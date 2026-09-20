@@ -2940,11 +2940,15 @@ var DL = (function () {
     var total = i1 - i0 + 1;
     var i = i1;                    // 내림차순
     var doneRows = 0;
-    var CHUNK = Math.max(60, Math.min(600, Math.round(120000 / Math.max(1, cols.length))));
+    var CHUNK = Math.max(64, Math.min(600, Math.round(120000 / Math.max(1, cols.length))));
+    function _now() { return (window.performance && performance.now) ? performance.now() : +new Date(); }
+    /* 한 tick 당 시간 예산. 탭이 숨겨지면 브라우저가 setTimeout 을 1초 단위로 늦추므로
+       tick 수 자체를 줄여야 한다(그 상태에선 UI 응답성을 지킬 이유도 없다). */
+    function _budget() { return document.hidden ? 600 : 45; }
 
     function step() {
-      var buf = [], cnt = 0;
-      while (i >= i0 && cnt < CHUNK) {
+      var buf = [], cnt = 0, t0 = _now(), bud = _budget();
+      while (i >= i0) {
         var line = String(DATES[i]);
         for (var k2 = 0; k2 < arrs.length; k2++) {
           line += ',';
@@ -2956,6 +2960,7 @@ var DL = (function () {
         }
         buf.push(line);
         i--; cnt++; doneRows++;
+        if (cnt % CHUNK === 0 && (_now() - t0) >= bud) break;
       }
       if (buf.length) parts.push(buf.join(CRLF) + CRLF);
       if (onProg) onProg(doneRows, total);
@@ -3017,8 +3022,9 @@ guard('다운로드·커브', function () {
   DL.bindPanel('cv-out', 'cv-dl', '커브 분석 · 결과', function () {
     var m = document.querySelector('input[name=cv-mode]:checked');
     var isTime = !m || m.value === 'time';
-    return '커브분석_' + (isTime ? DL.safe($('cv-type').value) + '_' + DL.safe($('cv-da').value) + '-' + DL.safe($('cv-db').value)
-      : DL.safe($('cv-ta').value) + '_' + DL.safe($('cv-tb').value) + '_' + DL.safe($('cv-d').value)) +
+    var d = function (x) { return DL.safe(x).replace(/-/g, ''); };
+    return '커브분석_' + (isTime ? DL.safe($('cv-type').value) + '_' + d($('cv-da').value) + '-' + d($('cv-db').value)
+      : DL.safe($('cv-ta').value) + '_' + DL.safe($('cv-tb').value) + '_' + d($('cv-d').value)) +
       '_' + DL.today() + '.csv';
   }, function () {
     var m = document.querySelector('input[name=cv-mode]:checked');
