@@ -145,6 +145,33 @@
   .serpick button.on{background:#17456b;border-color:#17456b;color:#fff;}
   .mono{font-family:Consolas,"D2Coding",monospace;}
   .hint{font-size:11px;color:#8a939e;margin-top:4px;}
+
+  /* ===== 데이터 다운로드 ===== */
+  .panelhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 11px;}
+  .panelhead h2{margin:0;flex:1 1 auto;}
+  .dlbtn{font:inherit;font-size:11.5px;font-weight:600;letter-spacing:-.2px;padding:6px 14px;
+      border:1px solid #17456b;background:#fff;color:#17456b;border-radius:4px;cursor:pointer;white-space:nowrap;}
+  .dlbtn:hover:enabled{background:#17456b;color:#fff;}
+  .dlbtn:disabled{border-color:#d7dde5;color:#b3bcc6;background:#f7f9fb;cursor:not-allowed;}
+  .dlbtn.wide{width:100%;padding:7px 10px;}
+  .dlbtn.solid{background:#17456b;color:#fff;}
+  .dlbtn.solid:hover:enabled{background:#1d5684;}
+  .dlbtn.solid:disabled{background:#f7f9fb;color:#b3bcc6;border-color:#d7dde5;}
+  .chips{display:flex;flex-wrap:wrap;gap:5px;max-height:190px;overflow-y:auto;
+      border:1px solid #e0e5ec;border-radius:5px;background:#fbfcfe;padding:7px 8px;min-height:34px;box-sizing:border-box;}
+  .chips .chipnone{font-size:11px;color:#8a939e;line-height:1.5;}
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 5px 3px 9px;
+      border:1px solid #c8d0da;background:#fff;border-radius:11px;color:#3c4753;max-width:100%;}
+  .chip button{font:inherit;font-size:12px;line-height:1;padding:0 3px;border:0;background:transparent;
+      color:#8a939e;cursor:pointer;}
+  .chip button:hover{color:#d0021b;}
+  .progwrap{margin:12px 0 0;}
+  .progbar{height:9px;border-radius:5px;background:#e6ebf1;overflow:hidden;}
+  .progbar > i{display:block;height:100%;width:0;background:#17456b;transition:width .12s linear;}
+  .progtxt{font-size:11.5px;color:#3c4753;margin-top:6px;font-family:Consolas,"D2Coding",monospace;}
+  .dlnote{font-size:11.5px;color:#3c4753;background:#f7fafd;border:1px solid #d9e3ec;border-left:4px solid #17456b;
+      border-radius:0 6px 6px 0;padding:10px 13px;line-height:1.75;margin:14px 0 0;}
+  .dlnote b{color:#17456b;}
 </style>
 
 <style>
@@ -293,6 +320,7 @@ body{font-size:13px;}
     <button type="button" data-v="var">VaR</button>
     <button type="button" data-v="curve">커브 분석</button>
     <button type="button" data-v="spread">스프레드 분석</button>
+    <button type="button" data-v="dl">데이터 다운로드</button>
   </nav>
   <div class="navfoot" id="diag">진단 대기…</div>
 </aside>
@@ -618,7 +646,7 @@ body{font-size:13px;}
   </div>
     </section>
     <section class="card resultpanel">
-      <h2>스트레스테스트 · 결과</h2>
+      <div class="panelhead"><h2>스트레스테스트 · 결과</h2><button type="button" class="dlbtn" id="st-dl" disabled title="화면에 표시된 표를 계산 근거 주석과 함께 CSV 로 내려받습니다">CSV 다운로드</button></div>
       <div class="out" id="st-out"><div class="placeholder">좌측에서 조건을 설정한 뒤 [분석 실행] 을 누르십시오.</div></div>
     </section>
   </div>
@@ -662,7 +690,7 @@ body{font-size:13px;}
   </div>
     </section>
     <section class="card resultpanel">
-      <h2>VaR · 결과</h2>
+      <div class="panelhead"><h2>VaR · 결과</h2><button type="button" class="dlbtn" id="vr-dl" disabled title="화면에 표시된 표를 계산 근거 주석과 함께 CSV 로 내려받습니다">CSV 다운로드</button></div>
       <div class="out" id="vr-out"><div class="placeholder">좌측에서 조건을 설정한 뒤 [산출] 을 누르십시오.</div></div>
     </section>
   </div>
@@ -696,7 +724,7 @@ body{font-size:13px;}
   </div>
     </section>
     <section class="card resultpanel">
-      <h2>커브 분석 · 결과</h2>
+      <div class="panelhead"><h2>커브 분석 · 결과</h2><button type="button" class="dlbtn" id="cv-dl" disabled title="화면에 표시된 표를 계산 근거 주석과 함께 CSV 로 내려받습니다">CSV 다운로드</button></div>
       <div class="out" id="cv-out"><div class="placeholder">좌측에서 조건을 설정한 뒤 [비교] 을 누르십시오.</div></div>
     </section>
   </div>
@@ -723,8 +751,64 @@ body{font-size:13px;}
   </div>
     </section>
     <section class="card resultpanel">
-      <h2>스프레드 분석 · 결과</h2>
+      <div class="panelhead"><h2>스프레드 분석 · 결과</h2><button type="button" class="dlbtn" id="sp-dl" disabled title="화면에 표시된 표를 계산 근거 주석과 함께 CSV 로 내려받습니다">CSV 다운로드</button></div>
       <div class="out" id="sp-out"><div class="placeholder">좌측에서 조건을 설정한 뒤 [분석] 을 누르십시오.</div></div>
+    </section>
+  </div>
+</div>
+
+<div class="view" id="view-dl" style="display:none">
+  <div class="tool">
+    <section class="card formpanel">
+      <h2>시계열 원본 다운로드 · 선택</h2>
+      <div class="frm">
+        <div class="fld w2"><label>채권종류</label><select id="dl-type"></select></div>
+        <div class="fld w2"><label>만기</label><select id="dl-mat"></select></div>
+        <div class="fld w2"><button type="button" class="dlbtn wide solid" id="dl-add">+ 이 만기 추가</button></div>
+        <div class="fld w2"><button type="button" class="dlbtn wide" id="dl-add-all">+ 이 채권종류 전 만기</button></div>
+        <div class="fld w2"><button type="button" class="dlbtn wide" id="dl-add-base">+ 한국은행 기준금리</button></div>
+        <div class="fld w2"><button type="button" class="dlbtn wide" id="dl-clear" disabled>선택 비우기</button></div>
+
+        <div class="fld w2"><label>선택한 시리즈 <span id="dl-cnt">(0)</span></label>
+          <div class="chips" id="dl-chips"></div>
+        </div>
+
+        <div class="fld w2"><label>기간</label>
+          <div style="display:flex;gap:6px"><input type="date" id="dl-from"><input type="date" id="dl-to"></div>
+          <div class="presets" id="dl-range-p" style="margin-top:6px"></div></div>
+
+        <div class="runrow"><button class="run" id="dl-run" disabled>CSV 다운로드</button></div>
+      </div>
+    </section>
+    <section class="card resultpanel">
+      <div class="panelhead"><h2>시계열 원본 다운로드 · 내보내기</h2></div>
+      <div class="out" id="dl-out">
+        <div id="dl-info"></div>
+        <div id="dl-msg"></div>
+        <div class="progwrap" id="dl-prog" style="display:none">
+          <div class="progbar"><i id="dl-bar"></i></div>
+          <div class="progtxt" id="dl-progtxt"></div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <h3>전체 다운로드</h3>
+          <div class="bd" style="padding:12px 14px 4px">
+            <p style="margin:0 0 10px;font-size:12px;line-height:1.75;color:#3c4753">
+              전 기간 · <b>전체 시리즈</b>를 하나의 wide CSV 로 내려받습니다.
+              용량이 크므로(약 30MB 내외) 생성에 수십 초가 걸릴 수 있으며, 진행률이 위에 표시됩니다.
+            </p>
+            <button type="button" class="dlbtn" id="dl-all">전체 다운로드 (전 기간 · 전 시리즈)</button>
+          </div>
+        </div>
+        <div class="dlnote">
+          <b>파일 형식</b><br>
+          · 인코딩 <b>UTF-8 (BOM)</b> · 줄바꿈 <b>CRLF</b> — Excel 에서 바로 열어도 한글이 깨지지 않습니다.<br>
+          · 컬럼명은 마스터 CSV 와 동일한 규칙(<span class="mono">채권종류 정식명_만기</span>)을 씁니다.<br>
+          · 값은 원본 고시치 문자열 그대로이며, <b>결측은 빈 칸</b>입니다(보간하지 않고 0으로도 채우지 않습니다).<br>
+          · 정렬은 <b>일자 내림차순</b>(마스터 CSV 와 동일), 일자는 <span class="mono">YYYYMMDD</span> 형식입니다.<br>
+          · 파일 상단에 생성 시각·기간·관측치 수 등 계산 근거가 <b>#</b> 주석 행으로 들어갑니다.<br>
+          · 각 분석 도구의 결과는 해당 도구 화면의 <b>[CSV 다운로드]</b> 버튼으로 내려받습니다.
+        </div>
+      </div>
     </section>
   </div>
 </div>
@@ -1379,7 +1463,7 @@ function setRange(fromEl, toEl, unit, n) {
 }
 
 /* ---- [NEW] 좌측 내비게이션 / 뷰 전환 ---- */
-var VIEWS = ['dash', 'stress', 'var', 'curve', 'spread'];
+var VIEWS = ['dash', 'stress', 'var', 'curve', 'spread', 'dl'];
 function showView(v) {
   var nav = $('navbar');
   if (nav) [].forEach.call(nav.getElementsByTagName('button'), function (b) {
@@ -2524,6 +2608,606 @@ function runSpread() {
   ]));
   out.innerHTML = h.join('');
 }
+
+
+/* ================================================================
+   [NEW] 데이터 다운로드 — CSV 내보내기
+   · UTF-8 BOM + CRLF (Excel 한글 깨짐 방지)
+   · 결측은 빈 칸(보간·0채움 없음), 일자 내림차순, 컬럼명은 마스터 CSV 규칙
+   · 외부 라이브러리 없음. blob URL 은 사용 후 revokeObjectURL 로 해제한다.
+   ================================================================ */
+var DL = (function () {
+
+  var CRLF = '\r\n';
+
+  /* ---- 원본 문자열 복원 ----
+     마스터 CSV 는 2013-10-28 부터 소수 3자리, 그 이전은 2자리로 고시된다.
+     (전 기간 3,389,150 셀 대조 결과 불일치 0건)
+     기준금리는 전 구간 2자리. */
+  var DEC_SWITCH = 20131028;
+  var BASE_COL = DATA.base.c;
+  function decFor(col, i) {
+    if (col === BASE_COL) return 2;
+    return DATES[i] >= DEC_SWITCH ? 3 : 2;
+  }
+  function cellOf(col, i) {
+    var a = COL[col];
+    if (!a) return '';
+    var v = a[i];
+    if (isNaN(v)) return '';
+    return (v / 1000).toFixed(decFor(col, i));
+  }
+
+  /* ---- CSV 원시 유틸 ---- */
+  function q(v) {
+    v = (v == null) ? '' : String(v);
+    if (v.indexOf('"') >= 0 || v.indexOf(',') >= 0 || v.indexOf('\n') >= 0 || v.indexOf('\r') >= 0) {
+      return '"' + v.replace(/"/g, '""') + '"';
+    }
+    return v;
+  }
+  function row(arr) {
+    var o = [];
+    for (var i = 0; i < arr.length; i++) o.push(q(arr[i]));
+    return o.join(',');
+  }
+  /** 주석 행 — 한 셀짜리 행으로 내보낸다(Excel 에서 A열에 그대로 보인다) */
+  function cmt(s) { return q('# ' + String(s == null ? '' : s)); }
+
+  /** parts: 문자열 배열. 거대 문자열 하나로 합치지 않고 Blob 에 그대로 넘긴다. */
+  function saveParts(filename, parts) {
+    var blob, url, a;
+    try {
+      blob = new Blob(['﻿'].concat(parts), { type: 'text/csv;charset=utf-8;' });
+    } catch (e) {
+      alert('CSV 생성에 실패했습니다: ' + (e && e.message ? e.message : e));
+      return false;
+    }
+    if (window.navigator && window.navigator.msSaveBlob) {   // 구형 IE/Edge
+      window.navigator.msSaveBlob(blob, filename);
+      return true;
+    }
+    url = URL.createObjectURL(blob);
+    a = document.createElement('a');
+    a.href = url; a.download = filename; a.rel = 'noopener';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () {
+      try { document.body.removeChild(a); } catch (e2) { }
+      try { URL.revokeObjectURL(url); } catch (e3) { }
+    }, 2000);
+    return true;
+  }
+  function saveText(filename, text) { return saveParts(filename, [text]); }
+
+  /* ---- 파일명 안전화 ---- */
+  function safe(s) {
+    return String(s == null ? '' : s)
+      .replace(/[\\/:*?"<>|]/g, '')
+      .replace(/\s+/g, '')
+      .replace(/[·,]/g, '');
+  }
+  function today() {
+    var d = new Date(), p = function (x) { return (x < 10 ? '0' : '') + x; };
+    return '' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate());
+  }
+  function nowStr() {
+    var d = new Date(), p = function (x) { return (x < 10 ? '0' : '') + x; };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' +
+      p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  }
+  function ymd8(v) { return String(v); }
+
+  /* ================================================================
+     1) 화면 표 → CSV  (도구 6종 공통)
+     결과 패널 안의 <table> 을 그대로 긁는다. 판정 정의표(.defbox)는 제외.
+     ================================================================ */
+  function isDefTable(tbl) {
+    var n = tbl.parentNode;
+    while (n && n.nodeType === 1) {
+      if (n.className && (' ' + n.className + ' ').indexOf(' defbox ') >= 0) return true;
+      n = n.parentNode;
+    }
+    return false;
+  }
+  function resultTables(out) {
+    var all = out ? out.getElementsByTagName('table') : [];
+    var res = [];
+    for (var i = 0; i < all.length; i++) if (!isDefTable(all[i])) res.push(all[i]);
+    return res;
+  }
+  function txt(node) {
+    return String(node.textContent || '')
+      .replace(/ /g, ' ').replace(/\s+/g, ' ').replace(/^ +| +$/g, '');
+  }
+  /** colspan/rowspan 을 펼쳐 격자로 만든다 */
+  function tableGrid(tbl) {
+    var grid = [], trs = tbl.rows, r, k, c, dr, dc;
+    for (r = 0; r < trs.length; r++) {
+      if (!grid[r]) grid[r] = [];
+      c = 0;
+      for (k = 0; k < trs[r].cells.length; k++) {
+        while (grid[r][c] !== undefined) c++;
+        var cell = trs[r].cells[k];
+        var t = txt(cell);
+        var cs = cell.colSpan || 1, rs = cell.rowSpan || 1;
+        for (dr = 0; dr < rs; dr++) {
+          if (!grid[r + dr]) grid[r + dr] = [];
+          for (dc = 0; dc < cs; dc++) {
+            grid[r + dr][c + dc] = (dr === 0 && dc === 0) ? t : '';
+          }
+        }
+        c += cs;
+      }
+    }
+    var out = [];
+    for (r = 0; r < grid.length; r++) {
+      var g = grid[r] || [], o = [];
+      for (k = 0; k < g.length; k++) o.push(g[k] === undefined ? '' : g[k]);
+      out.push(o);
+    }
+    return out;
+  }
+  function ownH3(node) {
+    if (!node || !node.children) return null;
+    for (var i = 0; i < node.children.length; i++) {
+      if (node.children[i].tagName === 'H3') return node.children[i];
+    }
+    return null;
+  }
+  /** 표 바로 앞(또는 감싼 패널)의 h3 제목을 찾는다 */
+  function tableTitle(tbl, out) {
+    var node = tbl;
+    while (node && node !== out) {
+      var p = node.previousElementSibling;
+      while (p) {
+        if (p.tagName === 'H3') return txt(p);
+        var inner = p.getElementsByTagName ? p.getElementsByTagName('h3') : [];
+        if (inner && inner.length) return txt(inner[inner.length - 1]);
+        p = p.previousElementSibling;
+      }
+      node = node.parentNode;
+      var h = ownH3(node);
+      if (h) return txt(h);
+    }
+    return '';
+  }
+  /** .evid 블록을 '키 : 값' 줄 배열로 */
+  function evidLines(out) {
+    var res = [], ds = out.getElementsByClassName('evid'), i;
+    for (i = 0; i < ds.length; i++) {
+      var parts = String(ds[i].innerHTML).split(/<br\s*\/?>/i);
+      for (var k = 0; k < parts.length; k++) {
+        var tmp = document.createElement('div');
+        tmp.innerHTML = parts[k];
+        var t = txt(tmp);
+        if (t) res.push(t);
+      }
+    }
+    return res;
+  }
+  /** 경고/안내(.alert) 줄 */
+  function alertLines(out) {
+    var res = [], ds = out.getElementsByClassName('alert');
+    for (var i = 0; i < ds.length; i++) { var t = txt(ds[i]); if (t) res.push(t); }
+    return res;
+  }
+  /** KPI 값 */
+  function kpiLines(out) {
+    var res = [], ds = out.getElementsByClassName('kpi');
+    for (var i = 0; i < ds.length; i++) {
+      var k = ds[i].getElementsByClassName('k'), v = ds[i].getElementsByClassName('v');
+      if (k.length && v.length) res.push(txt(k[0]) + ' : ' + txt(v[0]));
+    }
+    return res;
+  }
+
+  function hasResult(out) { return resultTables(out).length > 0; }
+
+  /** 결과 패널 전체를 CSV 문자열로 */
+  function panelCSV(title, out, extraMeta) {
+    var L = [];
+    L.push(cmt('금리 분석 대시보드 (kisbond.com) — ' + title));
+    L.push(cmt('생성 시각 : ' + nowStr()));
+    L.push(cmt('데이터 기준일 : ' + fmtD(DATES[LAST]) + '  ·  ' + DATA.meta.nseries + '시리즈 · ' +
+      N.toLocaleString() + '영업일 (' + fmtD(DATA.meta.from) + ' ~ ' + fmtD(DATA.meta.to) + ')'));
+    L.push(cmt('원자료 : KOFIA 채권정보센터 채권시가평가수익률 (마스터 ' + DATA.meta.source + ')'));
+    if (extraMeta) for (var e = 0; e < extraMeta.length; e++) L.push(cmt(extraMeta[e]));
+
+    var kp = kpiLines(out);
+    if (kp.length) {
+      L.push(cmt(''));
+      L.push(cmt('--- 요약 지표 ---'));
+      for (var a = 0; a < kp.length; a++) L.push(cmt(kp[a]));
+    }
+    var ev = evidLines(out);
+    if (ev.length) {
+      L.push(cmt(''));
+      L.push(cmt('--- 계산 근거 ---'));
+      for (var b = 0; b < ev.length; b++) L.push(cmt(ev[b]));
+    }
+    var al = alertLines(out);
+    if (al.length) {
+      L.push(cmt(''));
+      L.push(cmt('--- 경고 / 안내 ---'));
+      for (var c = 0; c < al.length; c++) L.push(cmt(al[c]));
+    }
+    L.push(cmt(''));
+    L.push(cmt('--- 표 ---  (화면에 표시된 표를 그대로 옮긴 것입니다. — 는 해당일 미고시)'));
+
+    var tbls = resultTables(out);
+    for (var i = 0; i < tbls.length; i++) {
+      var ttl = tableTitle(tbls[i], out);
+      L.push('');
+      L.push(cmt('[표 ' + (i + 1) + '] ' + (ttl || '(제목 없음)')));
+      var g = tableGrid(tbls[i]);
+      for (var r = 0; r < g.length; r++) L.push(row(g[r]));
+    }
+    return L.join(CRLF) + CRLF;
+  }
+
+  /** 도구 결과 패널에 다운로드 버튼을 연결 */
+  function bindPanel(outId, btnId, title, nameFn, metaFn) {
+    var out = $(outId), btn = $(btnId);
+    if (!out || !btn) return;
+    var upd = function () {
+      try { btn.disabled = !hasResult(out); } catch (e) { }
+    };
+    btn.onclick = function () {
+      if (btn.disabled) return;
+      try {
+        var text = panelCSV(title, out, metaFn ? metaFn() : null);
+        saveText(nameFn(), text);
+      } catch (e) {
+        alert('CSV 생성 중 오류: ' + (e && e.message ? e.message : e));
+      }
+    };
+    if (window.MutationObserver) {
+      try { new MutationObserver(upd).observe(out, { childList: true, subtree: true }); }
+      catch (e) { }
+    }
+    // MutationObserver 가 없는 환경 대비 — 실행 버튼 클릭 후에도 갱신
+    var runBtn = $(outId.split('-')[0] + '-run');
+    if (runBtn && runBtn.addEventListener) {
+      runBtn.addEventListener('click', function () { setTimeout(upd, 60); setTimeout(upd, 400); });
+    }
+    upd();
+  }
+
+  /* ================================================================
+     2) 시계열 원본 CSV  (wide, 일자 내림차순)
+     ================================================================ */
+  /** cols: [{c: 마스터컬럼명, label: 표시명}] */
+  function seriesHeaderLines(cols, i0, i1, reqFrom, reqTo, counts, note) {
+    var L = [];
+    L.push(cmt('금리 분석 대시보드 (kisbond.com) — 금리 시계열 원본'));
+    L.push(cmt('생성 시각 : ' + nowStr()));
+    L.push(cmt('원자료 : KOFIA 채권정보센터 채권시가평가수익률'));
+    L.push(cmt('마스터 파일 : ' + DATA.meta.source + '  (생성 ' + DATA.meta.generated + ')'));
+    L.push(cmt('전체 데이터 : ' + fmtD(DATA.meta.from) + ' ~ ' + fmtD(DATA.meta.to) + ' · ' +
+      N.toLocaleString() + '영업일 · ' + DATA.meta.nseries + '시리즈'));
+    L.push(cmt('요청 기간 : ' + fmtD(reqFrom) + ' ~ ' + fmtD(reqTo)));
+    L.push(cmt('실제 기간 : ' + fmtD(DATES[i0]) + ' ~ ' + fmtD(DATES[i1]) +
+      ' (' + (i1 - i0 + 1).toLocaleString() + '영업일, 영업일 = 데이터에 행이 존재하는 날)'));
+    L.push(cmt('시리즈 수 : ' + cols.length));
+    L.push(cmt('단위 : % (연율). 값은 원본 고시치 그대로이며 결측은 빈 칸입니다 (보간·0채움 없음).'));
+    L.push(cmt('정렬 : 일자 내림차순 (마스터 CSV 와 동일)'));
+    L.push(cmt('컬럼명 : 마스터 CSV 와 동일 (채권종류 정식명_만기)'));
+    L.push(cmt('산출기준 변경 : ' + fmtD(REGIME) + ' — 이전/이후 산정방식이 달라 단순 비교 시 주의가 필요합니다.'));
+    L.push(cmt('인코딩 : UTF-8 (BOM), 줄바꿈 CRLF'));
+    if (note) L.push(cmt(note));
+    if (counts) {
+      L.push(cmt(''));
+      L.push(cmt('--- 컬럼 목록 (구간 내 관측치 수) ---'));
+      for (var i = 0; i < cols.length; i++) {
+        L.push(cmt('[' + (i + 1) + '] ' + cols[i].c +
+          (cols[i].label ? '  (' + cols[i].label + ')' : '') +
+          ' · 관측 ' + counts[i].toLocaleString() + '일'));
+      }
+    }
+    L.push(cmt(''));
+    return L;
+  }
+
+  function countObs(cols, i0, i1) {
+    var counts = [], k, i;
+    for (k = 0; k < cols.length; k++) {
+      var a = COL[cols[k].c], n = 0;
+      if (a) for (i = i0; i <= i1; i++) if (!isNaN(a[i])) n++;
+      counts.push(n);
+    }
+    return counts;
+  }
+
+  /** 청크 단위로 CSV 를 만들며 진행률을 알린다. done(parts) 로 끝난다. */
+  function buildSeriesCSV(cols, i0, i1, reqFrom, reqTo, opt, onProg, done) {
+    opt = opt || {};
+    var counts = (cols.length <= 60 || opt.forceCounts) ? countObs(cols, i0, i1) : null;
+    var note = counts ? null : '컬럼이 많아 컬럼별 관측치 수 목록은 생략했습니다 (헤더 행 참조).';
+    var parts = [];
+    parts.push(seriesHeaderLines(cols, i0, i1, reqFrom, reqTo, counts, note).join(CRLF) + CRLF);
+
+    var head = ['일자'];
+    for (var k = 0; k < cols.length; k++) head.push(cols[k].c);
+    parts.push(row(head) + CRLF);
+
+    var arrs = [];
+    for (k = 0; k < cols.length; k++) arrs.push(COL[cols[k].c] || null);
+    var decs = [];
+    for (k = 0; k < cols.length; k++) decs.push(cols[k].c === BASE_COL ? -1 : 0); // -1 = 항상 2자리
+
+    var total = i1 - i0 + 1;
+    var i = i1;                    // 내림차순
+    var doneRows = 0;
+    var CHUNK = Math.max(60, Math.min(600, Math.round(120000 / Math.max(1, cols.length))));
+
+    function step() {
+      var buf = [], cnt = 0;
+      while (i >= i0 && cnt < CHUNK) {
+        var line = String(DATES[i]);
+        for (var k2 = 0; k2 < arrs.length; k2++) {
+          line += ',';
+          var a = arrs[k2];
+          if (a) {
+            var v = a[i];
+            if (!isNaN(v)) line += (v / 1000).toFixed(decs[k2] < 0 ? 2 : (DATES[i] >= DEC_SWITCH ? 3 : 2));
+          }
+        }
+        buf.push(line);
+        i--; cnt++; doneRows++;
+      }
+      if (buf.length) parts.push(buf.join(CRLF) + CRLF);
+      if (onProg) onProg(doneRows, total);
+      if (i >= i0) setTimeout(step, 0);
+      else done(parts);
+    }
+    setTimeout(step, 0);
+  }
+
+  return {
+    save: saveParts, saveText: saveText, row: row, cmt: cmt, q: q, CRLF: CRLF,
+    cellOf: cellOf, safe: safe, today: today, nowStr: nowStr,
+    bindPanel: bindPanel, panelCSV: panelCSV, hasResult: hasResult,
+    buildSeriesCSV: buildSeriesCSV, countObs: countObs, resultTables: resultTables,
+    tableGrid: tableGrid, evidLines: evidLines
+  };
+})();
+
+/* ---------------- 도구 6종 결과 다운로드 버튼 연결 ---------------- */
+guard('다운로드·스트레스', function () {
+  DL.bindPanel('st-out', 'st-dl', '스트레스테스트 · 결과', function () {
+    var sc = document.querySelector('input[name=st-sc]:checked');
+    var v = sc ? sc.value : 'all';
+    var nm = { bull_flat: '불플랫', bull_steep: '불스팁', bear_flat: '베어플랫', bear_steep: '베어스팁', all: '전체', pivot: '피벗', spread: '스프레드확대' }[v] || v;
+    return '스트레스테스트_' + DL.safe(nm) + '_' + DL.today() + '.csv';
+  }, function () {
+    var sc = document.querySelector('input[name=st-sc]:checked');
+    var v = sc ? sc.value : 'all';
+    if (v === 'spread') {
+      return ['도구 : 스트레스테스트 — 스프레드 확대',
+      '시리즈 A(크레딧) : ' + $('st-sa').value + ' ' + matLabel(+$('st-sma').value),
+      '시리즈 B(기준) : ' + $('st-sb').value + ' ' + matLabel(+$('st-smb').value),
+      '방향 : ' + $('st-sdir').value + ' · 윈도우 ' + $('st-win').value + '영업일 · 상위 ' + $('st-topn').value + '건'];
+    }
+    if (v === 'pivot') {
+      return ['도구 : 스트레스테스트 — 피벗(기준금리 방향 전환)',
+      '채권종류 : ' + $('st-type').value,
+      '만기 : ' + matLabel(+$('st-short').value) + ' / ' + matLabel(+$('st-long').value),
+      '전환 방향 : ' + $('st-pv-dir').value + ' · 윈도우 ' + $('st-win').value + '영업일'];
+    }
+    return ['도구 : 스트레스테스트 — 커브 시나리오',
+    '채권종류 : ' + $('st-type').value,
+    '만기 : 단기 ' + matLabel(+$('st-short').value) + ' / 장기 ' + matLabel(+$('st-long').value),
+    '시나리오 : ' + v + ' · 윈도우 ' + $('st-win').value + '영업일 · 상위 ' + $('st-topn').value + '건'];
+  });
+});
+guard('다운로드·VaR', function () {
+  DL.bindPanel('vr-out', 'vr-dl', 'VaR · 결과', function () {
+    return 'VaR_' + DL.safe($('vr-type').value) + DL.safe(matLabel(+$('vr-mat').value)) +
+      '_p' + DL.safe($('vr-p').value) + '_' + DL.today() + '.csv';
+  }, function () {
+    return ['도구 : VaR (과거 시뮬레이션)',
+    '채권종류 / 만기 : ' + $('vr-type').value + ' ' + matLabel(+$('vr-mat').value),
+    '변동기간 h : ' + $('vr-h').value + '영업일 · 퍼센타일 ' + $('vr-p').value + '% · 방향 ' + $('vr-side').value,
+    '보간 : ' + $('vr-interp').value + ' · 표본추출 ' + ($('vr-ovl').value === '1' ? '오버래핑' : '비오버래핑') + ' · 기준변경 ' + $('vr-reg').value];
+  });
+});
+guard('다운로드·커브', function () {
+  DL.bindPanel('cv-out', 'cv-dl', '커브 분석 · 결과', function () {
+    var m = document.querySelector('input[name=cv-mode]:checked');
+    var isTime = !m || m.value === 'time';
+    return '커브분석_' + (isTime ? DL.safe($('cv-type').value) + '_' + DL.safe($('cv-da').value) + '-' + DL.safe($('cv-db').value)
+      : DL.safe($('cv-ta').value) + '_' + DL.safe($('cv-tb').value) + '_' + DL.safe($('cv-d').value)) +
+      '_' + DL.today() + '.csv';
+  }, function () {
+    var m = document.querySelector('input[name=cv-mode]:checked');
+    var isTime = !m || m.value === 'time';
+    return isTime
+      ? ['도구 : 커브 분석 — (a) 같은 채권종류 · 두 시점 비교',
+      '채권종류 : ' + $('cv-type').value, '시점 A / B : ' + $('cv-da').value + ' / ' + $('cv-db').value]
+      : ['도구 : 커브 분석 — (b) 같은 시점 · 두 채권종류 비교',
+      '채권종류 A / B : ' + $('cv-ta').value + ' / ' + $('cv-tb').value, '기준 시점 : ' + $('cv-d').value];
+  });
+});
+guard('다운로드·스프레드', function () {
+  DL.bindPanel('sp-out', 'sp-dl', '스프레드 분석 · 결과', function () {
+    return '스프레드분석_' + DL.safe($('sp-ta').value) + DL.safe(matLabel(+$('sp-ma').value)) +
+      '_' + DL.safe($('sp-tb').value) + DL.safe(matLabel(+$('sp-mb').value)) + '_' + DL.today() + '.csv';
+  }, function () {
+    return ['도구 : 스프레드 분석',
+    '시리즈 A : ' + $('sp-ta').value + ' ' + matLabel(+$('sp-ma').value),
+    '시리즈 B : ' + $('sp-tb').value + ' ' + matLabel(+$('sp-mb').value),
+    '기간 : ' + $('sp-from').value + ' ~ ' + $('sp-to').value];
+  });
+});
+
+/* ---------------- 시계열 원본 다운로드 탭 ---------------- */
+guard('다운로드 탭', function () {
+  var dlSel = [];          // [{c, label}]
+  var busy = false;
+
+  function seriesLabel(typeName, months) {
+    return typeName + ' ' + matLabel(months);
+  }
+  function renderChips() {
+    var host = $('dl-chips');
+    if (!host) return;
+    while (host.firstChild) host.removeChild(host.firstChild);
+    if (!dlSel.length) {
+      host.appendChild(el('span', { 'class': 'chipnone' }, '선택된 시리즈가 없습니다. 위에서 채권종류·만기를 고른 뒤 [+ 추가] 를 누르십시오.'));
+    } else {
+      dlSel.forEach(function (s, i) {
+        var chip = el('span', { 'class': 'chip', title: s.c });
+        chip.appendChild(document.createTextNode(s.label));
+        var x = el('button', { type: 'button', title: '삭제' }, '×');
+        x.onclick = function () { dlSel.splice(i, 1); renderChips(); };
+        chip.appendChild(x);
+        host.appendChild(chip);
+      });
+    }
+    var cnt = $('dl-cnt'); if (cnt) cnt.textContent = '(' + dlSel.length + ')';
+    var run = $('dl-run'); if (run) run.disabled = busy || dlSel.length === 0;
+    var clr = $('dl-clear'); if (clr) clr.disabled = dlSel.length === 0;
+    updInfo();
+  }
+  function addCol(c, label) {
+    if (!c) return false;
+    for (var i = 0; i < dlSel.length; i++) if (dlSel[i].c === c) return false;
+    dlSel.push({ c: c, label: label });
+    return true;
+  }
+  function rangeIdx() {
+    var f = $('dl-from').value, t = $('dl-to').value;
+    if (!f || !t) return null;
+    var i0 = idxGE(parseD(f)), i1 = idxLE(parseD(t));
+    if (i0 < 0 || i1 < 0 || i1 < i0) return null;
+    return [i0, i1, parseD(f), parseD(t)];
+  }
+  function updInfo() {
+    var box = $('dl-info');
+    if (!box) return;
+    var r = rangeIdx();
+    if (!r) { box.innerHTML = '<div class="alert e">기간이 올바르지 않습니다. 시작일·종료일을 확인해 주십시오.</div>'; return; }
+    var rows = r[1] - r[0] + 1;
+    var h = '<div class="kpis">' +
+      '<div class="kpi"><div class="k">선택 시리즈</div><div class="v">' + dlSel.length + '<span class="u">개</span></div></div>' +
+      '<div class="kpi"><div class="k">기간 (영업일)</div><div class="v">' + rows.toLocaleString() + '<span class="u">행</span></div></div>' +
+      '<div class="kpi"><div class="k">실제 기간</div><div class="v" style="font-size:13px">' + fmtD(DATES[r[0]]) + ' ~ ' + fmtD(DATES[r[1]]) + '</div></div>' +
+      '<div class="kpi"><div class="k">예상 셀 수</div><div class="v">' + (rows * dlSel.length).toLocaleString() + '</div></div>' +
+      '</div>';
+    box.innerHTML = h;
+  }
+
+  function fname(cols, i0, i1) {
+    var tag;
+    if (!cols.length) tag = '없음';
+    else if (cols.length <= 4) tag = cols.map(function (s) { return DL.safe(s.label); }).join('_');
+    else tag = cols.length + '개시리즈';
+    return '금리시계열_' + tag + '_' + DATES[i0] + '-' + DATES[i1] + '.csv';
+  }
+
+  function setBusy(b, msg, pctv) {
+    busy = b;
+    var run = $('dl-run'), all = $('dl-all'), pg = $('dl-prog'), bar = $('dl-bar'), st = $('dl-progtxt');
+    if (run) run.disabled = b || dlSel.length === 0;
+    if (all) all.disabled = b;
+    if (pg) pg.style.display = b ? '' : 'none';
+    if (bar) bar.style.width = (pctv == null ? 0 : Math.max(0, Math.min(100, pctv))) + '%';
+    if (st) st.textContent = msg || '';
+  }
+
+  function runDownload(cols, i0, i1, reqFrom, reqTo, filename, label) {
+    if (busy) return;
+    setBusy(true, label + ' — 준비 중…', 0);
+    var t0 = (window.performance && performance.now) ? performance.now() : +new Date();
+    setTimeout(function () {
+      DL.buildSeriesCSV(cols, i0, i1, reqFrom, reqTo, {},
+        function (d, tot) {
+          var p = Math.round(d * 100 / tot);
+          setBusy(true, label + ' — CSV 생성 중… ' + d.toLocaleString() + ' / ' + tot.toLocaleString() + '행 (' + p + '%)', p);
+        },
+        function (parts) {
+          setBusy(true, label + ' — 파일 저장 중…', 100);
+          setTimeout(function () {
+            var ok = DL.save(filename, parts);
+            var el2 = (window.performance && performance.now) ? performance.now() : +new Date();
+            setBusy(false, '', 0);
+            var box = $('dl-msg');
+            if (box) {
+              box.innerHTML = ok
+                ? '<div class="alert i">✔ <b>' + esc(filename) + '</b> 내려받기를 시작했습니다 · ' +
+                (i1 - i0 + 1).toLocaleString() + '행 × ' + cols.length + '열 · 생성 ' + Math.round(el2 - t0) + 'ms<br>' +
+                '<span style="color:#67727f">브라우저 다운로드 폴더를 확인하십시오. Excel 에서 바로 열립니다(UTF-8 BOM).</span></div>'
+                : '<div class="alert e">파일 생성에 실패했습니다.</div>';
+            }
+          }, 30);
+        });
+    }, 30);
+  }
+
+  /* --- 폼 구성 --- */
+  var tSel = $('dl-type'), mSel = $('dl-mat');
+  if (!tSel || !mSel) return;
+  fillTypes(tSel, '국고채권');
+  attachTypeFilter(tSel, function () { fillMats(mSel, tSel.value, 36); });
+  fillMats(mSel, tSel.value, 36);
+  if (tSel.addEventListener) tSel.addEventListener('change', function () { fillMats(mSel, tSel.value, 36); });
+  bindAvail(tSel, mSel, null);
+
+  $('dl-add').onclick = function () {
+    var t = tSel.value, m = +mSel.value, c = colOf(t, m);
+    if (!c) { alert('선택한 만기의 컬럼이 없습니다.'); return; }
+    if (!addCol(c, seriesLabel(t, m))) { alert('이미 추가된 시리즈입니다.'); return; }
+    pushRecent(t);
+    renderChips();
+  };
+  $('dl-add-all').onclick = function () {
+    var t = typeByName(tSel.value);
+    if (!t) return;
+    var n = 0;
+    t.mats.forEach(function (mm) { if (addCol(mm.col, seriesLabel(t.name, mm.months))) n++; });
+    pushRecent(t.name);
+    renderChips();
+    if (!n) alert('추가할 새 만기가 없습니다.');
+  };
+  $('dl-add-base').onclick = function () {
+    if (!addCol(DATA.base.c, '한국은행기준금리')) { alert('이미 추가되어 있습니다.'); return; }
+    renderChips();
+  };
+  $('dl-clear').onclick = function () { dlSel = []; renderChips(); };
+
+  presets($('dl-range-p'), [['1Y', 'y', 1], ['3Y', 'y', 3], ['5Y', 'y', 5], ['10Y', 'y', 10], ['20Y', 'y', 20], ['전 기간', 'a', 0]],
+    function (p) { setRange($('dl-from'), $('dl-to'), p[1], p[2]); updInfo(); });
+  setRange($('dl-from'), $('dl-to'), 'y', 10);
+  ['dl-from', 'dl-to'].forEach(function (id) {
+    var e = $(id); if (e && e.addEventListener) e.addEventListener('change', updInfo);
+  });
+
+  $('dl-run').onclick = function () {
+    if (busy) return;
+    if (!dlSel.length) { alert('시리즈를 1개 이상 선택하십시오.'); return; }
+    var r = rangeIdx();
+    if (!r) { alert('기간이 올바르지 않습니다.'); return; }
+    var cols = dlSel.slice();
+    runDownload(cols, r[0], r[1], r[2], r[3], fname(cols, r[0], r[1]), '선택 시리즈 ' + cols.length + '개');
+  };
+
+  $('dl-all').onclick = function () {
+    if (busy) return;
+    var nser = SERIES.length;
+    if (!confirm('전 기간 · 전체 ' + nser + '시리즈를 CSV 로 만듭니다.\n' +
+      N.toLocaleString() + '행 × ' + (nser + 1) + '열 (약 30MB 내외).\n' +
+      '생성에 수십 초가 걸릴 수 있습니다. 계속하시겠습니까?')) return;
+    var cols = [{ c: DATA.base.c, label: '한국은행기준금리' }];
+    SERIES.forEach(function (s) { cols.push({ c: s.c, label: s.t + ' ' + s.m }); });
+    runDownload(cols, 0, N - 1, DATA.meta.from, DATA.meta.to,
+      '금리시계열_전체' + nser + '시리즈_' + DATES[0] + '-' + DATES[N - 1] + '.csv',
+      '전체 ' + nser + '시리즈');
+  };
+
+  renderChips();
+});
 
 
 /* ---- [NEW] 시작 뷰 + 리사이즈 대응 + 자가진단 ---- */
