@@ -94,8 +94,11 @@
   #loadwrap .lsub{font-size:12px;color:#67727f;line-height:1.6;word-break:break-all;}
   #loadwrap button{font:inherit;font-size:12.5px;padding:7px 18px;border:1px solid #17456b;background:#17456b;
             color:#fff;border-radius:5px;cursor:pointer;}
+  .wtxt{color:#b06000;}
+  .etxt{color:#d0021b;font-weight:600;}
   .availbox .wtxt{color:#b06000;}
   .availbox .etxt{color:#d0021b;font-weight:600;}
+  .fld select:disabled{background:#f1f4f8;color:#8a939e;cursor:not-allowed;}
   .fld select optgroup{font-size:11px;color:#8a939e;}
   .fld select option{color:#1c2530;}
   .radios{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12.5px;padding-top:2px;}
@@ -320,6 +323,7 @@ body{font-size:13px;}
     <button type="button" data-v="var">VaR</button>
     <button type="button" data-v="curve">커브 분석</button>
     <button type="button" data-v="spread">스프레드 분석</button>
+    <button type="button" data-v="corr">상관관계 분석</button>
     <button type="button" data-v="dl">데이터 다운로드</button>
   </nav>
   <div class="navfoot" id="diag">진단 대기…</div>
@@ -757,6 +761,47 @@ body{font-size:13px;}
   </div>
 </div>
 
+<!-- ===================== 상관관계 분석 ===================== -->
+<div class="view" id="view-corr" style="display:none">
+  <div class="tool">
+    <section class="card formpanel">
+      <h2>상관관계 분석 · 입력</h2>
+      <div class="frm">
+    <div class="fld w2"><label>시리즈 A</label><select id="co-ta"></select></div>
+    <div class="fld"><label>만기 A</label><select id="co-ma"></select></div>
+    <div class="fld"></div>
+    <div class="fld w2"><label>시리즈 B</label><select id="co-tb"></select></div>
+    <div class="fld"><label>만기 B</label><select id="co-mb"></select></div>
+    <div class="fld"></div>
+
+    <div class="fld w2"><label>계산 대상</label>
+      <div class="radios">
+        <label><input type="radio" name="co-mode" value="diff" checked>변동 (일간 차분) — 기본</label>
+        <label><input type="radio" name="co-mode" value="level">수준 (레벨)</label>
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:#67727f;line-height:1.6">
+        금리는 추세가 강해 <b>레벨 상관계수는 거의 항상 높게 나오고 의미가 없습니다.</b>
+        두 시리즈가 같이 오르내린 정도는 <b>일간 변동(차분)</b> 간 상관으로 봅니다.<br>
+        레벨을 고르면 추세 때문에 상관이 과대평가될 수 있습니다.
+      </div>
+    </div>
+
+    <div class="fld"><label>기준일 (기간의 끝)</label><input type="date" id="co-asof"></div>
+    <div class="fld"><label>롤링 윈도우 (영업일)</label><input type="number" id="co-win" value="244" min="20" max="2000">
+      <div class="presets" id="co-win-p"></div></div>
+    <div class="fld"><label>2023-01-09 기준변경</label><select id="co-reg">
+      <option value="exclude">교차 구간 제외(기본)</option><option value="ignore">무시</option></select></div>
+
+    <div class="runrow"><button class="run" id="co-run">분석</button></div>
+  </div>
+    </section>
+    <section class="card resultpanel">
+      <div class="panelhead"><h2>상관관계 분석 · 결과</h2><button type="button" class="dlbtn" id="co-dl" disabled title="화면에 표시된 표를 계산 근거 주석과 함께 CSV 로 내려받습니다">CSV 다운로드</button></div>
+      <div class="out" id="co-out"><div class="placeholder">좌측에서 두 시리즈를 고른 뒤 [분석] 을 누르십시오.</div></div>
+    </section>
+  </div>
+</div>
+
 <div class="view" id="view-dl" style="display:none">
   <div class="tool">
     <section class="card formpanel">
@@ -929,11 +974,90 @@ var TYPES = [];
   });
   TYPES.forEach(function (t) { t.mats.sort(function (a, b) { return a.months - b.months; }); });
 })();
-function typeByName(n) { for (var i = 0; i < TYPES.length; i++) if (TYPES[i].name === n) return TYPES[i]; return null; }
+function typeByName(n) {
+  for (var i = 0; i < TYPES.length; i++) if (TYPES[i].name === n) return TYPES[i];
+  return regTypeByName(n);
+}
 
 /* 대분류 그룹 순서 (optgroup) */
 var GROUPS = [];
 (function () { var m = {}; SERIES.forEach(function (x) { var g = x.g || '기타'; if (!m[g]) { m[g] = 1; GROUPS.push(g); } }); })();
+
+/* ================================================================
+   [NEW] 시리즈 레지스트리 — KOFIA '채권종류 × 만기' 격자 밖의 시리즈
+   ----------------------------------------------------------------
+   한국은행 기준금리가 첫 사례이고, 앞으로 들어올 해외금리(미국채 10년 등)도
+   똑같은 방식으로 얹는다. 도구 코드는 레지스트리를 모른다 — TYPES 와 같은
+   모양(name/full/g/mats[])으로 변환해 두므로 typeByName·colOf·matMeta·
+   fillMats·bindAvail 이 그대로 동작한다.
+
+   새 시리즈 추가 절차 (도구 코드 수정 불필요)
+     1) data/rates.json 에 extra[] 항목으로 컬럼을 싣는다
+        { "c":"미국채_10년", "fi":0, "li":6450, "lv":..., "d":"<delta-varint-b64>" }
+        (series[] 와 동일한 인코딩. 만기 격자에 속하면 그냥 series[] 에 넣으면 된다.)
+     2) 아래 EXTRA_SERIES 에 한 줄 등록한다.
+
+   필드
+     key      고유 식별자 (코드에서 쓰지 않지만 중복 방지·추적용)
+     label    표시명 = 드롭다운의 '채권종류' 자리에 들어가는 이름
+     group    optgroup 이름 ('기준지표', '해외금리' …). 등장 순서대로 최상단에 쌓인다
+     col      COL[] 의 컬럼명 (= 마스터 CSV 컬럼명)
+     maturity 개월 수. 만기 개념이 없으면 null → 만기 드롭다운이 '해당없음'으로 잠긴다
+              같은 label 로 maturity 가 다른 항목을 여러 줄 넣으면 만기 드롭다운이 생긴다
+     full     검색·툴팁용 정식명
+     note     이 시리즈가 선택됐을 때 결과 화면에 붙일 해석 주석 (없으면 생략)
+   ================================================================ */
+var EXTRA_SERIES = [
+  {
+    key: 'BOK_BASE', label: '한국은행 기준금리', group: '기준지표',
+    col: DATA.base.c, maturity: null,
+    full: '한국은행 기준금리 (정책금리) base rate',
+    note: '<b>한국은행 기준금리는 변경일에만 바뀌는 계단식(전방채움) 시계열</b>입니다. ' +
+      '대부분의 영업일에 일간 변동이 정확히 0이므로 변동(차분) 상관은 구조적으로 0 근처로 낮게 나오고, ' +
+      '스프레드는 기준금리가 고정된 구간에서 상대 시리즈의 금리 움직임을 그대로 따라갑니다. 해석에 주의하십시오.'
+  }
+  /* 예시 — 해외금리를 넣을 때 (데이터에 컬럼이 없으면 이 줄은 조용히 무시된다)
+  , { key: 'UST10Y', label: '미국채', group: '해외금리', col: '미국채_10년', maturity: 120,
+      full: 'US Treasury 10Y', note: '해외금리는 한국 영업일 기준으로 정렬되어 있어 휴일 차이로 결측이 생길 수 있습니다.' }
+  */
+];
+
+/* rates.json 에 extra[] 가 있으면 COL 에 디코드해 올린다 (없어도 무해) */
+(function () {
+  var ex = DATA.extra || [];
+  for (var i = 0; i < ex.length; i++) {
+    var x = ex[i];
+    if (!x || !x.c || COL[x.c]) continue;
+    try { COL[x.c] = decodeSeries(x.d, N, x.fi, x.li); } catch (e) { }
+  }
+})();
+
+/* 레지스트리 → TYPES 와 같은 모양의 의사(擬似) 채권종류 */
+var REG_TYPES = [], REG_GROUPS = [], REG_NOTE = {};
+(function () {
+  var byLabel = {}, gseen = {};
+  EXTRA_SERIES.forEach(function (e) {
+    var arr = COL[e.col];
+    if (!arr) return;                                   // 데이터에 컬럼이 없으면 건너뛴다
+    var fi = -1, li = -1, cnt = 0;
+    for (var i = 0; i < N; i++) if (!isNaN(arr[i])) { if (fi < 0) fi = i; li = i; cnt++; }
+    if (fi < 0) return;                                 // 전부 결측이면 건너뛴다
+    var t = byLabel[e.label];
+    if (!t) {
+      t = byLabel[e.label] = { name: e.label, full: e.full || e.col, g: e.group || '기타', mats: [], reg: true, noMat: true };
+      REG_TYPES.push(t);
+      if (!gseen[t.g]) { gseen[t.g] = 1; REG_GROUPS.push(t.g); }
+    }
+    var mm = (e.maturity == null) ? 0 : +e.maturity;
+    t.mats.push({ label: (mm ? matLabel(mm) : '해당없음'), months: mm, col: e.col, n: cnt, fi: fi, li: li });
+    if (mm) t.noMat = false;
+    if (e.note) REG_NOTE[e.col] = e.note;
+  });
+  REG_TYPES.forEach(function (t) { t.mats.sort(function (a, b) { return a.months - b.months; }); });
+})();
+function regTypeByName(n) { for (var i = 0; i < REG_TYPES.length; i++) if (REG_TYPES[i].name === n) return REG_TYPES[i]; return null; }
+/** 레지스트리 시리즈인가 */
+function isRegType(n) { return !!regTypeByName(n); }
 
 /* 자주 쓰는 채권종류 — 드롭다운 최상단 고정 */
 var FAV_TYPES = ['국고채권', '통안증권', '특수채AAA', '은행채AAA', '회사채AAA', '회사채AA0', '회사채AA-', '회사채A0', '회사채BBB0', 'MBS(주금공)', '커버드본드AAA'];
@@ -946,6 +1070,7 @@ function recentTypes() {
 }
 function pushRecent(name) {
   if (!name) return;
+  if (isRegType(name)) return;   // 레지스트리 시리즈는 '최근 사용'에 넣지 않는다(허용된 select 에만 노출)
   var a = recentTypes().filter(function (x) { return x !== name; });
   a.unshift(name); a = a.slice(0, 6);
   window.__recent = a;
@@ -1251,6 +1376,7 @@ var LEVEL_MATS = [12, 18, 24, 36, 48, 60, 84, 120, 180, 240, 360];
   setTable('box-level', 'tbl-level', '', _h1, body);
 })();
 function matLabel(m) {
+  if (!m) return '해당없음';   // 만기 축이 없는 레지스트리 시리즈 (months = 0)
   return m % 12 === 0 ? (m / 12) + '년' : (m < 12 ? m + '월' : Math.floor(m / 12) + '년' + (m % 12) + '월');
 }
 
@@ -1363,9 +1489,11 @@ function typeMatches(t, q) {
   }
   return true;
 }
-/** 채권종류 select 채우기 — 대분류 optgroup + 즐겨찾기/최근 상단 고정 + 검색 필터 q */
+/** 채권종류 select 채우기 — 대분류 optgroup + 즐겨찾기/최근 상단 고정 + 검색 필터 q
+ *  select 에 data-reg="1" 이 있으면 시리즈 레지스트리(기준지표·해외금리 …)도 최상단에 붙인다. */
 function fillTypes(sel, def, q) {
   if (!sel) return 0;
+  var allowReg = !!(sel.getAttribute && sel.getAttribute('data-reg') === '1');
   while (sel.firstChild) sel.removeChild(sel.firstChild);
   var list = TYPES.filter(function (t) { return typeMatches(t, q); });
   var n = 0;
@@ -1375,17 +1503,20 @@ function fillTypes(sel, def, q) {
     arr.forEach(function (t) {
       var o = document.createElement('option');
       o.value = t.name;
-      o.text = t.name + '  (' + t.mats.length + '만기)';
+      o.text = t.name + (t.reg && t.noMat ? '' : '  (' + t.mats.length + '만기)');
       o.title = t.full;
       og.appendChild(o); n++;
     });
     sel.appendChild(og);
   }
+  if (allowReg) REG_GROUPS.forEach(function (g) {
+    grp(g, REG_TYPES.filter(function (t) { return t.g === g && typeMatches(t, q); }));
+  });
   var rc = recentTypes().map(function (nm) { return typeByName(nm); })
-    .filter(function (t) { return t && typeMatches(t, q); });
+    .filter(function (t) { return t && !t.reg && typeMatches(t, q); });
   grp('↩ 최근 사용', rc);
   var favs = FAV_TYPES.map(function (nm) { return typeByName(nm); })
-    .filter(function (t) { return t && typeMatches(t, q); });
+    .filter(function (t) { return t && !t.reg && typeMatches(t, q); });
   grp('★ 자주 쓰는 종류', favs);
   GROUPS.forEach(function (g) {
     grp(g, list.filter(function (t) { return t.g === g; }));
@@ -1447,6 +1578,28 @@ function fillMats(sel, typeName, def) {
   var have = t.mats.some(function (m) { return m.months === def; });
   setOptions(sel, items, have ? def : t.mats[Math.min(7, t.mats.length - 1)].months);
 }
+/** 채권종류 선택에 맞춰 만기 select 를 채운다. 만기 개념이 없는 시리즈면 '해당없음' 하나만 남기고 잠근다. */
+function syncMats(typeSel, matSel, def) {
+  if (!typeSel || !matSel) return;
+  fillMats(matSel, typeSel.value, def);
+  var t = typeByName(typeSel.value), nom = !!(t && t.noMat);
+  matSel.disabled = nom;
+  matSel.title = nom ? '이 시리즈는 만기 개념이 없습니다.' : '';
+}
+/** 시리즈 표시명 — 만기가 없는 시리즈에는 만기를 붙이지 않는다 */
+function serName(typeName, months) {
+  var t = typeByName(typeName);
+  return (t && t.noMat) ? typeName : (typeName + ' ' + matLabel(months));
+}
+/** 선택된 컬럼들 중 레지스트리 주석이 달린 것을 alert 블록으로 */
+function regNoteHTML(cols) {
+  var seen = {}, out = [];
+  for (var i = 0; i < cols.length; i++) {
+    var nt = REG_NOTE[cols[i]];
+    if (nt && !seen[nt]) { seen[nt] = 1; out.push('<div class="alert i">ℹ ' + nt + '</div>'); }
+  }
+  return out.join('');
+}
 function presets(host, list, cb) {
   host.innerHTML = '';
   list.forEach(function (p) {
@@ -1463,7 +1616,7 @@ function setRange(fromEl, toEl, unit, n) {
 }
 
 /* ---- [NEW] 좌측 내비게이션 / 뷰 전환 ---- */
-var VIEWS = ['dash', 'stress', 'var', 'curve', 'spread', 'dl'];
+var VIEWS = ['dash', 'stress', 'var', 'curve', 'spread', 'corr', 'dl'];
 function showView(v) {
   var nav = $('navbar');
   if (nav) [].forEach.call(nav.getElementsByTagName('button'), function (b) {
@@ -1523,9 +1676,10 @@ var stAvailS = null, stAvailL = null;
 /* 스프레드 확대 시나리오 — 시리즈 A/B 선택기 초기화 (기존 검색창·optgroup 방식 재사용) */
 var stSpdAvailA = null, stSpdAvailB = null;
 (function initStressSpread() {
+  $('st-sa').setAttribute('data-reg', '1'); $('st-sb').setAttribute('data-reg', '1');
   fillTypes($('st-sa'), '회사채AA-'); fillTypes($('st-sb'), '국고채권');
-  var sa = function () { fillMats($('st-sma'), $('st-sa').value, 36); };
-  var sb = function () { fillMats($('st-smb'), $('st-sb').value, 36); };
+  var sa = function () { syncMats($('st-sa'), $('st-sma'), 36); };
+  var sb = function () { syncMats($('st-sb'), $('st-smb'), 36); };
   $('st-sa').onchange = function () { pushRecent($('st-sa').value); sa(); if (stSpdAvailA) stSpdAvailA(); };
   $('st-sb').onchange = function () { pushRecent($('st-sb').value); sb(); if (stSpdAvailB) stSpdAvailB(); };
   sa(); sb();
@@ -1787,8 +1941,9 @@ function runSpreadStress() {
     }
   }
 
-  var nmA = ta + ' ' + matLabel(ma), nmB = tb + ' ' + matLabel(mb);
+  var nmA = serName(ta, ma), nmB = serName(tb, mb);
   var h = [];
+  h.push(regNoteHTML([ca, cb]));
   var reqFrom = parseD($('st-from').value);
   if (DATES[eff] > reqFrom + 3) h.push('<div class="alert w">⚠ 요청 시작일 <b>' + fmtD(reqFrom) + '</b> 대비 실제 유효 시작일은 <b>' + fmtD(DATES[eff]) + '</b>입니다 (A·B 모두 값이 존재하는 첫 영업일). 실효 탐색 범위가 요청보다 짧습니다.</div>');
   if (exReg) h.push('<div class="alert w">⚠ 2023-01-09 산출기준 변경 경계를 걸치는 윈도우 <b>' + exReg.toLocaleString() + '건</b>을 제외했습니다 (평가 대상 ' + evalN.toLocaleString() + '건 중). 스프레드는 두 시리즈의 차라서 경계 점프가 상당 부분 상쇄되지만 완전한 상쇄는 아니므로 기존 스트레스테스트와 동일하게 제외를 기본으로 둡니다. 고급 설정에서 "무시"로 바꿀 수 있습니다.</div>');
@@ -1900,11 +2055,13 @@ function renderSpreadStressDetail(i) {
   h.push('<p class="hint" style="margin:-6px 0 14px">분해 — <b>' + esc(at.txt) + '</b>' + (at.sub ? ' · ' + esc(at.sub) : '') +
     '. Δ스프레드 ' + f1(c.d) + 'bp = ΔA ' + f1(c.dA) + 'bp − ΔB ' + f1(c.dB) + 'bp.</p>');
 
-  /* 4) 같은 구간 · 신용등급 사다리 비교 */
-  var baseT = '국고채권', baseC = colOf(baseT, S.ma);
+  /* 4) 같은 구간 · 신용등급 사다리 비교
+        A(또는 B)가 만기 없는 레지스트리 시리즈(기준금리 등)면 반대쪽 leg 의 만기를 쓴다. */
+  var ladM = S.ma || S.mb || 0;
+  var baseT = '국고채권', baseC = ladM ? colOf(baseT, ladM) : null;
   var lad = [], bars = [];
   GRADE_LADDER.forEach(function (g) {
-    var gc = colOf(g, S.ma);
+    var gc = ladM ? colOf(g, ladM) : null;
     var row = { g: g, col: gc, s0: NaN, s1: NaN, d: NaN, dA: NaN, n: 0, miss: !gc };
     if (gc && baseC) {
       var G = COL[gc], BB = COL[baseC];
@@ -1919,8 +2076,8 @@ function renderSpreadStressDetail(i) {
   });
   var dBase = (baseC && !isNaN(COL[baseC][c.b]) && !isNaN(COL[baseC][c.t])) ? (COL[baseC][c.t] - COL[baseC][c.b]) / 10 : NaN;
 
-  h.push('<div class="panel" style="margin-top:16px"><h3>같은 구간 · 신용등급 사다리 — 각 등급 ' + esc(matLabel(S.ma)) + ' − 국고채권 ' + esc(matLabel(S.ma)) + ' 의 Δ스프레드 (bp)</h3>');
-  if (!baseC) h.push('<div class="bd"><div class="alert e">국고채권 ' + esc(matLabel(S.ma)) + ' 컬럼이 없어 등급 사다리를 계산할 수 없습니다.</div></div>');
+  h.push('<div class="panel" style="margin-top:16px"><h3>같은 구간 · 신용등급 사다리 — 각 등급 ' + esc(matLabel(ladM)) + ' − 국고채권 ' + esc(matLabel(ladM)) + ' 의 Δ스프레드 (bp)</h3>');
+  if (!baseC) h.push('<div class="bd"><div class="alert e">' + (ladM ? '국고채권 ' + esc(matLabel(ladM)) + ' 컬럼이 없어' : 'A·B 모두 만기 개념이 없는 시리즈여서') + ' 등급 사다리를 계산할 수 없습니다.</div></div>');
   else {
     h.push('<div class="bd chartbox">' + svgBars(bars, { w: wpx, h: 200 }) + '</div>');
     h.push('<div class="bd chartbox"><table><thead><tr><th class="l" style="width:140px">등급</th>' +
@@ -1931,7 +2088,7 @@ function renderSpreadStressDetail(i) {
       '<tr><td class="l">Δ등급금리 (bp)</td>' + lad.map(function (r) { return bpCell(r.dA); }).join('') + '</tr>' +
       '<tr><td class="l">관측치 (일)</td>' + lad.map(function (r) { return '<td>' + (r.n ? r.n.toLocaleString() : '—') + '</td>'; }).join('') + '</tr>' +
       '</tbody></table></div>');
-    h.push('<div class="bd"><p class="hint" style="margin:0">같은 구간 국고채권 ' + esc(matLabel(S.ma)) + ' 변동 Δ = <b>' + f1(dBase) + 'bp</b>. 위 Δ스프레드는 모두 이 국고 변동을 차감한 값이다. ' +
+    h.push('<div class="bd"><p class="hint" style="margin:0">같은 구간 국고채권 ' + esc(matLabel(ladM)) + ' 변동 Δ = <b>' + f1(dBase) + 'bp</b>. 위 Δ스프레드는 모두 이 국고 변동을 차감한 값이다. ' +
       '등급이 내려갈수록 확대폭이 커지는지(사다리 기울기)가 크레딧 스트레스 시나리오 설계의 출발점이다.</p></div>');
     var misses = lad.filter(function (r) { return isNaN(r.d); });
     if (misses.length) h.push('<div class="bd"><div class="alert i" style="margin:0">결측으로 Δ스프레드를 계산하지 않은 등급: ' + misses.map(function (r) { return esc(r.g); }).join(', ') + ' (보간하지 않음).</div></div>');
@@ -1947,7 +2104,7 @@ function renderSpreadStressDetail(i) {
     ['종료 스프레드', c.s1.toFixed(4) + ' bp = (' + f3(pct(S.ca, c.t)) + ' − ' + f3(pct(S.cb, c.t)) + ') × 100'],
     ['Δ스프레드', c.d.toFixed(4) + ' bp = ΔA ' + c.dA.toFixed(4) + ' − ΔB ' + c.dB.toFixed(4)],
     ['관측치 수', '구간 내 A·B 모두 관측 ' + nobs.toLocaleString() + '일 / 전체 ' + (c.t - c.b + 1).toLocaleString() + '영업일 (A결측 ' + nmissA + '일, B결측 ' + nmissB + '일, 보간 없음)'],
-    ['등급 사다리', GRADE_LADDER.length + '개 등급 중 양끝 모두 관측 ' + lad.filter(function (r) { return !isNaN(r.d); }).length + '개, 만기 ' + matLabel(S.ma)]
+    ['등급 사다리', GRADE_LADDER.length + '개 등급 중 양끝 모두 관측 ' + lad.filter(function (r) { return !isNaN(r.d); }).length + '개, 만기 ' + matLabel(ladM)]
   ]));
   h.push('</div>');
   $('st-spd-detail').innerHTML = h.join('');
@@ -2507,9 +2664,10 @@ function runCurve() {
    ================================================================ */
 var spAvailA = null, spAvailB = null;
 (function initSpread() {
+  $('sp-ta').setAttribute('data-reg', '1'); $('sp-tb').setAttribute('data-reg', '1');
   fillTypes($('sp-ta'), '회사채AA-'); fillTypes($('sp-tb'), '국고채권');
-  var sa = function () { fillMats($('sp-ma'), $('sp-ta').value, 36); };
-  var sb = function () { fillMats($('sp-mb'), $('sp-tb').value, 36); };
+  var sa = function () { syncMats($('sp-ta'), $('sp-ma'), 36); };
+  var sb = function () { syncMats($('sp-tb'), $('sp-mb'), 36); };
   $('sp-ta').onchange = function () { pushRecent($('sp-ta').value); sa(); if (spAvailA) spAvailA(); };
   $('sp-tb').onchange = function () { pushRecent($('sp-tb').value); sb(); if (spAvailB) spAvailB(); };
   sa(); sb();
@@ -2553,6 +2711,7 @@ function runSpread() {
     h.push('<div class="alert w">⚠ 기간이 2023-01-09 산출기준 변경일을 포함합니다. 스프레드는 두 시리즈의 <b>차</b>이므로 경계 점프가 상당 부분 상쇄되지만(699/701 조합이 같은 방향으로 점프), 완전한 상쇄는 아닙니다. 기획서 4-1-(e)에 따라 스프레드는 <b>regime=ignore</b>(연속 취급)를 기본으로 계산했습니다.</div>');
   if (miss) h.push('<div class="alert i">한쪽 결측으로 스프레드를 정의하지 않은 날 ' + miss.toLocaleString() + '일 (inner join, forward fill 금지). 차트에서 선이 끊깁니다.</div>');
 
+  h.push(regNoteHTML([ca, cb]));
   h.push('<div class="defbox"><b>계산 정의</b> — <span class="mono">S<sub>t</sub> = ( y<sub>A</sub>(t) − y<sub>B</sub>(t) ) × 100 [bp]</span>, 양쪽 모두 값이 있는 날만(inner join)<br>' +
     'percentile rank = 100 × #{S<sub>i</sub> ≤ S<sub>T</sub>} / n (분포 가정 없음) · z-score = (S<sub>T</sub> − μ) / σ (정규 가정) — 둘이 크게 다르면 분포가 비대칭이라는 신호다.</div>');
 
@@ -2564,7 +2723,7 @@ function runSpread() {
   h.push('<p class="hint" style="margin:-6px 0 14px">현재값 <b>' + cur.toFixed(1) + 'bp</b> (' + fmtD(DATES[curIdx]) + ') · 최저 ' + mn.toFixed(1) + 'bp (' + fmtD(DATES[mnIdx]) + ') · 최고 ' + mx.toFixed(1) + 'bp (' + fmtD(DATES[mxIdx]) + ') · n=' + n.toLocaleString() + '일</p>');
 
   var vl = (REGIME_IDX > i0 && REGIME_IDX <= i1) ? [{ x: REGIME_IDX, label: '2023-01-09 기준변경', color: '#8a5a20' }] : [];
-  h.push('<div class="panel"><h3>스프레드 시계열 (bp) — ' + esc(ta + ' ' + matLabel(ma)) + ' − ' + esc(tb + ' ' + matLabel(mb)) + '</h3><div class="bd chartbox">' +
+  h.push('<div class="panel"><h3>스프레드 시계열 (bp) — ' + esc(serName(ta, ma)) + ' − ' + esc(serName(tb, mb)) + '</h3><div class="bd chartbox">' +
     svgLine({
       w: cw('sp-out', 900), h: 300, series: [{ name: 'spread', pts: pts, color: '#17456b' }],
       xTicks: dateTicks(i0, i1, 9), yFmt: function (v) { return v.toFixed(0); },
@@ -2580,7 +2739,7 @@ function runSpread() {
   for (var i = i0; i <= i1; i++) { var va = pct(ca, i), vb = pct(cb, i); pa.push(isNaN(va) ? null : [i, va]); pb.push(isNaN(vb) ? null : [i, vb]); }
   h.push('<div class="panel" style="margin-top:16px"><h3>두 leg의 원 금리 (%)</h3><div class="bd chartbox">' +
     svgLine({ w: cw('sp-out', 900), h: 240, series: [{ name: 'A', pts: pa, color: '#d0021b' }, { name: 'B', pts: pb, color: '#17456b' }], xTicks: dateTicks(i0, i1, 9), vlines: vl }) +
-    '</div><div class="lgd" style="padding:0 12px"><span><i style="background:#d0021b"></i>' + esc(ta + ' ' + matLabel(ma)) + ' <b>' + f3(pct(ca, curIdx)) + '%</b></span><span><i style="background:#17456b"></i>' + esc(tb + ' ' + matLabel(mb)) + ' <b>' + f3(pct(cb, curIdx)) + '%</b></span></div></div>');
+    '</div><div class="lgd" style="padding:0 12px"><span><i style="background:#d0021b"></i>' + esc(serName(ta, ma)) + ' <b>' + f3(pct(ca, curIdx)) + '%</b></span><span><i style="background:#17456b"></i>' + esc(serName(tb, mb)) + ' <b>' + f3(pct(cb, curIdx)) + '%</b></span></div></div>');
 
   // 구간별 변동
   var HZ = [['1일', 'd', 1], ['1주', 'd', 7], ['1개월', 'm', 1], ['3개월', 'm', 3], ['6개월', 'm', 6], ['1년', 'y', 1]];
@@ -2605,6 +2764,306 @@ function runSpread() {
     ['관측치 수', 'n=' + n.toLocaleString() + '일 (한쪽 결측 ' + miss.toLocaleString() + '일 제외, 보간 없음)'],
     ['현재값 산출', cur.toFixed(4) + ' bp = (' + f3(pct(ca, curIdx)) + ' − ' + f3(pct(cb, curIdx)) + ') × 100, 기준일 ' + fmtD(DATES[curIdx])],
     ['통계', 'μ=' + mean.toFixed(3) + ', σ=' + sd.toFixed(3) + ', z=' + z.toFixed(3) + ', PR=' + pr.toFixed(2) + '% (선형보간 분위)']
+  ]));
+  out.innerHTML = h.join('');
+}
+
+
+/* ================================================================
+   도구 5 — 상관관계 분석
+   ----------------------------------------------------------------
+   · 기본은 '변동(일간 차분)' 상관. 금리는 추세가 강해 레벨 상관은
+     거의 항상 높게 나오고 두 시리즈가 같이 움직였는지를 말해주지 않는다.
+   · 피어슨. 양쪽 모두 값이 있는 날만 쓰고 그 수를 n 으로 보고한다(보간 없음).
+   · 시리즈 선택은 레지스트리(data-reg)를 켜 두어 기준금리·해외금리도 고를 수 있다.
+   ================================================================ */
+var CORR_PERIODS = [
+  ['1주일', 'd', 7], ['1개월', 'm', 1], ['1분기', 'm', 3],
+  ['반기', 'm', 6], ['1년', 'y', 1], ['전 기간', 'a', 0]
+];
+
+/** 두 컬럼의 정렬된 관측쌍. mode='diff' 면 일간 차분(bp), 'level' 이면 레벨(%) */
+function corrPairs(ca, cb, i0, i1, mode, dropRegime) {
+  var A = COL[ca], B = COL[cb], xs = [], ys = [], ix = [], k;
+  if (mode === 'level') {
+    for (k = i0; k <= i1; k++) {
+      if (isNaN(A[k]) || isNaN(B[k])) continue;
+      xs.push(A[k] / 1000); ys.push(B[k] / 1000); ix.push(k);
+    }
+  } else {
+    for (k = Math.max(i0 + 1, 1); k <= i1; k++) {
+      if (dropRegime && k === REGIME_IDX) continue;     // 2023-01-09 경계를 넘는 차분 1건
+      var x = A[k] - A[k - 1], y = B[k] - B[k - 1];
+      if (isNaN(x) || isNaN(y)) continue;
+      xs.push(x / 10); ys.push(y / 10); ix.push(k);     // bp
+    }
+  }
+  return { x: xs, y: ys, i: ix };
+}
+/** 피어슨 상관계수 + 회귀계수 */
+function pearson(xs, ys) {
+  var n = xs.length;
+  if (n < 2) return { r: NaN, n: n, beta: NaN, sdx: NaN, sdy: NaN };
+  var i, sx = 0, sy = 0;
+  for (i = 0; i < n; i++) { sx += xs[i]; sy += ys[i]; }
+  var mx = sx / n, my = sy / n, sxx = 0, syy = 0, sxy = 0, dx, dy;
+  for (i = 0; i < n; i++) { dx = xs[i] - mx; dy = ys[i] - my; sxx += dx * dx; syy += dy * dy; sxy += dx * dy; }
+  var r = (sxx > 0 && syy > 0) ? sxy / Math.sqrt(sxx * syy) : NaN;
+  return {
+    r: r, n: n, beta: sxx > 0 ? sxy / sxx : NaN, alpha: 0, mx: mx, my: my,
+    sdx: Math.sqrt(sxx / (n - 1)), sdy: Math.sqrt(syy / (n - 1))
+  };
+}
+function fR(r) { return isNaN(r) ? '—' : (r >= 0 ? '+' : '') + r.toFixed(3); }
+/** n 에 따른 신뢰도 등급 */
+function corrGrade(n) {
+  if (n < 10) return { k: 'bad', t: '참고용 불가 (n&lt;10)' };
+  if (n < 20) return { k: 'warn', t: '표본 부족 — 해석 주의 (n&lt;20)' };
+  if (n < 60) return { k: 'thin', t: '표본 적음' };
+  return { k: 'ok', t: '' };
+}
+
+/** 산점도 */
+function svgScatter(xs, ys, opts) {
+  opts = opts || {};
+  var w = opts.w || 900, h = opts.h || 330, pl = 62, pr = 16, pt = 14, pb = 40;
+  var iw = w - pl - pr, ih = h - pt - pb, i;
+  if (!xs.length) return '<div class="alert e">표본이 없습니다.</div>';
+  var x0 = xs[0], x1 = xs[0], y0 = ys[0], y1 = ys[0];
+  for (i = 1; i < xs.length; i++) {
+    if (xs[i] < x0) x0 = xs[i]; if (xs[i] > x1) x1 = xs[i];
+    if (ys[i] < y0) y0 = ys[i]; if (ys[i] > y1) y1 = ys[i];
+  }
+  if (x0 === x1) { x0 -= 0.5; x1 += 0.5; }
+  if (y0 === y1) { y0 -= 0.5; y1 += 0.5; }
+  var px = (x1 - x0) * 0.04, py = (y1 - y0) * 0.04;
+  x0 -= px; x1 += px; y0 -= py; y1 += py;
+  var X = function (v) { return pl + (v - x0) / (x1 - x0) * iw; };
+  var Y = function (v) { return pt + ih - (v - y0) / (y1 - y0) * ih; };
+  var fmt = opts.fmt || function (v) { return v.toFixed(1); };
+  var o = ['<svg width="100%" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">'];
+  o.push('<rect x="' + pl + '" y="' + pt + '" width="' + iw + '" height="' + ih + '" fill="#fff" stroke="#dbe2ea"/>');
+  niceTicks(y0, y1, 5).forEach(function (v) {
+    var y = Y(v); if (y < pt - 0.5 || y > pt + ih + 0.5) return;
+    o.push('<line x1="' + pl + '" y1="' + y.toFixed(1) + '" x2="' + (pl + iw) + '" y2="' + y.toFixed(1) + '" stroke="#eef1f5"/>');
+    o.push('<text x="' + (pl - 6) + '" y="' + (y + 3.5).toFixed(1) + '" text-anchor="end" font-size="10.5" fill="#7d8794">' + fmt(v) + '</text>');
+  });
+  niceTicks(x0, x1, 6).forEach(function (v) {
+    var x = X(v); if (x < pl - 0.5 || x > pl + iw + 0.5) return;
+    o.push('<line x1="' + x.toFixed(1) + '" y1="' + pt + '" x2="' + x.toFixed(1) + '" y2="' + (pt + ih) + '" stroke="#eef1f5"/>');
+    o.push('<text x="' + x.toFixed(1) + '" y="' + (pt + ih + 15) + '" text-anchor="middle" font-size="10.5" fill="#7d8794">' + fmt(v) + '</text>');
+  });
+  if (x0 < 0 && x1 > 0) o.push('<line x1="' + X(0).toFixed(1) + '" y1="' + pt + '" x2="' + X(0).toFixed(1) + '" y2="' + (pt + ih) + '" stroke="#c6cfda"/>');
+  if (y0 < 0 && y1 > 0) o.push('<line x1="' + pl + '" y1="' + Y(0).toFixed(1) + '" x2="' + (pl + iw) + '" y2="' + Y(0).toFixed(1) + '" stroke="#c6cfda"/>');
+  o.push('<g fill="#17456b" fill-opacity="0.32">');
+  for (i = 0; i < xs.length; i++) o.push('<circle cx="' + X(xs[i]).toFixed(1) + '" cy="' + Y(ys[i]).toFixed(1) + '" r="1.7"/>');
+  o.push('</g>');
+  if (opts.fit && isFinite(opts.fit.b)) {
+    var fy = function (v) { return opts.fit.a + opts.fit.b * v; };
+    var ax = x0, bx = x1, ay = fy(ax), by = fy(bx);
+    // 축 범위 밖으로 나가면 잘라 그린다
+    var pts = [[ax, ay], [bx, by]].map(function (p) { return [Math.max(x0, Math.min(x1, p[0])), Math.max(y0, Math.min(y1, p[1]))]; });
+    o.push('<line x1="' + X(pts[0][0]).toFixed(1) + '" y1="' + Y(fy(pts[0][0])).toFixed(1) +
+      '" x2="' + X(pts[1][0]).toFixed(1) + '" y2="' + Y(fy(pts[1][0])).toFixed(1) +
+      '" stroke="#d0021b" stroke-width="1.6" stroke-dasharray="5 3"/>');
+  }
+  o.push('<text x="' + (pl + iw / 2) + '" y="' + (h - 4) + '" text-anchor="middle" font-size="11" fill="#4a5663">' + esc(opts.xLabel || '') + '</text>');
+  o.push('<text x="14" y="' + (pt + ih / 2) + '" text-anchor="middle" font-size="11" fill="#4a5663" transform="rotate(-90 14 ' + (pt + ih / 2) + ')">' + esc(opts.yLabel || '') + '</text>');
+  o.push('</svg>');
+  return o.join('');
+}
+
+var coAvailA = null, coAvailB = null;
+(function initCorr() {
+  $('co-ta').setAttribute('data-reg', '1'); $('co-tb').setAttribute('data-reg', '1');
+  fillTypes($('co-ta'), '국고채권'); fillTypes($('co-tb'), '국고채권');
+  var sa = function () { syncMats($('co-ta'), $('co-ma'), 36); };
+  var sb = function () { syncMats($('co-tb'), $('co-mb'), 120); };
+  $('co-ta').onchange = function () { pushRecent($('co-ta').value); sa(); if (coAvailA) coAvailA(); };
+  $('co-tb').onchange = function () { pushRecent($('co-tb').value); sb(); if (coAvailB) coAvailB(); };
+  sa(); sb();
+  attachTypeFilter($('co-ta'), function () { sa(); if (coAvailA) coAvailA(); });
+  attachTypeFilter($('co-tb'), function () { sb(); if (coAvailB) coAvailB(); });
+  presets($('co-win-p'), [['3M', 61], ['6M', 122], ['1Y', 244], ['2Y', 488], ['3Y', 732]], function (p) { $('co-win').value = p[1]; });
+  $('co-asof').value = fmtD(DATES[LAST]);
+  coAvailA = bindAvail($('co-ta'), $('co-ma'), null);
+  coAvailB = bindAvail($('co-tb'), $('co-mb'), null);
+  $('co-run').onclick = runCorr;
+})();
+
+function runCorr() {
+  var ta = $('co-ta').value, ma = +$('co-ma').value;
+  var tb = $('co-tb').value, mb = +$('co-mb').value;
+  var ca = colOf(ta, ma), cb = colOf(tb, mb), out = $('co-out');
+  var mode = (document.querySelector('input[name=co-mode]:checked') || { value: 'diff' }).value;
+  var regime = $('co-reg').value, dropReg = (regime === 'exclude');
+  var W = Math.max(20, Math.round(+$('co-win').value || 244));
+  if (!ca || !cb) { out.innerHTML = '<div class="alert e">선택한 조합의 컬럼이 없습니다.</div>'; return; }
+  if (ca === cb) { out.innerHTML = '<div class="alert e">시리즈 A와 B가 동일합니다. 상관계수는 정의상 항상 +1.000 입니다.</div>'; return; }
+
+  var asof = parseD($('co-asof').value || fmtD(DATES[LAST]));
+  var iEnd = idxLE(asof);
+  if (iEnd < 1) { out.innerHTML = '<div class="alert e">기준일이 올바르지 않습니다.</div>'; return; }
+
+  var A = COL[ca], B = COL[cb];
+  var eff = -1, effL = -1, k;
+  for (k = 0; k <= iEnd; k++) if (!isNaN(A[k]) && !isNaN(B[k])) { if (eff < 0) eff = k; effL = k; }
+  if (eff < 0) { out.innerHTML = '<div class="alert e">기준일까지 양쪽 모두 값이 있는 날이 없습니다.</div>'; return; }
+
+  var nmA = serName(ta, ma), nmB = serName(tb, mb);
+  var isLvl = (mode === 'level');
+  var unit = isLvl ? '%' : 'bp';
+  var h = [];
+
+  h.push(regNoteHTML([ca, cb]));
+
+  /* --- 방법론 --- */
+  h.push('<div class="defbox"><b>계산 정의</b> — 피어슨 상관계수 ' +
+    '<span class="mono">r = Σ(xᵢ−x̄)(yᵢ−ȳ) / √( Σ(xᵢ−x̄)² · Σ(yᵢ−ȳ)² )</span>, 양쪽 모두 값이 있는 날만 사용(inner join, 보간·전방채움 없음)<br>' +
+    (isLvl
+      ? '대상 = <b>수준(레벨, %)</b>. <span class="etxt">⚠ 금리는 추세가 강해 레벨 상관은 거의 항상 높게 나오고, 두 시리즈가 같이 오르내렸는지를 말해주지 않습니다 — 추세 때문에 <b>과대평가될 수 있습니다</b>.</span> 같이 움직인 정도는 <b>변동(차분)</b> 으로 보십시오.'
+      : '대상 = <b>변동(일간 차분, bp)</b> — <span class="mono">xᵢ = ( y<sub>A</sub>(tᵢ) − y<sub>A</sub>(tᵢ₋₁) ) × 100</span>. ' +
+        '금리는 추세가 강해 레벨 상관은 거의 항상 높게 나오고 의미가 없으므로, 두 시리즈가 <b>같이 오르내린 정도</b>는 일간 변동 간 상관으로 봅니다(기본값).') + '<br>' +
+    'A = <b>' + esc(nmA) + '</b> · B = <b>' + esc(nmB) + '</b> · 기준일 ' + fmtD(DATES[iEnd]) + '<br>' +
+    '2023-01-09 산출기준 변경 : ' + (dropReg
+      ? (isLvl ? '<b>제외</b> — 레벨 모드에서는 경계를 넘는 구간을 <b>신기준(2023-01-09 이후)만</b> 쓰도록 잘라 계산합니다(표의 실제 시작일 참조).'
+               : '<b>제외</b> — 경계를 넘는 차분 1건(2023-01-09)을 표본에서 뺍니다.')
+      : '<b>무시</b> — 경계 점프를 실제 변동으로 취급합니다.') +
+    '</div>');
+
+  /* --- 1) 기간별 표 --- */
+  var rows = [], scatterSrc = null;
+  CORR_PERIODS.forEach(function (P) {
+    var i0;
+    if (P[1] === 'a') i0 = eff;
+    else i0 = Math.max(eff, idxGE(shiftCal(DATES[iEnd], P[1], P[2])));
+    if (i0 < 0) i0 = eff;
+    if (isLvl && dropReg && REGIME_IDX > 0 && i0 < REGIME_IDX && iEnd >= REGIME_IDX) i0 = REGIME_IDX;
+    var pr = corrPairs(ca, cb, i0, iEnd, mode, dropReg);
+    var st = pearson(pr.x, pr.y);
+    var row = { k: P[0], i0: i0, st: st, first: pr.i.length ? pr.i[0] : -1, last: pr.i.length ? pr.i[pr.i.length - 1] : -1, g: corrGrade(st.n) };
+    rows.push(row);
+    if (P[1] === 'a') scatterSrc = { pr: pr, st: st, i0: i0 };
+  });
+
+  var best = rows[rows.length - 1].st;
+  h.push('<div class="kpis">' +
+    kpi('전 기간 상관계수 r', fR(best.r), '', true) +
+    kpi('표본 n', best.n.toLocaleString(), isLvl ? '일' : '차분') +
+    kpi('결정계수 R²', isNaN(best.r) ? '—' : (best.r * best.r).toFixed(3), '') +
+    kpi('회귀계수 β (B→A)', isNaN(best.beta) ? '—' : best.beta.toFixed(3), '') +
+    kpi('σ A', isNaN(best.sdx) ? '—' : best.sdx.toFixed(2), unit) +
+    kpi('σ B', isNaN(best.sdy) ? '—' : best.sdy.toFixed(2), unit) + '</div>');
+
+  var cutLvl = rows.filter(function (r) { return r.i0 === REGIME_IDX && r.k === '전 기간'; }).length > 0 && isLvl && dropReg;
+  if (cutLvl) h.push('<div class="alert w">⚠ 레벨 모드 + 기준변경 <b>제외</b> — 2023-01-09 경계를 넘는 기간은 <b>신기준 구간(2023-01-09 이후)만</b> 잘라 계산했습니다. 표의 실제 시작일을 확인하십시오. 전 구간을 그대로 쓰려면 "무시"로 바꾸십시오.</div>');
+  var anyBad = rows.some(function (r) { return r.g.k === 'bad'; });
+  var anyWarn = rows.some(function (r) { return r.g.k === 'warn'; });
+  if (anyBad) h.push('<div class="alert e">⚠ 표본이 10개 미만인 기간이 있습니다. 예컨대 <b>1주일</b>은 영업일이 5일 안팎이라 차분이 4~5개뿐이고, 이 경우 상관계수는 사실상 무의미합니다 — 값은 표시하되 <b>참고용으로도 쓰지 마십시오</b>.</div>');
+  else if (anyWarn) h.push('<div class="alert w">⚠ 표본이 20개 미만인 기간이 있습니다. 상관계수가 우연에 크게 흔들립니다.</div>');
+
+  h.push('<div class="panel"><h3>기간별 상관계수 — ' + esc(nmA) + ' vs ' + esc(nmB) + ' (' + (isLvl ? '수준' : '일간 변동') + ')</h3><div class="bd chartbox">' +
+    '<table><thead><tr><th class="l" style="width:92px">기간</th><th style="width:110px">상관계수 r</th><th style="width:78px">R²</th>' +
+    '<th style="width:96px">관측치 n</th><th>실제 시작일</th><th>실제 종료일</th><th class="l" style="width:210px">비고</th></tr></thead><tbody>');
+  rows.forEach(function (r) {
+    var st = r.st, badge = '';
+    if (r.g.k === 'bad') badge = '<span class="etxt"><b>' + r.g.t + '</b></span>';
+    else if (r.g.k === 'warn') badge = '<span class="wtxt">' + r.g.t + '</span>';
+    else if (r.g.k === 'thin') badge = '<span style="color:#7d8794">' + r.g.t + '</span>';
+    if (st.n >= 2 && isNaN(st.r)) badge = '<span class="wtxt">한쪽 ' + (isLvl ? '수준' : '변동') + '이 전 구간 동일(분산 0) — 상관 정의 불가</span>' + (badge ? ' · ' + badge : '');
+    h.push('<tr><td class="l"><b>' + esc(r.k) + '</b></td>' +
+      '<td class="' + (r.g.k === 'bad' ? 'na' : cls(st.r)) + '"><b>' + fR(st.r) + '</b></td>' +
+      '<td>' + (isNaN(st.r) ? '—' : (st.r * st.r).toFixed(3)) + '</td>' +
+      '<td' + (st.n < 20 ? ' class="dn"' : '') + '><b>' + st.n.toLocaleString() + '</b></td>' +
+      '<td class="mono">' + (r.first >= 0 ? fmtD(DATES[r.first]) : '—') + '</td>' +
+      '<td class="mono">' + (r.last >= 0 ? fmtD(DATES[r.last]) : '—') + '</td>' +
+      '<td class="l">' + badge + '</td></tr>');
+  });
+  h.push('</tbody></table></div>');
+  h.push('<div class="bd"><p class="hint" style="margin:0">실제 시작일·종료일은 <b>표본에 실제로 쓰인 첫·마지막 날</b>입니다' +
+    (isLvl ? '' : ' (차분이므로 그 전 영업일의 값도 함께 사용됩니다)') +
+    '. n 은 양쪽 모두 값이 있어 실제로 계산에 들어간 ' + (isLvl ? '일수' : '차분 개수') + '입니다.</p></div></div>');
+
+  /* --- 2) 롤링 상관 --- */
+  var full = scatterSrc.pr, fx = full.x, fy = full.y, fi = full.i;
+  var roll = [], rollStat = null;
+  if (fx.length >= W) {
+    var sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0, j;
+    for (j = 0; j < fx.length; j++) {
+      sx += fx[j]; sy += fy[j]; sxx += fx[j] * fx[j]; syy += fy[j] * fy[j]; sxy += fx[j] * fy[j];
+      if (j >= W) {
+        var d0 = j - W;
+        sx -= fx[d0]; sy -= fy[d0]; sxx -= fx[d0] * fx[d0]; syy -= fy[d0] * fy[d0]; sxy -= fx[d0] * fy[d0];
+      }
+      if (j >= W - 1) {
+        var cvv = sxy - sx * sy / W, vxx = sxx - sx * sx / W, vyy = syy - sy * sy / W;
+        var rr = (vxx > 0 && vyy > 0) ? cvv / Math.sqrt(vxx * vyy) : NaN;
+        roll.push([fi[j], rr]);
+      }
+    }
+    var vals = roll.map(function (p) { return p[1]; }).filter(isFinite);
+    if (vals.length) {
+      var mnv = vals[0], mxv = vals[0], sm = 0, mnI = 0, mxI = 0;
+      roll.forEach(function (p, q) {
+        if (!isFinite(p[1])) return;
+        if (p[1] < mnv) { mnv = p[1]; mnI = q; }
+        if (p[1] > mxv) { mxv = p[1]; mxI = q; }
+        sm += p[1];
+      });
+      rollStat = { cur: roll[roll.length - 1][1], curD: roll[roll.length - 1][0], mn: mnv, mnD: roll[mnI][0], mx: mxv, mxD: roll[mxI][0], avg: sm / vals.length, n: vals.length };
+    }
+  }
+  h.push('<div class="panel" style="margin-top:16px"><h3>롤링 상관계수 — 윈도우 ' + W + (isLvl ? '영업일(레벨)' : '개 차분') + '</h3>');
+  if (!rollStat) {
+    h.push('<div class="bd"><div class="alert i">표본(' + fx.length.toLocaleString() + ')이 롤링 윈도우(' + W + ')보다 적어 롤링 상관을 계산하지 않았습니다. 윈도우를 줄여 보십시오.</div></div>');
+  } else {
+    h.push('<div class="bd chartbox">' + svgLine({
+      w: cw('co-out', 900), h: 260, series: [{ name: 'rolling r', pts: roll, color: '#17456b', wd: 1.6 }],
+      xTicks: dateTicks(roll[0][0], roll[roll.length - 1][0], 9), yFmt: function (v) { return v.toFixed(2); },
+      yMin: -1, yMax: 1,
+      hlines: [{ y: 0, color: '#8a939e', dash: '3 3', label: '0' },
+               { y: rollStat.avg, color: '#8a5a20', label: '평균 ' + rollStat.avg.toFixed(2) }],
+      vlines: (REGIME_IDX > roll[0][0] && REGIME_IDX <= roll[roll.length - 1][0]) ? [{ x: REGIME_IDX, label: '2023-01-09 기준변경', color: '#8a5a20' }] : []
+    }) + '</div>');
+    h.push('<div class="bd chartbox"><table><thead><tr><th class="l" style="width:190px">롤링 상관 요약</th><th>현재</th><th>기간 평균</th><th>최저</th><th>최저 시점</th><th>최고</th><th>최고 시점</th><th>구간 수</th></tr></thead><tbody>' +
+      '<tr><td class="l">r (' + W + (isLvl ? '영업일' : '차분') + ' 윈도우)</td>' +
+      '<td class="' + cls(rollStat.cur) + '"><b>' + fR(rollStat.cur) + '</b></td>' +
+      '<td>' + fR(rollStat.avg) + '</td>' +
+      '<td class="' + cls(rollStat.mn) + '">' + fR(rollStat.mn) + '</td><td class="mono">' + fmtD(DATES[rollStat.mnD]) + '</td>' +
+      '<td class="' + cls(rollStat.mx) + '">' + fR(rollStat.mx) + '</td><td class="mono">' + fmtD(DATES[rollStat.mxD]) + '</td>' +
+      '<td>' + rollStat.n.toLocaleString() + '</td></tr></tbody></table></div>');
+    h.push('<div class="bd"><p class="hint" style="margin:0">각 점은 <b>그 날로 끝나는 ' + W + '개 표본</b>의 상관계수입니다. 금리 국면이 바뀌면 상관이 무너지는 구간이 눈에 보입니다 — 상관을 상수로 가정한 헤지·분산 효과는 그런 구간에서 깨집니다.</p></div>');
+  }
+  h.push('</div>');
+
+  /* --- 3) 산점도 --- */
+  h.push('<div class="panel" style="margin-top:16px"><h3>산점도 — 전 기간 ' + (isLvl ? '수준 (%)' : '일간 변동 (bp)') + ' · n=' + scatterSrc.st.n.toLocaleString() + '</h3><div class="bd chartbox">' +
+    svgScatter(fx, fy, {
+      w: cw('co-out', 900), h: 340,
+      xLabel: 'A · ' + nmA + ' (' + unit + ')', yLabel: 'B · ' + nmB + ' (' + unit + ')',
+      fmt: function (v) { return isLvl ? v.toFixed(1) : v.toFixed(0); },
+      fit: isFinite(scatterSrc.st.beta) ? { b: scatterSrc.st.beta, a: scatterSrc.st.my - scatterSrc.st.beta * scatterSrc.st.mx } : null
+    }) + '</div>');
+  h.push('<div class="bd"><p class="hint" style="margin:0">붉은 점선은 최소제곱 회귀선 (기울기 β = ' +
+    (isNaN(scatterSrc.st.beta) ? '—' : scatterSrc.st.beta.toFixed(3)) + '). 점들이 선 주위에 얼마나 몰려 있는지가 r 의 크기입니다. ' +
+    '상관은 <b>같이 움직인 정도</b>일 뿐 인과가 아니며, 한쪽이 다른 쪽을 따라간 것인지는 말해주지 않습니다.</p></div></div>');
+
+  if (!isLvl) h.push('<div class="alert i">국내 크레딧 수익률(회사채·은행채·특수채 등)은 <b>국고 커브에 등급별 스프레드를 더하는 방식</b>으로 산출되는 성격이 강해, 국고와의 일간 변동 상관이 구조적으로 매우 높게 나옵니다. 크레딧 고유의 움직임을 보려면 <b>스프레드 분석</b> 탭에서 스프레드 자체의 변화를 보십시오.</div>');
+
+  /* --- 4) 근거 --- */
+  h.push(evid([
+    ['시리즈 A 컬럼', esc(ca)], ['시리즈 B 컬럼', esc(cb)],
+    ['계산 대상', isLvl ? '수준(레벨, %) — 추세로 과대평가될 수 있음' : '변동(일간 차분, bp) — 기본값'],
+    ['상관계수', '피어슨 적률상관계수 (Pearson product-moment). 순위상관(Spearman)·시차상관은 쓰지 않았다.'],
+    ['결측 처리', '양쪽 모두 값이 있는 날만 사용(inner join). 보간·전방채움 없음.'],
+    ['기준일', fmtD(DATES[iEnd]) + ' (요청 ' + fmtD(asof) + ')'],
+    ['양쪽 관측 구간', fmtD(DATES[eff]) + ' ~ ' + fmtD(DATES[effL])],
+    ['전 기간 n', scatterSrc.st.n.toLocaleString() + (isLvl ? '일' : '개 차분')],
+    ['기간별 n', rows.map(function (r) { return r.k + '=' + r.st.n; }).join(' · ')],
+    ['전 기간 통계', 'r=' + (isNaN(best.r) ? '—' : best.r.toFixed(6)) + ', R²=' + (isNaN(best.r) ? '—' : (best.r * best.r).toFixed(6)) +
+      ', β(A on B)=' + (isNaN(best.beta) ? '—' : best.beta.toFixed(6)) + ', σA=' + (isNaN(best.sdx) ? '—' : best.sdx.toFixed(4)) + unit + ', σB=' + (isNaN(best.sdy) ? '—' : best.sdy.toFixed(4)) + unit],
+    ['롤링', rollStat ? (W + (isLvl ? '영업일' : '개 차분') + ' 윈도우 · ' + rollStat.n.toLocaleString() + '구간 · 현재 ' + fR(rollStat.cur) + ' · 최저 ' + fR(rollStat.mn) + '(' + fmtD(DATES[rollStat.mnD]) + ') · 최고 ' + fR(rollStat.mx) + '(' + fmtD(DATES[rollStat.mxD]) + ')') : '표본 부족으로 계산하지 않음'],
+    ['2023-01-09 기준변경', regime === 'exclude' ? (isLvl ? '제외 — 경계를 넘는 기간은 신기준 구간만 사용' : '제외 — 경계 교차 차분 1건 제외') : '무시(연속 취급)']
   ]));
   out.innerHTML = h.join('');
 }
@@ -2991,8 +3450,8 @@ guard('다운로드·스트레스', function () {
     var v = sc ? sc.value : 'all';
     if (v === 'spread') {
       return ['도구 : 스트레스테스트 — 스프레드 확대',
-      '시리즈 A(크레딧) : ' + $('st-sa').value + ' ' + matLabel(+$('st-sma').value),
-      '시리즈 B(기준) : ' + $('st-sb').value + ' ' + matLabel(+$('st-smb').value),
+      '시리즈 A(크레딧) : ' + serName($('st-sa').value, +$('st-sma').value),
+      '시리즈 B(기준) : ' + serName($('st-sb').value, +$('st-smb').value),
       '방향 : ' + $('st-sdir').value + ' · 윈도우 ' + $('st-win').value + '영업일 · 상위 ' + $('st-topn').value + '건'];
     }
     if (v === 'pivot') {
@@ -3038,13 +3497,29 @@ guard('다운로드·커브', function () {
 });
 guard('다운로드·스프레드', function () {
   DL.bindPanel('sp-out', 'sp-dl', '스프레드 분석 · 결과', function () {
-    return '스프레드분석_' + DL.safe($('sp-ta').value) + DL.safe(matLabel(+$('sp-ma').value)) +
-      '_' + DL.safe($('sp-tb').value) + DL.safe(matLabel(+$('sp-mb').value)) + '_' + DL.today() + '.csv';
+    return '스프레드분석_' + DL.safe(serName($('sp-ta').value, +$('sp-ma').value)) +
+      '_' + DL.safe(serName($('sp-tb').value, +$('sp-mb').value)) + '_' + DL.today() + '.csv';
   }, function () {
     return ['도구 : 스프레드 분석',
-    '시리즈 A : ' + $('sp-ta').value + ' ' + matLabel(+$('sp-ma').value),
-    '시리즈 B : ' + $('sp-tb').value + ' ' + matLabel(+$('sp-mb').value),
+    '시리즈 A : ' + serName($('sp-ta').value, +$('sp-ma').value),
+    '시리즈 B : ' + serName($('sp-tb').value, +$('sp-mb').value),
     '기간 : ' + $('sp-from').value + ' ~ ' + $('sp-to').value];
+  });
+});
+
+guard('다운로드·상관관계', function () {
+  DL.bindPanel('co-out', 'co-dl', '상관관계 분석 · 결과', function () {
+    return '상관관계_' + DL.safe(serName($('co-ta').value, +$('co-ma').value)) +
+      '_' + DL.safe(serName($('co-tb').value, +$('co-mb').value)) + '_' + DL.today() + '.csv';
+  }, function () {
+    var md = (document.querySelector('input[name=co-mode]:checked') || { value: 'diff' }).value;
+    return ['도구 : 상관관계 분석 (피어슨)',
+    '시리즈 A : ' + serName($('co-ta').value, +$('co-ma').value),
+    '시리즈 B : ' + serName($('co-tb').value, +$('co-mb').value),
+    '계산 대상 : ' + (md === 'level' ? '수준(레벨, %) — 추세로 과대평가될 수 있음' : '변동(일간 차분, bp)'),
+    '기준일 : ' + $('co-asof').value + '  ·  롤링 윈도우 : ' + $('co-win').value,
+    '2023-01-09 기준변경 : ' + ($('co-reg').value === 'exclude' ? '제외' : '무시'),
+    '결측 처리 : 양쪽 모두 값이 있는 날만(inner join), 보간 없음'];
   });
 });
 
@@ -3224,7 +3699,7 @@ showView('dash');
 })();
 (function selfCheck() {
   try {
-    var ids = ['st-type', 'st-short', 'st-long', 'st-sa', 'st-sb', 'st-sma', 'st-smb', 'vr-type', 'vr-mat', 'cv-type', 'cv-ta', 'cv-tb', 'sp-ta', 'sp-tb', 'sp-ma', 'sp-mb'];
+    var ids = ['st-type', 'st-short', 'st-long', 'st-sa', 'st-sb', 'st-sma', 'st-smb', 'vr-type', 'vr-mat', 'cv-type', 'cv-ta', 'cv-tb', 'sp-ta', 'sp-tb', 'sp-ma', 'sp-mb', 'co-ta', 'co-tb', 'co-ma', 'co-mb'];
     var minOpt = 1e9, tot = 0;
     ids.forEach(function (id) { var e = $(id); var n = e ? e.options.length : 0; tot += n; if (n < minOpt) minOpt = n; });
     var lv = $('tbl-level'), cg = $('tbl-chg');
