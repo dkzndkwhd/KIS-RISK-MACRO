@@ -1126,7 +1126,9 @@ function percentile(sorted, p, method) {
    SVG 차트 (외부 라이브러리 없음)
    ================================================================ */
 var PAL = ['#17456b', '#d0021b', '#1f6b42', '#8a5a20', '#553b8c', '#0057c7', '#a8326b', '#4a7c8c',
-           '#7a8b1f', '#b1541c', '#2f6f8f', '#8c2f5a', '#5d6d7e', '#b8860b'];
+           '#7a8b1f', '#b1541c', '#2f6f8f', '#8c2f5a', '#5d6d7e', '#b8860b',
+           /* 해외금리·기준지표용 추가 5색 — TS_CANDID 가 14개를 넘어 색이 겹치지 않도록 */
+           '#00736b', '#9c3d0e', '#3f51a8', '#6b7a00', '#a02c2c'];
 
 function niceTicks(min, max, cnt) {
   if (!(isFinite(min) && isFinite(max))) return [0, 1];
@@ -1329,6 +1331,32 @@ var LEVEL_MATS = [12, 18, 24, 36, 48, 60, 84, 120, 180, 240, 360];
     });
     body += '</tr>';
   });
+
+  /* 미국채 — 한국 영업일 축에 얹혀 있어 국내 최신일(LAST)에 값이 없는 날이 있다
+     (미국 휴일, 그리고 수동 적재라 며칠 뒤처지는 구간). 국내 행과 같은 규칙으로
+     LAST 만 보면 행 전체가 '—' 가 되므로, 만기별로 LAST 이하의 가장 최근 관측일을
+     찾아 그 값을 쓰고 기준일을 행 라벨에 적는다. 없는 만기(1년6월·4년·15년)는
+     국내 행과 동일하게 '·' 로 비운다. */
+  (function () {
+    var t = typeByName('미국채'); if (!t) return;
+    function lastIdx(col, upto) { for (var i = upto; i >= 0; i--) if (!isNaN(raw(col, i))) return i; return -1; }
+    var asof = -1;
+    t.mats.forEach(function (m) { var i = lastIdx(m.col, LAST); if (i > asof) asof = i; });
+    if (asof < 0) return;                       // 데이터가 아예 없으면 행을 만들지 않는다
+    var sub = (asof < LAST) ? '<br><span style="font-size:10.5px;color:#67727f">' + fmtD(DATES[asof]) + ' 기준</span>' : '';
+    body += '<tr style="background:#fbfcff"><td class="l"><b>미국채</b>' + sub + '</td>';
+    LEVEL_MATS.forEach(function (m) {
+      var c = colOf('미국채', m);
+      if (!c) { body += '<td class="na">·</td>'; return; }
+      var i = lastIdx(c, LAST);
+      if (i < 0) { body += '<td class="na">—</td>'; return; }
+      var j = lastIdx(c, i - 1);                // 직전 '관측일' 대비 변동
+      var v = pct(c, i), d = (j < 0) ? NaN : bpDiff(c, i, j);
+      body += '<td>' + v.toFixed(3) + '<br><span class="' + cls(d) + '" style="font-size:11px">' + f1(d) + '</span></td>';
+    });
+    body += '</tr>';
+  })();
+
   // 신용스프레드 (회사채AA- − 국고채권)
   body += '<tr style="background:#f7fafd"><td class="l"><b>신용스프레드</b><br><span style="font-size:10.5px;color:#67727f">AA- − 국고 (bp)</span></td>';
   LEVEL_MATS.forEach(function (m) {
@@ -1390,9 +1418,19 @@ var CHG_HORIZ = [['1일', 'd', 1], ['1주', 'd', 7], ['1개월', 'm', 1], ['3개
 
 /* --- 3. 금리 시계열 --- */
 var TS_DEFAULT = [['국고채권', 36], ['국고채권', 120], ['회사채AA-', 36], ['통안증권', 12]];
+/* [종류, 개월, (선택) 칩·범례 표시명] — 표시명을 생략하면 '종류 만기' 로 만든다 */
 var TS_CANDID = [['국고채권', 12], ['국고채권', 36], ['국고채권', 60], ['국고채권', 120], ['국고채권', 360],
   ['통안증권', 12], ['통안증권', 24], ['특수채AAA', 36], ['은행채AAA', 36],
-  ['회사채AA0', 36], ['회사채AA-', 36], ['회사채A0', 36], ['회사채BBB0', 36], ['한국은행기준금리', 0]];
+  ['회사채AA0', 36], ['회사채AA-', 36], ['회사채A0', 36], ['회사채BBB0', 36], ['한국은행기준금리', 0],
+  /* 해외 — 레지스트리 시리즈. 데이터에 컬럼이 없으면 칩이 조용히 생략된다. */
+  ['미국채', 24], ['미국채', 120], ['미국채', 360],
+  ['미국 SOFR(담보부익일물)', 0, '미국 SOFR'],
+  ['미국 연방기금금리(DFF)', 0, '미국 기준금리(DFF)']];
+/* 표시명 조회 — 칩과 범례가 같은 이름을 쓰도록 */
+var TS_LABEL = {};
+TS_CANDID.forEach(function (r) {
+  TS_LABEL[r[0] + '|' + r[1]] = r[2] || (r[0] + (r[1] ? ' ' + matLabel(r[1]) : ''));
+});
 var tsSel = TS_DEFAULT.map(function (r) { return r[0] + '|' + r[1]; });
 var tsRange = '3Y';
 (function () {
@@ -1401,7 +1439,7 @@ var tsRange = '3Y';
     var key = r[0] + '|' + r[1];
     var c = r[0] === '한국은행기준금리' ? DATA.base.c : colOf(r[0], r[1]);
     if (!c) return;
-    var b = el('button', {}, esc(r[0] + (r[1] ? ' ' + matLabel(r[1]) : '')));
+    var b = el('button', {}, esc(TS_LABEL[key]));
     if (tsSel.indexOf(key) >= 0) b.className = 'on';
     b.onclick = function () {
       var k = tsSel.indexOf(key);
@@ -1432,7 +1470,7 @@ function drawTS() {
     var p = key.split('|'), c = p[0] === '한국은행기준금리' ? DATA.base.c : colOf(p[0], +p[1]);
     var pts = [];
     for (var i = i0; i <= i1; i++) { var v = pct(c, i); pts.push(isNaN(v) ? null : [i, v]); }
-    return { name: p[0] + (p[1] !== '0' ? ' ' + matLabel(+p[1]) : ''), pts: pts, color: PAL[TS_CANDID.map(function (r) { return r[0] + '|' + r[1]; }).indexOf(key) % PAL.length] };
+    return { name: TS_LABEL[key] || (p[0] + (p[1] !== '0' ? ' ' + matLabel(+p[1]) : '')), pts: pts, color: PAL[TS_CANDID.map(function (r) { return r[0] + '|' + r[1]; }).indexOf(key) % PAL.length] };
   });
   var vl = [];
   if (REGIME_IDX > i0 && REGIME_IDX <= i1) vl.push({ x: REGIME_IDX, label: '2023-01-09 기준변경', color: '#8a5a20' });
@@ -1456,10 +1494,17 @@ function typeMatches(t, q) {
   return true;
 }
 /** 채권종류 select 채우기 — 대분류 optgroup + 즐겨찾기/최근 상단 고정 + 검색 필터 q
- *  select 에 data-reg="1" 이 있으면 시리즈 레지스트리(기준지표·해외금리 …)도 최상단에 붙인다. */
+ *  select 의 data-reg 로 시리즈 레지스트리(기준지표·해외금리 …) 노출을 제어한다.
+ *    (없음)  레지스트리 제외 — KOFIA 격자만
+ *    "1"     레지스트리 전부 (만기 없는 기준금리·SOFR 포함)
+ *    "mat"   만기축이 있는 레지스트리 시리즈만 (미국채 ○ / DFF·SOFR·기준금리 ×)
+ *            커브처럼 만기축이 필수인 도구, 단기·장기 두 만기를 고르는 도구에 쓴다.
+ *            만기가 하나뿐인 시리즈를 넣으면 화면은 뜨지만 결과가 무의미하기 때문이다. */
 function fillTypes(sel, def, q) {
   if (!sel) return 0;
-  var allowReg = !!(sel.getAttribute && sel.getAttribute('data-reg') === '1');
+  var regMode = (sel.getAttribute && sel.getAttribute('data-reg')) || '';
+  var allowReg = (regMode === '1' || regMode === 'mat');
+  var regNeedsMat = (regMode === 'mat');
   while (sel.firstChild) sel.removeChild(sel.firstChild);
   var list = TYPES.filter(function (t) { return typeMatches(t, q); });
   var n = 0;
@@ -1476,7 +1521,9 @@ function fillTypes(sel, def, q) {
     sel.appendChild(og);
   }
   if (allowReg) REG_GROUPS.forEach(function (g) {
-    grp(g, REG_TYPES.filter(function (t) { return t.g === g && typeMatches(t, q); }));
+    grp(g, REG_TYPES.filter(function (t) {
+      return t.g === g && typeMatches(t, q) && !(regNeedsMat && t.noMat);
+    }));
   });
   var rc = recentTypes().map(function (nm) { return typeByName(nm); })
     .filter(function (t) { return t && !t.reg && typeMatches(t, q); });
@@ -1611,6 +1658,8 @@ var SC_NAME = { bull_flat: '불플랫(bull flattening)', bull_steep: '불스팁(
 
 var stAvailS = null, stAvailL = null;
 (function initStress() {
+  // 단기·장기 두 만기로 커브 유형을 판정하므로 만기축이 있는 시리즈만 (미국채 ○)
+  $('st-type').setAttribute('data-reg', 'mat');
   fillTypes($('st-type'), '국고채권');
   var sync = function () { fillMats($('st-short'), $('st-type').value, 36); fillMats($('st-long'), $('st-type').value, 120); };
   $('st-type').onchange = function () { pushRecent($('st-type').value); sync(); if (stAvailS) { stAvailS(); stAvailL(); } };
@@ -1715,6 +1764,7 @@ function runStress() {
 
   /* --- 화면 --- */
   var h = [];
+  h.push(regNoteHTML([cs, cl]));
   var reqFrom = parseD($('st-from').value);
   if (DATES[eff] > reqFrom + 3) h.push('<div class="alert w">⚠ 요청 시작일 <b>' + fmtD(reqFrom) + '</b> 대비 실제 유효 시작일은 <b>' + fmtD(DATES[eff]) + '</b>입니다 (두 시리즈 모두 값이 존재하는 첫 영업일). 실효 탐색 범위가 요청보다 짧습니다.</div>');
   if (exReg) h.push('<div class="alert w">⚠ 2023-01-09 산출기준 변경 경계를 걸치는 윈도우 <b>' + exReg.toLocaleString() + '건</b>을 제외했습니다 (평가 대상 ' + evalN.toLocaleString() + '건 중). 경계에서는 평균 약 10.6bp의 산정방식 점프가 있어 가짜 변동으로 잡힙니다.</div>');
@@ -2389,6 +2439,8 @@ var INTERP_DESC = {
 };
 var vrAvail = null;
 (function initVar() {
+  // 단일 시리즈의 변동분포만 보므로 만기 없는 시리즈(SOFR·DFF)도 의미가 있다
+  $('vr-type').setAttribute('data-reg', '1');
   fillTypes($('vr-type'), '국고채권');
   var sync = function () { fillMats($('vr-mat'), $('vr-type').value, 36); };
   $('vr-type').onchange = function () { pushRecent($('vr-type').value); sync(); if (vrAvail) vrAvail(); };
@@ -2438,6 +2490,7 @@ function runVar() {
   var eff = (hz > 1 && ovl) ? n / hz : n;
 
   var h = [];
+  h.push(regNoteHTML([c]));
   var reqFrom = parseD($('vr-from').value);
   var firstObs = -1; for (var i = i0; i <= i1; i++) if (!isNaN(A[i])) { firstObs = i; break; }
   if (firstObs > 0 && DATES[firstObs] > reqFrom + 3)
@@ -2520,6 +2573,8 @@ function cvInfo() {
   });
 }
 (function initCurve() {
+  // 커브는 만기축이 필수 — 미국채(11만기)만 들어오고 DFF·SOFR·기준금리는 빠진다
+  ['cv-type', 'cv-ta', 'cv-tb'].forEach(function (id) { $(id).setAttribute('data-reg', 'mat'); });
   fillTypes($('cv-type'), '국고채권'); fillTypes($('cv-ta'), '국고채권'); fillTypes($('cv-tb'), '회사채AA-');
   $('cv-da').value = fmtD(DATES[LAST]);
   $('cv-db').value = fmtD(Math.max(DATES[0], shiftCal(DATES[LAST], 'y', 1)));
@@ -2569,6 +2624,20 @@ function runCurve() {
   } else {
     if (DATES[A.i] !== reqA) h.push('<div class="alert w">⚠ <b>' + fmtD(reqA) + '</b>은 영업일이 아니어서 <b>' + fmtD(DATES[A.i]) + '</b>로 대체했습니다.</div>');
   }
+
+  /* 선택 시점에 값이 통째로 없는 커브 경고.
+     미국채처럼 한국 영업일 축에 얹힌 시리즈는 미국 휴일·수동 적재 지연 때문에
+     국내 최신일에 값이 없을 수 있다. 그대로 두면 빈 차트만 나와 원인을 알기 어렵다. */
+  [[A, nameA], [B, nameB]].forEach(function (x) {
+    var cv = x[0], nm = x[1];
+    if (cv.pts.some(function (p) { return !isNaN(p.v); })) return;
+    var li = -1;
+    cv.t.mats.forEach(function (m) { if (m.li > li) li = m.li; });
+    h.push('<div class="alert w">⚠ <b>' + esc(nm) + '</b>는 <b>' + fmtD(DATES[cv.i]) +
+      '</b>에 값이 없습니다' + (li >= 0 ? ' — 이 시리즈의 마지막 관측일은 <b>' + fmtD(DATES[li]) + '</b>입니다.' : '.') +
+      ' 날짜를 그날 이전으로 옮겨 주십시오. (보간·전방채움은 하지 않습니다)</div>');
+  });
+  h.push(regNoteHTML([(A.pts[0] || {}).col, (B.pts[0] || {}).col]));
 
   // 공통 만기 합집합 (개월 기준)
   var monthsSet = {};
@@ -3607,6 +3676,7 @@ guard('다운로드 탭', function () {
       '<div class="kpi"><div class="k">실제 기간</div><div class="v" style="font-size:13px">' + fmtD(DATES[r[0]]) + ' ~ ' + fmtD(DATES[r[1]]) + '</div></div>' +
       '<div class="kpi"><div class="k">예상 셀 수</div><div class="v">' + (rows * dlSel.length).toLocaleString() + '</div></div>' +
       '</div>';
+    h += regNoteHTML(dlSel.map(function (s) { return s.c; }));
     box.innerHTML = h;
   }
 
@@ -3660,6 +3730,8 @@ guard('다운로드 탭', function () {
   /* --- 폼 구성 --- */
   var tSel = $('dl-type'), mSel = $('dl-mat');
   if (!tSel || !mSel) return;
+  // 내려받기는 전부 가능해야 한다 — 만기 없는 시리즈 포함
+  tSel.setAttribute('data-reg', '1');
   fillTypes(tSel, '국고채권');
   attachTypeFilter(tSel, function () { fillMats(mSel, tSel.value, 36); });
   fillMats(mSel, tSel.value, 36);
