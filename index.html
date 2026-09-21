@@ -2843,7 +2843,7 @@ function fR(r) { return isNaN(r) ? '—' : (r >= 0 ? '+' : '') + r.toFixed(3); }
 function corrGrade(n) {
   if (n < 5) return { k: 'bad', t: '⚠ 관측치 5 미만 — 사실상 무의미' };
   if (n < 10) return { k: 'warn', t: '⚠ 표본 매우 적음 (n&lt;10)' };
-  if (n < 20) return { k: 'thin', t: '표본 적음 (n&lt;20)' };
+  if (n < 15) return { k: 'thin', t: '표본 적음 (n&lt;15)' };
   return { k: 'ok', t: '' };
 }
 
