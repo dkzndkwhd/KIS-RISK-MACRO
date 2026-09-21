@@ -794,7 +794,13 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
       </div>
     </div>
 
+    <div class="fld"><label>시작일 (선택)</label><input type="date" id="co-from"></div>
     <div class="fld"><label>기준일 (기간의 끝)</label><input type="date" id="co-asof"></div>
+    <div class="fld w2"><div class="presets" id="co-range-p"></div>
+      <div style="font-size:11px;color:#67727f;line-height:1.6">
+        시작일을 넣으면 아래 6개 기간 표에 <b>「사용자 지정」 행</b>이 추가되고,
+        <b>롤링 상관 차트·산점도가 그 구간으로 제한</b>됩니다. 비우면 지금까지와 같이 6개 기간만 계산합니다.
+      </div></div>
     <div class="fld"><label>롤링 윈도우 (영업일)</label><input type="number" id="co-win" value="244" min="20" max="2000">
       <div class="presets" id="co-win-p"></div></div>
     <div class="fld"><label>2023-01-09 기준변경</label><select id="co-reg">
@@ -2894,6 +2900,15 @@ var coAvailA = null, coAvailB = null;
   attachTypeFilter($('co-tb'), function () { sb(); if (coAvailB) coAvailB(); });
   presets($('co-win-p'), [['3M', 61], ['6M', 122], ['1Y', 244], ['2Y', 488], ['3Y', 732]], function (p) { $('co-win').value = p[1]; });
   $('co-asof').value = fmtD(DATES[LAST]);
+  /* 시작일 프리셋 — 기준일에서 거꾸로 센다(다른 도구와 동일한 방식). '비움'은 기본 동작(6개 기간만)으로 되돌린다. */
+  presets($('co-range-p'),
+    [['1Y', 'y', 1], ['3Y', 'y', 3], ['5Y', 'y', 5], ['10Y', 'y', 10], ['20Y', 'y', 20], ['전 기간', 'a', 0], ['비움', 'x', 0]],
+    function (p) {
+      if (p[1] === 'x') { $('co-from').value = ''; return; }
+      if (p[1] === 'a') { $('co-from').value = fmtD(DATES[0]); return; }
+      var end = parseD($('co-asof').value || fmtD(DATES[LAST]));
+      $('co-from').value = fmtD(Math.max(shiftCal(end, p[1], p[2]), DATES[0]));
+    });
   coAvailA = bindAvail($('co-ta'), $('co-ma'), null);
   coAvailB = bindAvail($('co-tb'), $('co-mb'), null);
   $('co-run').onclick = runCorr;
@@ -2912,6 +2927,16 @@ function runCorr() {
   var asof = parseD($('co-asof').value || fmtD(DATES[LAST]));
   var iEnd = idxLE(asof);
   if (iEnd < 1) { out.innerHTML = '<div class="alert e">기준일이 올바르지 않습니다.</div>'; return; }
+
+  /* 시작일(선택). 비우면 기존 동작 그대로 — 6개 기간만. */
+  var fromRaw = ($('co-from').value || '').replace(/\s/g, '');
+  var hasFrom = !!fromRaw, fromD = hasFrom ? parseD(fromRaw) : 0;
+  if (hasFrom && !(fromD > 0)) { out.innerHTML = '<div class="alert e">시작일이 올바르지 않습니다.</div>'; return; }
+  if (hasFrom && fromD > asof) {
+    out.innerHTML = '<div class="alert e">⚠ <b>시작일이 기준일보다 뒤입니다</b> — 시작일 ' + fmtD(fromD) + ' &gt; 기준일 ' + fmtD(asof) +
+      '. 구간이 성립하지 않아 계산하지 않았습니다. 시작일을 기준일 이전으로 바꾸거나 시작일을 비우십시오.</div>';
+    return;
+  }
 
   var A = COL[ca], B = COL[cb];
   var eff = -1, effL = -1, k;
@@ -2932,7 +2957,8 @@ function runCorr() {
       ? '대상 = <b>수준(레벨, %)</b>. <span class="etxt">⚠ 금리는 추세가 강해 레벨 상관은 거의 항상 높게 나오고, 두 시리즈가 같이 오르내렸는지를 말해주지 않습니다 — 추세 때문에 <b>과대평가될 수 있습니다</b>.</span> 같이 움직인 정도는 <b>변동(차분)</b> 으로 보십시오.'
       : '대상 = <b>변동(일간 차분, bp)</b> — <span class="mono">xᵢ = ( y<sub>A</sub>(tᵢ) − y<sub>A</sub>(tᵢ₋₁) ) × 100</span>. ' +
         '금리는 추세가 강해 레벨 상관은 거의 항상 높게 나오고 의미가 없으므로, 두 시리즈가 <b>같이 오르내린 정도</b>는 일간 변동 간 상관으로 봅니다(기본값).') + '<br>' +
-    'A = <b>' + esc(nmA) + '</b> · B = <b>' + esc(nmB) + '</b> · 기준일 ' + fmtD(DATES[iEnd]) + '<br>' +
+    'A = <b>' + esc(nmA) + '</b> · B = <b>' + esc(nmB) + '</b> · 기준일 ' + fmtD(DATES[iEnd]) +
+    (hasFrom ? ' · 사용자 지정 시작일 <b>' + fmtD(fromD) + '</b> (표의 「사용자 지정」 행 · 롤링/산점도 구간)' : '') + '<br>' +
     '2023-01-09 산출기준 변경 : ' + (dropReg
       ? (isLvl ? '<b>제외</b> — 레벨 모드에서는 경계를 넘는 구간을 <b>신기준(2023-01-09 이후)만</b> 쓰도록 잘라 계산합니다(표의 실제 시작일 참조).'
                : '<b>제외</b> — 경계를 넘는 차분 1건(2023-01-09)을 표본에서 뺍니다.')
@@ -2954,7 +2980,30 @@ function runCorr() {
     if (P[1] === 'a') scatterSrc = { pr: pr, st: st, i0: i0 };
   });
 
-  var best = rows[rows.length - 1].st;
+  var best = rows[rows.length - 1].st;        // '전 기간' — KPI 정의는 종전 그대로 유지
+
+  /* --- 1-b) 사용자 지정 구간 (시작일이 있을 때만) --- */
+  var cusRow = null, cusSrc = null, cusClamped = false, cusRegCut = false;
+  if (hasFrom) {
+    var ic0 = idxGE(fromD);
+    if (ic0 < 0) ic0 = eff;                    // 시작일이 전체 데이터보다 뒤 → 뒤에서 n=0 으로 걸러진다
+    if (ic0 < eff) { ic0 = eff; cusClamped = true; }   // 가용 시작보다 이른 시작일
+    if (isLvl && dropReg && REGIME_IDX > 0 && ic0 < REGIME_IDX && iEnd >= REGIME_IDX) { ic0 = REGIME_IDX; cusRegCut = true; }
+    var cpr = corrPairs(ca, cb, ic0, iEnd, mode, dropReg);
+    var cst = pearson(cpr.x, cpr.y);
+    cusRow = {
+      k: '사용자 지정', i0: ic0, st: cst,
+      first: cpr.i.length ? cpr.i[0] : -1, last: cpr.i.length ? cpr.i[cpr.i.length - 1] : -1,
+      g: corrGrade(cst.n), cus: true
+    };
+    rows.push(cusRow);
+    cusSrc = { pr: cpr, st: cst, i0: ic0 };
+  }
+  /* 차트(롤링·산점도)는 시작일이 있으면 그 구간으로 제한, 없으면 종전대로 전 기간 */
+  var chartSrc = cusSrc || scatterSrc;
+  var chartLbl = hasFrom
+    ? (cusRow.first >= 0 ? fmtD(DATES[cusRow.first]) + ' ~ ' + fmtD(DATES[cusRow.last]) : '사용자 지정 구간')
+    : '전 기간';
   h.push('<div class="kpis">' +
     kpi('전 기간 상관계수 r', fR(best.r), '', true) +
     kpi('표본 n', best.n.toLocaleString(), isLvl ? '일' : '차분') +
@@ -2967,11 +3016,21 @@ function runCorr() {
   if (cutLvl) h.push('<div class="alert w">⚠ 레벨 모드 + 기준변경 <b>제외</b> — 2023-01-09 경계를 넘는 기간은 <b>신기준 구간(2023-01-09 이후)만</b> 잘라 계산했습니다. 표의 실제 시작일을 확인하십시오. 전 구간을 그대로 쓰려면 "무시"로 바꾸십시오.</div>');
   var anyBad = rows.some(function (r) { return r.g.k === 'bad'; });
   var anyWarn = rows.some(function (r) { return r.g.k === 'warn'; });
+  if (hasFrom) {
+    if (cusRow.st.n === 0) {
+      h.push('<div class="alert e">⚠ <b>사용자 지정 구간(' + fmtD(fromD) + ' ~ ' + fmtD(DATES[iEnd]) + ')에 양쪽 모두 값이 있는 날이 없습니다</b> — 「사용자 지정」 행은 계산되지 않았고, 롤링 상관·산점도도 그릴 수 없습니다. 시작일을 앞당기십시오.</div>');
+    } else if (cusClamped) {
+      h.push('<div class="alert w">⚠ 요청 시작일 <b>' + fmtD(fromD) + '</b> 은 선택한 두 시리즈가 함께 관측되기 시작한 날(<b>' + fmtD(DATES[eff]) + '</b>) 보다 이릅니다 — ' +
+        '실제 계산 구간은 <b>' + fmtD(DATES[cusRow.first]) + ' ~ ' + fmtD(DATES[cusRow.last]) + '</b> 입니다. 롤링 상관·산점도도 이 구간으로 그렸습니다.</div>');
+    } else if (cusRegCut) {
+      h.push('<div class="alert w">⚠ 레벨 모드 + 기준변경 <b>제외</b> — 사용자 지정 구간이 2023-01-09 경계를 넘어, <b>신기준 구간(' + fmtD(DATES[cusRow.first]) + ' ~ ' + fmtD(DATES[cusRow.last]) + ')만</b> 잘라 계산했습니다.</div>');
+    }
+  }
   if (anyBad) h.push('<div class="alert e">⚠ 표본이 10개 미만인 기간이 있습니다. 예컨대 <b>1주일</b>은 영업일이 5일 안팎이라 차분이 4~5개뿐이고, 이 경우 상관계수는 사실상 무의미합니다 — 값은 표시하되 <b>참고용으로도 쓰지 마십시오</b>.</div>');
   else if (anyWarn) h.push('<div class="alert w">⚠ 표본이 20개 미만인 기간이 있습니다. 상관계수가 우연에 크게 흔들립니다.</div>');
 
   h.push('<div class="panel"><h3>기간별 상관계수 — ' + esc(nmA) + ' vs ' + esc(nmB) + ' (' + (isLvl ? '수준' : '일간 변동') + ')</h3><div class="bd chartbox">' +
-    '<table><thead><tr><th class="l" style="width:92px">기간</th><th style="width:110px">상관계수 r</th><th style="width:78px">R²</th>' +
+    '<table><thead><tr><th class="l" style="width:104px">기간</th><th style="width:110px">상관계수 r</th><th style="width:78px">R²</th>' +
     '<th style="width:96px">관측치 n</th><th>실제 시작일</th><th>실제 종료일</th><th class="l wrapc" style="width:210px;max-width:210px">비고</th></tr></thead><tbody>');
   rows.forEach(function (r) {
     var st = r.st, badge = '';
@@ -2979,7 +3038,8 @@ function runCorr() {
     else if (r.g.k === 'warn') badge = '<span class="wtxt">' + r.g.t + '</span>';
     else if (r.g.k === 'thin') badge = '<span style="color:#7d8794">' + r.g.t + '</span>';
     if (st.n >= 2 && isNaN(st.r)) badge = '<span class="wtxt">한쪽 ' + (isLvl ? '수준' : '변동') + '이 전 구간 동일(분산 0) — 상관 정의 불가</span>' + (badge ? ' · ' + badge : '');
-    h.push('<tr><td class="l"><b>' + esc(r.k) + '</b></td>' +
+    if (r.cus) badge = '<span style="color:#17456b">시작일 ' + fmtD(fromD) + ' 지정 · 롤링/산점도 구간</span>' + (badge ? ' · ' + badge : '');
+    h.push('<tr' + (r.cus ? ' style="background:#f3f7fb;border-top:2px solid #c6cfda"' : '') + '><td class="l"><b>' + esc(r.k) + '</b></td>' +
       '<td class="' + (r.g.k === 'bad' ? 'na' : cls(st.r)) + '"><b>' + fR(st.r) + '</b></td>' +
       '<td>' + (isNaN(st.r) ? '—' : (st.r * st.r).toFixed(3)) + '</td>' +
       '<td' + (st.n < 20 ? ' class="dn"' : '') + '><b>' + st.n.toLocaleString() + '</b></td>' +
@@ -2993,7 +3053,7 @@ function runCorr() {
     '. n 은 양쪽 모두 값이 있어 실제로 계산에 들어간 ' + (isLvl ? '일수' : '차분 개수') + '입니다.</p></div></div>');
 
   /* --- 2) 롤링 상관 --- */
-  var full = scatterSrc.pr, fx = full.x, fy = full.y, fi = full.i;
+  var full = chartSrc.pr, fx = full.x, fy = full.y, fi = full.i;
   var roll = [], rollStat = null;
   if (fx.length >= W) {
     var sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0, j;
@@ -3021,9 +3081,11 @@ function runCorr() {
       rollStat = { cur: roll[roll.length - 1][1], curD: roll[roll.length - 1][0], mn: mnv, mnD: roll[mnI][0], mx: mxv, mxD: roll[mxI][0], avg: sm / vals.length, n: vals.length };
     }
   }
-  h.push('<div class="panel" style="margin-top:16px"><h3>롤링 상관계수 — 윈도우 ' + W + (isLvl ? '영업일(레벨)' : '개 차분') + '</h3>');
+  h.push('<div class="panel" style="margin-top:16px"><h3>롤링 상관계수 — 윈도우 ' + W + (isLvl ? '영업일(레벨)' : '개 차분') +
+    ' · 구간 ' + esc(chartLbl) + '</h3>');
   if (!rollStat) {
-    h.push('<div class="bd"><div class="alert i">표본(' + fx.length.toLocaleString() + ')이 롤링 윈도우(' + W + ')보다 적어 롤링 상관을 계산하지 않았습니다. 윈도우를 줄여 보십시오.</div></div>');
+    h.push('<div class="bd"><div class="alert i">표본(' + fx.length.toLocaleString() + ')이 롤링 윈도우(' + W + ')보다 적어 롤링 상관을 계산하지 않았습니다. 윈도우를 줄이' +
+      (hasFrom ? '거나 시작일을 앞당겨' : '어') + ' 보십시오.</div></div>');
   } else {
     h.push('<div class="bd chartbox">' + svgLine({
       w: cw('co-out', 900), h: 260, series: [{ name: 'rolling r', pts: roll, color: '#17456b', wd: 1.6 }],
@@ -3045,15 +3107,17 @@ function runCorr() {
   h.push('</div>');
 
   /* --- 3) 산점도 --- */
-  h.push('<div class="panel" style="margin-top:16px"><h3>산점도 — 전 기간 ' + (isLvl ? '수준 (%)' : '일간 변동 (bp)') + ' · n=' + scatterSrc.st.n.toLocaleString() + '</h3><div class="bd chartbox">' +
+  h.push('<div class="panel" style="margin-top:16px"><h3>산점도 — ' + esc(chartLbl) + ' ' + (isLvl ? '수준 (%)' : '일간 변동 (bp)') + ' · n=' + chartSrc.st.n.toLocaleString() + '</h3><div class="bd chartbox">' +
     svgScatter(fx, fy, {
       w: cw('co-out', 900), h: 340,
       xLabel: 'A · ' + nmA + ' (' + unit + ')', yLabel: 'B · ' + nmB + ' (' + unit + ')',
       fmt: function (v) { return isLvl ? v.toFixed(1) : v.toFixed(0); },
-      fit: isFinite(scatterSrc.st.beta) ? { b: scatterSrc.st.beta, a: scatterSrc.st.my - scatterSrc.st.beta * scatterSrc.st.mx } : null
+      fit: isFinite(chartSrc.st.beta) ? { b: chartSrc.st.beta, a: chartSrc.st.my - chartSrc.st.beta * chartSrc.st.mx } : null
     }) + '</div>');
-  h.push('<div class="bd"><p class="hint" style="margin:0">붉은 점선은 최소제곱 회귀선 (기울기 β = ' +
-    (isNaN(scatterSrc.st.beta) ? '—' : scatterSrc.st.beta.toFixed(3)) + '). 점들이 선 주위에 얼마나 몰려 있는지가 r 의 크기입니다. ' +
+  h.push('<div class="bd"><p class="hint" style="margin:0">' +
+    (hasFrom ? '<b>시작일이 지정되어 롤링 상관 차트와 산점도는 ' + esc(chartLbl) + ' 구간만 그렸습니다</b> (위 표의 6개 기간 행은 종전대로 기준일에서 거꾸로 센 구간입니다). ' : '') +
+    '붉은 점선은 최소제곱 회귀선 (기울기 β = ' +
+    (isNaN(chartSrc.st.beta) ? '—' : chartSrc.st.beta.toFixed(3)) + '). 점들이 선 주위에 얼마나 몰려 있는지가 r 의 크기입니다. ' +
     '상관은 <b>같이 움직인 정도</b>일 뿐 인과가 아니며, 한쪽이 다른 쪽을 따라간 것인지는 말해주지 않습니다.</p></div></div>');
 
   if (!isLvl) h.push('<div class="alert i">국내 크레딧 수익률(회사채·은행채·특수채 등)은 <b>국고 커브에 등급별 스프레드를 더하는 방식</b>으로 산출되는 성격이 강해, 국고와의 일간 변동 상관이 구조적으로 매우 높게 나옵니다. 크레딧 고유의 움직임을 보려면 <b>스프레드 분석</b> 탭에서 스프레드 자체의 변화를 보십시오.</div>');
@@ -3065,6 +3129,11 @@ function runCorr() {
     ['상관계수', '피어슨 적률상관계수 (Pearson product-moment). 순위상관(Spearman)·시차상관은 쓰지 않았다.'],
     ['결측 처리', '양쪽 모두 값이 있는 날만 사용(inner join). 보간·전방채움 없음.'],
     ['기준일', fmtD(DATES[iEnd]) + ' (요청 ' + fmtD(asof) + ')'],
+    ['시작일', hasFrom
+      ? (fmtD(fromD) + ' 지정 → 실제 계산 구간 ' + (cusRow.first >= 0 ? fmtD(DATES[cusRow.first]) + ' ~ ' + fmtD(DATES[cusRow.last]) : '없음') +
+         (cusClamped ? ' (요청 시작일이 양쪽 관측 시작보다 일러 잘림)' : '') + (cusRegCut ? ' (2023-01-09 신기준 구간만)' : ''))
+      : '미지정 — 6개 기간만 계산, 차트는 전 기간'],
+    ['차트(롤링·산점도) 구간', hasFrom ? chartLbl + ' (사용자 지정)' : '전 기간'],
     ['양쪽 관측 구간', fmtD(DATES[eff]) + ' ~ ' + fmtD(DATES[effL])],
     ['전 기간 n', scatterSrc.st.n.toLocaleString() + (isLvl ? '일' : '개 차분')],
     ['기간별 n', rows.map(function (r) { return r.k + '=' + r.st.n; }).join(' · ')],
@@ -3525,6 +3594,7 @@ guard('다운로드·상관관계', function () {
     '시리즈 A : ' + serName($('co-ta').value, +$('co-ma').value),
     '시리즈 B : ' + serName($('co-tb').value, +$('co-mb').value),
     '계산 대상 : ' + (md === 'level' ? '수준(레벨, %) — 추세로 과대평가될 수 있음' : '변동(일간 차분, bp)'),
+    '시작일 : ' + ($('co-from').value || '미지정(6개 기간만 · 차트는 전 기간)'),
     '기준일 : ' + $('co-asof').value + '  ·  롤링 윈도우 : ' + $('co-win').value,
     '2023-01-09 기준변경 : ' + ($('co-reg').value === 'exclude' ? '제외' : '무시'),
     '결측 처리 : 양쪽 모두 값이 있는 날만(inner join), 보간 없음'];
