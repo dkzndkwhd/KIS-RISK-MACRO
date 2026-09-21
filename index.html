@@ -49,6 +49,10 @@
   .tag.s{border-color:#b6d6c2;background:#eefaf2;color:#1f6b42;}
   .vf{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:3px;border:1px solid #d7dde5;background:#f4f6f9;color:#67727f;margin-left:2px;}
   .warn{font-size:11.5px;color:#1f6b42;background:#eefaf2;border:1px solid #b6d6c2;border-radius:6px;padding:9px 12px;line-height:1.7;margin:0 0 14px;}
+  .nwarn{display:inline-block;margin-left:8px;font-size:11px;font-weight:700;padding:2px 9px;border-radius:11px;background:#fdecec;border:1px solid #e9a9a9;color:#c0271b;vertical-align:2px;letter-spacing:-.2px;}
+  #news-asof{font-size:13px;font-weight:600;color:#5a6673;}
+  .news-stat{color:#6b7684;font-size:12.5px;line-height:1.7;}
+  .news-stat b{color:#c0271b;}
   .rpt-list{list-style:none;margin:0;padding:0;}
   .rpt-card{border:1px solid #dbe2ea;border-radius:8px;margin-bottom:14px;background:#fff;overflow:hidden;}
   .rpt-head{background:#f2f6fa;border-bottom:1px solid #dbe2ea;padding:11px 15px 12px;}
@@ -365,116 +369,11 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
     <p class="note">결측 구간은 선을 끊는다(보간하지 않음). 세로 점선은 2023-01-09 산출기준 변경일.</p>
   </section>
 
-  <section class="card span1 feed">
-    <h2>주요 이슈 10선 (2026-09-16)</h2>
+  <section class="card span1 feed" id="news-sec">
+    <h2>주요 이슈 <span id="news-cnt">—</span>선 <span id="news-asof"></span><span class="nwarn" id="news-mismatch" style="display:none"></span></h2>
     <div class="feedbody">
-<p class="warn"><b>수집 결과 안내 — 이번 회차는 축소 수집입니다.</b> 연합인포맥스는 브라우저 보안 정책상 고위험 사이트로 분류돼 페이지 로드·스크립트 실행마다 접근 승인이 필요합니다. 이번 실행(자동화 리허설, 심야 시간대)에서는 목록 페이지 1회 로드까지만 승인이 이뤄지고 이후 개별 기사 본문 열람이 차단됐습니다. 따라서 아래 10건은 <b>목록 페이지에서 확보한 제목과 리드(기사 첫 문단)까지만 확인</b>한 것이며, 본문 전체를 대조하지 않았습니다. 항목별 검증수준을 각 항목 하단에 표기했습니다. 1~4번 섹션의 금리 데이터·차트는 KOFIA에서 정상 수집돼 영향이 없습니다.</p>
-
-
-<ol class="news" id="newslist">
-
-<li data-tag="bond">
-  <div class="hd"><div class="no">1</div>
-  <h3>국고채 금리 일제히 하락 — 외국인 3년 국채선물 대거 순매수, 3년물 3.8bp↓</h3></div>
-  <p>국고채 금리가 16일 일제히 하락했다. 미국채 10년물 금리가 재차 5% 선을 돌파하고 국제유가가 급등세를 이어갔지만 외국인이 3년 국채선물을 대거 순매수하고 일부 저가매수가 유입된 것이 영향을 미쳤다.</p>
-  <div class="meta">
-    <span class="tag b">채권</span><span class="vf">제목·리드 확인</span><br>
-    [채권-마감] FOMC 경계감에도 外人 3선 매수에 강세…3년물 3.8bp↓ (2026.09.16) —
-    <a href="https://news.einfomax.co.kr/news/articleView.html?idxno=4435253">기사 원문</a>
-  </div>
-</li>
-<li data-tag="fx">
-  <div class="hd"><div class="no">2</div>
-  <h3>달러-원 1,368.60원 마감 — 넉 달 만에 5거래일 연속 상승</h3></div>
-  <p>달러-원 환율이 높은 국제유가와 미국 국채금리 상승, 숏커버 등에 장 초반 1,370원대까지 올랐으나 이후 차익실현성 물량과 수출업체 네고 속에 상승폭을 줄였다. 미국 연방공개시장위원회(FOMC) 정례회의 결과 발표를 앞둔 경계감이 이어졌다.</p>
-  <div class="meta">
-    <span class="tag f">외환</span><span class="vf">제목·리드 확인</span><br>
-    달러-원, 1,368.60원 서울장 마감…넉 달 만에 5거래일 연속 상승 (2026.09.16) —
-    <a href="https://news.einfomax.co.kr/news/articleView.html?idxno=4435245">기사 원문</a>
-  </div>
-</li>
-<li data-tag="policy">
-  <div class="hd"><div class="no">3</div>
-  <h3>노무라, 연준 전망 수정 — "올해 두 차례 인상 후 동결"</h3></div>
-  <p>글로벌 투자은행 노무라증권은 미국 연방준비제도(Fed·연준)의 향후 통화정책 전망을 연내 2회 금리 인상으로 수정했다. 16일 CNBC에 따르면 노무라는 보고서를 통해 연준이 이번 주 열리는 통화정책 회의에서 금리를 인상할 것으로 전망했다.</p>
-  <div class="meta">
-    <span class="tag m">통화정책</span><span class="vf">제목·리드 확인</span><br>
-    노무라, 연준 금리전망 수정…"올해 두 차례 인상 후 동결" (2026.09.16) —
-    <a href="https://news.einfomax.co.kr/news/articleView.html?idxno=4435248">기사 원문</a>
-  </div>
-</li>
-<li data-tag="bond">
-  <div class="hd"><div class="no">4</div>
-  <h3>IRS 금리 대부분 하락 — 장기물 중심 강세, 현물과 동조</h3></div>
-  <p>16일 서울 채권시장에서 IRS 금리는 1년 구간을 제외한 전 구간에서 하락세를 보이며 장기물 중심으로 강세를 나타냈다. 1년 IRS 금리는 오후 4시 30분 기준 전 거래일과 견줘 보합권에 머물렀다.</p>
-  <div class="meta">
-    <span class="tag b">채권</span><span class="vf">제목·리드 확인</span><br>
-    IRS 금리 대부분 하락…FOMC 앞두고 현물과 동조 (2026.09.16) —
-    <a href="https://news.einfomax.co.kr/news/articleView.html?idxno=4435254">기사 원문</a>
-  </div>
-</li>
-<li data-tag="fx">
-  <div class="hd"><div class="no">5</div>
-  <h3>FX스와프포인트 하락세 지속 — 연준 인상 가능성 반영</h3></div>
-  <p>외환(FX) 스와프포인트가 미국 연방준비제도(Fed·연준)의 기준금리 인상 가능성을 반영하며 하락세를 이어갔다. 16일 외화자금시장에서 1년 만기 FX스와프포인트는 시초가 대비 0.10원 하락했다. FOMC를 하루 앞두고 낙폭은 제한됐다.</p>
-  <div class="meta">
-    <span class="tag f">외환</span><span class="tag m">통화정책</span><span class="vf">제목·리드 확인</span><br>
-    FX스와프, 하락세 지속…FOMC 하루 앞두고 낙폭 제한 (2026.09.16) —
-    <a href="https://news.einfomax.co.kr/news/articleView.html?idxno=4435249">기사 원문</a>
-  </div>
-</li>
-<li data-tag="macro">
-  <div class="hd"><div class="no">6</div>
-  <h3>美 8월 소매판매 전월비 1.2% 증가 — 예상치 상회, 7월 부진에서 반등</h3></div>
-  <p>미국 소매판매가 8월 들어 전월 대비 큰 폭으로 증가하며 7월의 소비 부진에서 돌아섰다. 16일(현지시간) 미국 인구조사국에 따르면 8월 미국 소매 및 음식점 판매는 계절 조정 기준 7천739억4천700만달러로 집계됐다.</p>
-  <div class="meta">
-    <span class="tag s">지표</span><span class="vf">제목·리드 확인</span><br>
-    美 8월 소매판매 전월비 1.2% 증가…예상치 웃돌아(상보) (2026.09.16) —
-    <a href="https://news.einfomax.co.kr/news/articleView.html?idxno=4435264">기사 원문</a>
-  </div>
-</li>
-<li data-tag="macro">
-  <div class="hd"><div class="no">7</div>
-  <h3>후티, 사우디 아람코 얀부 시설·공군기지 공격 발표 — 유가 급등 배경</h3></div>
-  <p>예멘의 친이란 반군 후티가 얀부에 위치한 사우디아라비아 국영 석유회사인 아람코와 카미스 무사이트 공군기지를 공격했다고 밝혔다. 16일(현지시간) 후티 반군 대변인은 성명을 통해 공격 사실을 확인했다.</p>
-  <div class="meta">
-    <span class="tag s">지정학</span><span class="vf">제목·리드 확인</span><br>
-    후티 "얀부 위치한 아람코 및 무사이트 공군기지 공격" (2026.09.16) —
-    <a href="https://news.einfomax.co.kr/news/articleView.html?idxno=4435263">기사 원문</a>
-  </div>
-</li>
-<li data-tag="fx">
-  <div class="hd"><div class="no">8</div>
-  <h3>미 달러화 닷새째 강세 — FOMC 경계 속 제한적 움직임</h3></div>
-  <p>미국 달러화 가치가 소폭 강세를 보이고 있다. 시장 참여자는 FOMC 결과 발표를 앞둔 경계감에 적극적인 방향성 베팅은 제한하는 모습이다. 연합인포맥스(화면번호 6411)에 따르면 16일 오전 7시 40분 기준으로 집계됐다.</p>
-  <div class="meta">
-    <span class="tag f">외환</span><span class="vf">제목·리드 확인</span><br>
-    미 달러화 닷새째 강세…FOMC 경계하며 제한적 움직임 (2026.09.16) —
-    <a href="https://news.einfomax.co.kr/news/articleView.html?idxno=4435261">기사 원문</a>
-  </div>
-</li>
-<li data-tag="fx">
-  <div class="hd"><div class="no">9</div>
-  <h3>달러-원, 뉴욕장서 1,360원 후반대 거래 — 전장 대비 8.00원 상승</h3></div>
-  <p>달러-원 환율이 뉴욕장에서 1,360원 후반대에 거래됐다. 16일 외환시장에서 달러-원 환율은 오후 8시 33분 현재 전장 대비 8.00원 오른 1,367.40원으로 나타났다.</p>
-  <div class="meta">
-    <span class="tag f">외환</span><span class="vf">제목·리드 확인</span><br>
-    달러-원, 뉴욕장서 1,350원 후반대 거래 (2026.09.16) —
-    <a href="https://news.einfomax.co.kr/news/articleView.html?idxno=4435260">기사 원문</a>
-  </div>
-</li>
-<li data-tag="policy">
-  <div class="hd"><div class="no">10</div>
-  <h3>금통위원 "SK하이닉스 ADR 빼면 외화자금 순유출" — 환율 반등 우려</h3></div>
-  <p>한국은행 금융통화위원이 SK하이닉스 ADR 관련 자금을 제외하면 외화자금이 순유출로 보인다며 환율 반등 가능성을 우려했다. 많이 본 뉴스 4위 기사로, 기준일 전후 게재됐다.</p>
-  <div class="meta">
-    <span class="tag m">통화정책</span><span class="tag f">외환</span><span class="vf">제목만 확인</span><br>
-    금통위원 "SK하이닉스 ADR 빼면 외화자금 순유출로 보여"…환율 반등 우려 (2026.09.16) —
-    <a href="https://news.einfomax.co.kr/news/articleView.html?idxno=4435169">기사 원문</a>
-  </div>
-</li>
-
-</ol>
+      <p class="warn" id="news-note" style="display:none"></p>
+      <ol class="news" id="newslist"><li class="news-stat" id="news-stat">뉴스를 불러오는 중…</li></ol>
     </div>
   </section>
 
@@ -1349,6 +1248,7 @@ var LAST = N - 1, PREV = N - 2;
 (function () {
   var wd = ['일', '월', '화', '수', '목', '금', '토'][toJS(DATES[LAST]).getDay()];
   $('asof').textContent = fmtD(DATES[LAST]) + ' (' + wd + ')';
+  try { if (window.__NEWS_RATES_ASOF) window.__NEWS_RATES_ASOF(DATA.meta.to); } catch (e) { }
   $('asofcnt').textContent = '수록 ' + (SERIES.length + 1) + '개 시리즈 · ' + N.toLocaleString() + '영업일 (' + fmtD(DATES[0]) + ' ~ ' + fmtD(DATES[LAST]) + ')';
   var br = pct(DATA.base.c, LAST);
   $('baserate').textContent = isNaN(br) ? '—' : br.toFixed(2) + '%';
@@ -3793,6 +3693,124 @@ showView('dash');
 
 try{ window.__DONE(); }catch(_e){}
 }  /* end BOOT */
+</script>
+
+<script>
+/* ================================================================
+   뉴스 로더 — data/news.json 을 받아 "주요 이슈 N선" 을 그린다.
+   rates.json 로더와 완전히 독립이다. 뉴스가 실패해도 금리 화면은
+   정상 동작하고, 금리가 실패해도 뉴스는 그려진다.
+   ================================================================ */
+(function () {
+  var URL_NEWS = 'data/news.json';
+  var TAGCLS = { '채권': 'b', '금리': 'b', '외환': 'f', '통화정책': 'm', '정책': 'm',
+                 '지표': 's', '지정학': 's', '증시': 's', '수급': 'b', '크레딧': 'b' };
+  var S = { newsAsof: null, ratesAsof: null };
+
+  function $n(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function d8(v) { return String(v == null ? '' : v).replace(/-/g, ''); }
+  function dash(v) { v = d8(v); return v.length === 8 ? v.substr(0, 4) + '-' + v.substr(4, 2) + '-' + v.substr(6, 2) : String(v || ''); }
+  function stat(htmlStr) {
+    var e = $n('news-stat');
+    if (!e) {   /* 렌더 후 실패한 경우 — 목록 자리에 상태 줄을 되살린다 */
+      var ol = $n('newslist'); if (!ol) return;
+      ol.innerHTML = '<li class="news-stat" id="news-stat"></li>';
+      e = $n('news-stat');
+    }
+    if (e) e.innerHTML = htmlStr;
+  }
+
+  /* 금리 기준일과 뉴스 기준일이 다르면 제목 옆에 경고 배지를 띄운다.
+     양쪽 모두 확정된 뒤에만 판정한다. */
+  function syncBadge() {
+    var b = $n('news-mismatch'); if (!b) return;
+    if (!S.newsAsof || !S.ratesAsof) { b.style.display = 'none'; return; }
+    if (d8(S.newsAsof) === d8(S.ratesAsof)) { b.style.display = 'none'; return; }
+    b.textContent = '⚠ 금리 기준일(' + dash(S.ratesAsof) + ')과 다름';
+    b.title = '뉴스 기준일 ' + dash(S.newsAsof) + ' · 금리 기준일 ' + dash(S.ratesAsof) +
+      ' — 뉴스 수집이 실패했거나 갱신되지 않아 이전 회차 뉴스가 표시되고 있습니다.';
+    b.style.display = 'inline-block';
+  }
+  /* 금리 로더(BOOT)가 기준일을 확정하면 호출한다 */
+  window.__NEWS_RATES_ASOF = function (v) { S.ratesAsof = v; syncBadge(); };
+
+  function render(J) {
+    var items = (J && J.items) || [], meta = (J && J.meta) || {};
+    S.newsAsof = meta.asof || (items[0] && items[0].pubDate) || null;
+    var ol = $n('newslist'); if (!ol) return;
+
+    $n('news-cnt').textContent = items.length || (meta.count || 0);
+    $n('news-asof').textContent = S.newsAsof ? '(' + dash(S.newsAsof) + ')' : '';
+
+    var note = $n('news-note');
+    if (note) {
+      if (meta.note) { note.innerHTML = esc(meta.note); note.style.display = ''; }
+      else { note.style.display = 'none'; }
+    }
+
+    if (!items.length) {
+      ol.innerHTML = '<li class="news-stat">표시할 뉴스가 없습니다.' +
+        (meta.note ? '' : ' (data/news.json 의 items 가 비어 있습니다)') + '</li>';
+      syncBadge(); return;
+    }
+
+    var out = [];
+    for (var i = 0; i < items.length; i++) {
+      var x = items[i] || {};
+      var tg = [];
+      var tags = x.tags || [];
+      for (var k = 0; k < tags.length; k++) {
+        var lbl = (typeof tags[k] === 'string') ? tags[k] : (tags[k] && tags[k].label) || '';
+        if (!lbl) continue;
+        tg.push('<span class="tag ' + (TAGCLS[lbl] || '') + '">' + esc(lbl) + '</span>');
+      }
+      if (x.verify) tg.push('<span class="vf">' + esc(x.verify) + '</span>');
+      var src2 = [];
+      if (x.orig_title) src2.push(esc(x.orig_title));
+      if (x.pubDate) src2.push('(' + esc(dash(x.pubDate)) + ')');
+      var line = src2.join(' ');
+      if (x.link) line += (line ? ' — ' : '') + '<a href="' + esc(x.link) + '" target="_blank" rel="noopener">기사 원문</a>';
+      out.push(
+        '<li data-tag="' + esc(x.cat || '') + '">' +
+        '<div class="hd"><div class="no">' + esc(x.rank || (i + 1)) + '</div>' +
+        '<h3>' + esc(x.headline || '') + '</h3></div>' +
+        '<p>' + esc(x.summary || '') + '</p>' +
+        '<div class="meta">' + tg.join('') + (tg.length ? '<br>' : '') + line + '</div></li>');
+    }
+    ol.innerHTML = out.join('');
+    syncBadge();
+  }
+
+  function failNews(msg) {
+    var c = $n('news-cnt'); if (c) c.textContent = '—';
+    var d = $n('news-asof'); if (d) d.textContent = '';
+    var b2 = $n('news-mismatch'); if (b2) b2.style.display = 'none';
+    stat('<b>뉴스를 불러오지 못했습니다.</b><br>' + esc(msg) +
+      '<br>금리 데이터·차트 등 나머지 기능은 정상 동작합니다.');
+    if (window.console && console.warn) console.warn('[NEWS] ' + msg);
+  }
+
+  if (!window.fetch || !window.JSON) { failNews('이 브라우저는 fetch / JSON 을 지원하지 않습니다.'); return; }
+  if (location.protocol === 'file:') { failNews('로컬 파일(file://)에서는 data/news.json 을 읽을 수 없습니다.'); return; }
+
+  try {
+    fetch(URL_NEWS, { cache: 'no-cache' }).then(function (r) {
+      if (!r.ok) throw new Error(r.status === 404 ? 'data/news.json 이 리포지토리에 없습니다 (HTTP 404).' : 'HTTP ' + r.status);
+      return r.text();
+    }).then(function (t) {
+      var J;
+      try { J = JSON.parse(t); }
+      catch (e) { throw new Error('data/news.json 을 해석하지 못했습니다 — ' + e.message); }
+      if (!J || !J.items || !J.items.length && !J.meta) throw new Error('형식이 올바르지 않습니다 (items 없음).');
+      render(J);
+      if (window.console && console.log) console.log('[NEWS] ' + ((J.items || []).length) + '건 · 기준일 ' + (J.meta && J.meta.asof));
+    })['catch'](function (e) { failNews((e && e.message) ? e.message : String(e)); });
+  } catch (e) { failNews(String(e)); }
+})();
 </script>
 
 <script>
