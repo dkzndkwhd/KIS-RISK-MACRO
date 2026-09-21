@@ -219,6 +219,14 @@ body{font-size:13px;}
 .placeholder{color:#8a939e;font-size:12.5px;border:1px dashed #d7dde5;border-radius:6px;padding:26px;text-align:center;background:#fbfcfe;}
 .chartbox svg{width:100%;height:auto;display:block;}
 .chartbox{overflow-x:auto;}
+/* ===== 결과 표 오버플로 방지 (레이아웃 전용) ===== */
+.out{max-width:100%;min-width:0;}
+.out table{max-width:100%;}
+.tblwrap{max-width:100%;overflow-x:auto;margin:0;}
+.tblwrap > table{min-width:100%;}
+th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-word;line-height:1.5;}
+#st-spd-tbl th.wrapc,#st-spd-tbl td.wrapc{min-width:170px;max-width:250px;}
+#pv-tbl th.wrapc,#pv-tbl td.wrapc{min-width:90px;max-width:160px;}
 .errbar{background:#fdeef0;border-bottom:2px solid #d0021b;color:#b3001b;font-size:12px;line-height:1.7;
      padding:9px 16px;font-family:Consolas,"D2Coding",monospace;word-break:break-all;}
 .grid2{grid-template-columns:repeat(auto-fit,minmax(340px,1fr));}
@@ -1776,14 +1784,14 @@ function runStress() {
   }
 
   h.push('<h3 style="font-size:13px;margin:16px 0 8px;color:#17456b">결과 — ' + esc(SC_NAME[scen]) + ' 상위 ' + picked.length + '구간 <span style="font-weight:400;color:#67727f;font-size:11.5px">(행 클릭 → 상세)</span></h3>');
-  h.push('<table class="clickrow" id="st-tbl"><thead><tr><th style="width:44px">순위</th><th class="l">구간 (시작 ~ 종료)</th><th>Δ' + matLabel(sm) + '</th><th>Δ' + matLabel(lm) + '</th><th>Δlevel</th><th>Δslope</th><th>강도</th><th>유형</th></tr></thead><tbody>');
+  h.push('<div class="tblwrap"><table class="clickrow" id="st-tbl"><thead><tr><th style="width:44px">순위</th><th class="l">구간 (시작 ~ 종료)</th><th>Δ' + matLabel(sm) + '</th><th>Δ' + matLabel(lm) + '</th><th>Δlevel</th><th>Δslope</th><th>강도</th><th>유형</th></tr></thead><tbody>');
   picked.forEach(function (c, i) {
     h.push('<tr data-i="' + i + '"' + (i === 0 ? ' class="sel"' : '') + '><td>' + (i + 1) + '</td>' +
       '<td class="l mono">' + fmtD(DATES[c.b]) + ' ~ ' + fmtD(DATES[c.t]) + '<span style="color:#8a939e"> (' + (c.t - c.b) + '영업일)</span></td>' +
       bpCell(c.ds) + bpCell(c.dl) + bpCell(c.dlevel) + bpCell(c.dslope) +
       '<td><b>' + c.strength.toFixed(1) + '</b></td><td style="text-align:center">' + esc(SC_NAME[c.kind].split('(')[0]) + '</td></tr>');
   });
-  h.push('</tbody></table>');
+  h.push('</tbody></table></div>');
   h.push('<div id="st-detail"></div>');
   h.push(evid([
     ['사용 컬럼 (단기)', esc(cs)], ['사용 컬럼 (장기)', esc(cl)],
@@ -1970,8 +1978,8 @@ function runSpreadStress() {
   }
 
   h.push('<h3 style="font-size:13px;margin:16px 0 8px;color:#17456b">결과 — 스프레드 ' + esc(SPD_DIR_NAME[dir]) + ' 상위 ' + picked.length + '구간 <span style="font-weight:400;color:#67727f;font-size:11.5px">(행 클릭 → 상세)</span></h3>');
-  h.push('<table class="clickrow" id="st-spd-tbl"><thead><tr><th style="width:44px">순위</th><th class="l">구간 (시작 ~ 종료)</th>' +
-    '<th>시작 SPD</th><th>종료 SPD</th><th>Δ스프레드</th><th>ΔA (크레딧)</th><th>ΔB (기준)</th><th>관측치</th><th class="l" style="width:180px">분해 — 무엇이 벌렸나</th></tr></thead><tbody>');
+  h.push('<div class="tblwrap"><table class="clickrow" id="st-spd-tbl"><thead><tr><th style="width:44px">순위</th><th class="l">구간 (시작 ~ 종료)</th>' +
+    '<th>시작 SPD</th><th>종료 SPD</th><th>Δ스프레드</th><th>ΔA (크레딧)</th><th>ΔB (기준)</th><th>관측치</th><th class="l wrapc" style="width:180px">분해 — 무엇이 벌렸나</th></tr></thead><tbody>');
   picked.forEach(function (c, i) {
     var at = spdAttrib(c.dA, c.dB, c.d);
     var nobs = 0;
@@ -1983,9 +1991,9 @@ function runSpreadStress() {
       '<td class="' + cls(c.d) + '"><b>' + f1(c.d) + '</b></td>' +
       bpCell(c.dA) + bpCell(c.dB) +
       '<td>' + nobs.toLocaleString() + '</td>' +
-      '<td class="l"><b>' + esc(at.txt) + '</b>' + (at.sub ? '<span style="color:#67727f"> · ' + esc(at.sub) + '</span>' : '') + '</td></tr>');
+      '<td class="l wrapc"><b>' + esc(at.txt) + '</b>' + (at.sub ? '<span style="color:#67727f"> · ' + esc(at.sub) + '</span>' : '') + '</td></tr>');
   });
-  h.push('</tbody></table>');
+  h.push('</tbody></table></div>');
   h.push('<p class="hint" style="margin:8px 0 0">Δ스프레드 = ΔA − ΔB. 같은 +50bp 확대라도 <b>ΔA만 +50</b>(크레딧 리스크 재평가)과 <b>ΔB만 −50</b>(안전자산 선호로 국고 강세)은 성격이 전혀 다르다.</p>');
   h.push('<div id="st-spd-detail"></div>');
   h.push(evid([
@@ -2246,10 +2254,10 @@ function runPivot() {
   h.push('<h3 style="font-size:13px;margin:16px 0 8px;color:#17456b">피벗 목록 — ' +
     esc(dirSel === 'up' ? '인상 전환' : (dirSel === 'down' ? '인하 전환' : '인상·인하 전환')) +
     ' · 윈도우 ' + W + '영업일 <span style="font-weight:400;color:#67727f;font-size:11.5px">(행 클릭 → 상세)</span></h3>');
-  h.push('<table class="clickrow" id="pv-tbl"><thead><tr>' +
+  h.push('<div class="tblwrap"><table class="clickrow" id="pv-tbl"><thead><tr>' +
     '<th style="width:36px">#</th><th class="l">전환일</th><th class="l">기준금리</th><th>유형</th>' +
     '<th class="l">윈도우 (전환일 ~ 종료일)</th><th>Δ' + matLabel(sm) + '</th><th>Δ' + matLabel(lm) + '</th>' +
-    '<th>Δlevel</th><th>Δslope</th><th class="l">비고</th></tr></thead><tbody>');
+    '<th>Δlevel</th><th>Δslope</th><th class="l wrapc">비고</th></tr></thead><tbody>');
   rows.forEach(function (r, i) {
     var note = [];
     if (r.truncated) note.push('<span style="color:#b06000">부분(' + r.bizDays + '/' + W + '영업일)</span>');
@@ -2262,7 +2270,7 @@ function runPivot() {
       '<td style="text-align:center">' + (r.p.dir > 0 ? '<span class="up">인상 전환</span>' : '<span class="dn">인하 전환</span>') + '</td>' +
       '<td class="l mono">' + fmtD(DATES[r.b]) + ' ~ ' + fmtD(DATES[r.t]) + '<span style="color:#8a939e"> (' + r.bizDays + '영업일)</span></td>' +
       bpCell(r.ds) + bpCell(r.dl) + bpCell(r.dlevel) + bpCell(r.dslope) +
-      '<td class="l" style="font-size:11px">' + (note.join(' · ') || '—') + '</td></tr>');
+      '<td class="l wrapc" style="font-size:11px">' + (note.join(' · ') || '—') + '</td></tr>');
   });
   if (rows.length > 1) {
     h.push('<tr style="background:#f0f3f7;font-weight:600"><td></td><td class="l">평균</td><td></td><td></td>' +
@@ -2270,7 +2278,7 @@ function runPivot() {
       bpCell(avgDs) + bpCell(avgDl) + bpCell(avgOf(rows.map(function (r) { return r.dlevel; }))) + bpCell(avgSl) +
       '<td></td></tr>');
   }
-  h.push('</tbody></table>');
+  h.push('</tbody></table></div>');
 
   // ---- 국고 전 만기 변동 표 (피벗 나란히 비교) ----
   var GT = typeByName('국고채권');
@@ -2964,7 +2972,7 @@ function runCorr() {
 
   h.push('<div class="panel"><h3>기간별 상관계수 — ' + esc(nmA) + ' vs ' + esc(nmB) + ' (' + (isLvl ? '수준' : '일간 변동') + ')</h3><div class="bd chartbox">' +
     '<table><thead><tr><th class="l" style="width:92px">기간</th><th style="width:110px">상관계수 r</th><th style="width:78px">R²</th>' +
-    '<th style="width:96px">관측치 n</th><th>실제 시작일</th><th>실제 종료일</th><th class="l" style="width:210px">비고</th></tr></thead><tbody>');
+    '<th style="width:96px">관측치 n</th><th>실제 시작일</th><th>실제 종료일</th><th class="l wrapc" style="width:210px;max-width:210px">비고</th></tr></thead><tbody>');
   rows.forEach(function (r) {
     var st = r.st, badge = '';
     if (r.g.k === 'bad') badge = '<span class="etxt"><b>' + r.g.t + '</b></span>';
@@ -2977,7 +2985,7 @@ function runCorr() {
       '<td' + (st.n < 20 ? ' class="dn"' : '') + '><b>' + st.n.toLocaleString() + '</b></td>' +
       '<td class="mono">' + (r.first >= 0 ? fmtD(DATES[r.first]) : '—') + '</td>' +
       '<td class="mono">' + (r.last >= 0 ? fmtD(DATES[r.last]) : '—') + '</td>' +
-      '<td class="l">' + badge + '</td></tr>');
+      '<td class="l wrapc" style="max-width:210px">' + badge + '</td></tr>');
   });
   h.push('</tbody></table></div>');
   h.push('<div class="bd"><p class="hint" style="margin:0">실제 시작일·종료일은 <b>표본에 실제로 쓰인 첫·마지막 날</b>입니다' +
