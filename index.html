@@ -366,7 +366,7 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
     <div class="rangebar" id="ts-range" style="margin-top:10px"></div>
     <div class="chartbox" id="ts-chart"></div>
     <div class="lgd" id="ts-legend"></div>
-    <p class="note">결측 구간은 선을 끊는다(보간하지 않음). 세로 점선은 2023-01-09 산출기준 변경일.</p>
+    <p class="note">결측 구간은 선을 끊는다(보간하지 않음). 세로 점선은 2023-01-09 산출기준 변경일. <b>x축은 한국 영업일</b>이며, 미국 금리는 아래 별도 카드에서 미국 자체 날짜축으로 본다.</p>
   </section>
 
   <section class="card span1 feed" id="news-sec">
@@ -375,6 +375,16 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
       <p class="warn" id="news-note" style="display:none"></p>
       <ol class="news" id="newslist"><li class="news-stat" id="news-stat">뉴스를 불러오는 중…</li></ol>
     </div>
+  </section>
+
+  <!-- 미국 금리 — 한국 영업일축에 맞추지 않고 data/us_rates.json 의 미국 자체 날짜축으로 그린다 -->
+  <section class="card span3" id="us-sec">
+    <h2>미국 금리 시계열 (%) <span id="us-asof" style="font-weight:400;color:#67727f;font-size:11.5px">—</span></h2>
+    <div class="serpick" id="us-pick"></div>
+    <div class="rangebar" id="us-range" style="margin-top:10px"></div>
+    <div class="chartbox" id="us-chart"><p class="note" id="us-stat">미국 금리 데이터(data/us_rates.json)를 불러오는 중…</p></div>
+    <div class="lgd" id="us-legend"></div>
+    <p class="note" id="us-note"><b>x축이 미국 영업일</b>입니다. 위 '금리 시계열' 카드(한국 영업일축)에서는 한국 공휴일에 해당하는 미국 관측일이 버려지지만(전 기간 327일 · 2025년 16일), 이 카드에는 그 날들이 모두 들어 있습니다. 결측 구간은 선을 끊습니다(보간하지 않음). 출처 FRED · 수동 적재이므로 국내 기준일보다 며칠 뒤처질 수 있습니다.</p>
   </section>
 
   <section class="card span2">
@@ -852,7 +862,10 @@ var US_NOTE =
   '동일자 r ≈ 0.12(전기간) / 0.23(2023년~)인 반면, 미국을 하루 앞당기면 ' +
   'r ≈ 0.27 / 0.42 로 올라가고 이틀 앞당기면 0 근처로 꺼집니다. ' +
   '동일자 상관이 국내 시리즈끼리(0.85~0.99)보다 훨씬 낮은 것은 데이터 오류가 아니라 이 시차 때문입니다. ' +
-  '미국 데이터는 현재 <b>수동 적재</b>라 마스터 최신일보다 며칠 뒤처질 수 있습니다.';
+  '미국 데이터는 현재 <b>수동 적재</b>라 마스터 최신일보다 며칠 뒤처질 수 있습니다. ' +
+  '<b>미국 금리만 보려면 대시보드의 \'미국 금리 시계열\' 카드를 쓰십시오</b> — 그쪽은 ' +
+  'data/us_rates.json 의 미국 자체 날짜축이라 한국 공휴일에 버려지는 관측일(전 기간 327일)이 없습니다. ' +
+  '여기(한국축)는 한국 시리즈와 <b>같은 날짜끼리</b> 비교해야 하는 도구 전용입니다.';
 
 var EXTRA_SERIES = [
   {
@@ -1343,11 +1356,13 @@ var TS_DEFAULT = [['국고채권', 36], ['국고채권', 120], ['회사채AA-', 
 /* [종류, 개월, (선택) 칩·범례 표시명] — 표시명을 생략하면 '종류 만기' 로 만든다 */
 var TS_CANDID = [['국고채권', 12], ['국고채권', 36], ['국고채권', 60], ['국고채권', 120], ['국고채권', 360],
   ['통안증권', 12], ['통안증권', 24], ['특수채AAA', 36], ['은행채AAA', 36],
-  ['회사채AA0', 36], ['회사채AA-', 36], ['회사채A0', 36], ['회사채BBB0', 36], ['한국은행기준금리', 0],
-  /* 해외 — 레지스트리 시리즈. 데이터에 컬럼이 없으면 칩이 조용히 생략된다. */
-  ['미국채', 24], ['미국채', 120], ['미국채', 360],
-  ['미국 SOFR(담보부익일물)', 0, '미국 SOFR'],
-  ['미국 연방기금금리(DFF)', 0, '미국 기준금리(DFF)']];
+  ['회사채AA0', 36], ['회사채AA-', 36], ['회사채A0', 36], ['회사채BBB0', 36], ['한국은행기준금리', 0]];
+/* 미국 금리 칩은 2026-09-22 부터 이 카드에서 빠졌다.
+   이 카드의 x축은 '한국 영업일'이라 한국 공휴일에 해당하는 미국 관측일(전 기간 327일,
+   2025년 16일)이 통째로 버려진다. 미국 금리는 아래 '미국 금리 시계열' 카드에서
+   data/us_rates.json 의 미국 자체 날짜축으로 그린다.
+   ※ 상관관계·스프레드 등 한국 시리즈와 직접 비교하는 도구의 미국 선택지는
+     공통 축이 필요하므로 rates.json 의 extra[](한국축)를 그대로 쓴다 — 건드리지 않는다. */
 /* 표시명 조회 — 칩과 범례가 같은 이름을 쓰도록 */
 var TS_LABEL = {};
 TS_CANDID.forEach(function (r) {
@@ -3784,11 +3799,209 @@ guard('다운로드 탭', function () {
 });
 
 
+/* ================================================================
+   미국 금리 모듈 — data/us_rates.json (미국 자체 날짜축)
+   ----------------------------------------------------------------
+   왜 별도 파일인가
+     rates.json 의 extra[] 에 실린 미국 컬럼은 마스터 CSV 가 미국 데이터를
+     **한국 영업일 축에 left join** 한 결과다. 한국 공휴일에 해당하는 미국
+     관측일은 축에 자리가 없어 통째로 버려진다(전 기간 327일, 2025년 16일 —
+     예: 2025-10-06~09 추석·한글날). 그래서 '미국 금리만 보는' 화면에는
+     원본 축 그대로의 사본인 data/us_rates.json 을 쓴다.
+
+     us_rates.json  = 미국 자체 축. 이 카드와 변동현황 미국 행 전용.
+     rates.json 의 extra[] = 한국 영업일축. 상관관계·스프레드 등 한국 시리즈와
+                             직접 비교하는 도구 전용(공통 축이 필요하므로).
+     두 표현은 의도적으로 공존한다. 어느 한쪽을 지우면 다른 쪽이 깨진다.
+
+   인코딩은 rates.json 과 동일해 decodeSeries() 를 그대로 재사용한다.
+   로딩 실패는 이 카드와 변동현황 미국 행에만 국한되며 나머지는 정상 동작한다.
+   ================================================================ */
+var US = null;
+var US_CHIPS = [
+  ['미국채_1월', '미국채 1개월'], ['미국채_3월', '미국채 3개월'], ['미국채_6월', '미국채 6개월'],
+  ['미국채_1년', '미국채 1년'], ['미국채_2년', '미국채 2년'], ['미국채_3년', '미국채 3년'],
+  ['미국채_5년', '미국채 5년'],
+  /* 7년물은 원본 FRED 다운로드가 2021-09-17 부터만 담겨 있다(DGS7 자체는 1969년~).
+     데이터가 없는 게 아니라 수집이 덜 된 것이므로, 칩은 두되 라벨에 가용 시작일을 적는다. */
+  ['미국채_7년', '미국채 7년 (2021.9~)'],
+  ['미국채_10년', '미국채 10년'], ['미국채_20년', '미국채 20년'], ['미국채_30년', '미국채 30년'],
+  ['미국기준금리_DFF', '기준금리(DFF)'], ['미국단기금리_EFFR', 'EFFR'], ['미국단기금리_SOFR', 'SOFR']
+];
+var usSel = ['미국채_2년', '미국채_10년', '미국채_30년', '미국단기금리_SOFR'];
+var usRange = '3Y';
+/* 변동현황에 추가할 미국 행 */
+var US_CHG_ROWS = [['미국채_2년', '미국채 2년'], ['미국채_5년', '미국채 5년'],
+                   ['미국채_10년', '미국채 10년'], ['미국채_30년', '미국채 30년']];
+
+function uPct(c, i) { var a = US && US.COL[c]; if (!a) return NaN; var v = a[i]; return isNaN(v) ? NaN : v / 1000; }
+function uRaw(c, i) { var a = US && US.COL[c]; return a ? a[i] : NaN; }
+/** yyyymmdd 이하인 마지막 미국 영업일 인덱스 */
+function uIdxLE(ymd) {
+  var D = US.DATES, lo = 0, hi = US.N - 1, r = -1;
+  while (lo <= hi) { var m = (lo + hi) >> 1; if (D[m] <= ymd) { r = m; lo = m + 1; } else hi = m - 1; }
+  return r;
+}
+/** from 이하에서 그 컬럼에 값이 있는 가장 최근 인덱스 (미국 휴일 공백을 건너뛴다) */
+function uPrevObs(c, from) {
+  var a = US && US.COL[c]; if (!a) return -1;
+  for (var i = from; i >= 0; i--) if (!isNaN(a[i])) return i;
+  return -1;
+}
+/** 미국 날짜축용 tick (dateTicks 의 US판 — 전역 DATES 대신 US.DATES 를 본다) */
+function uDateTicks(i0, i1, cnt) {
+  cnt = cnt || 8; var out = [], step = Math.max(1, Math.floor((i1 - i0) / cnt));
+  var spanDays = dayDiff(US.DATES[i1], US.DATES[i0]);
+  for (var i = i0; i <= i1; i += step) {
+    var d = '' + US.DATES[i];
+    out.push({ x: i, label: spanDays > 730 ? d.substr(0, 4) + '.' + d.substr(4, 2) : d.substr(2, 2) + '.' + d.substr(4, 2) + '.' + d.substr(6, 2) });
+  }
+  return out;
+}
+function usWindow() {
+  var rb = $('us-range'); if (!rb) return 0;
+  var b = [].filter.call(rb.children, function (x) { return x.className === 'on'; })[0];
+  if (!b || b.dataset.u === 'a') return 0;
+  var i = uIdxLE(shiftCal(US.DATES[US.LAST], b.dataset.u, +b.dataset.n));
+  return i < 0 ? 0 : i;
+}
+function drawUSTS() {
+  if (!US) return;
+  var i0 = usWindow(), i1 = US.LAST;
+  var order = US_CHIPS.map(function (r) { return r[0]; });
+  var ser = usSel.map(function (c) {
+    var pts = [];
+    for (var i = i0; i <= i1; i++) { var v = uPct(c, i); pts.push(isNaN(v) ? null : [i, v]); }
+    var li = order.indexOf(c);
+    return { name: US.LBL[c] || c, pts: pts, color: PAL[(li < 0 ? 0 : li) % PAL.length] };
+  });
+  $('us-chart').innerHTML = svgLine({
+    w: cw('us-chart', 1080), h: 340, series: ser,
+    xTicks: uDateTicks(i0, i1, 9), yFmt: function (v) { return v.toFixed(2); }
+  });
+  $('us-legend').innerHTML = ser.map(function (s) {
+    return '<span><i style="background:' + s.color + '"></i>' + esc(s.name) + ' <b>' + f3(lastVal(s.pts)) + '%</b></span>';
+  }).join('');
+}
+
+/** 변동현황 표에 미국채 4행을 끼워 넣는다 (국내 행·로직은 손대지 않는다).
+ *  기준일이 다르다 — 국내는 DATES[LAST], 미국은 US.DATES[US.LAST].
+ *  미국 행의 변동은 전부 **미국 관측일 기준**으로 계산한다. 한국 축에 맞춰 계산하면
+ *  국내 최신일이 미국보다 앞설 때 '1일 변동'이 실제로는 며칠치 변동이 되어버린다. */
+function usChgRows() {
+  var tb = $('tbl-chg'); if (!tb || !tb.tBodies[0] || !US) return;
+  var body = tb.tBodies[0];
+  if (body.__us) return; body.__us = 1;
+  var L = US.LAST, asof = fmtD(US.DATES[L]);
+  var html = '';
+  US_CHG_ROWS.forEach(function (r) {
+    var c = r[0]; if (!US.COL[c]) return;
+    var iNow = uPrevObs(c, L); if (iNow < 0) return;
+    html += '<tr style="background:#fcfbf8"><td class="l">' + esc(r[1]) +
+      '<br><span style="font-size:10.5px;color:#8a5a20">미국 ' + fmtD(US.DATES[iNow]) + ' 기준</span></td>' +
+      '<td><b>' + f3(uPct(c, iNow)) + '</b></td>';
+    CHG_HORIZ.forEach(function (hz) {
+      var ri;
+      if (hz[1] === 'd' && hz[2] === 1) ri = uPrevObs(c, iNow - 1);            // 직전 미국 관측일
+      else ri = uPrevObs(c, uIdxLE(shiftCal(US.DATES[iNow], hz[1], hz[2])));   // 달력 역산 → 그 이전 미국 관측일
+      if (ri < 0) { html += '<td class="na" title="기준 관측일 없음">—</td>'; return; }
+      var d = (uRaw(c, iNow) - uRaw(c, ri)) / 10;
+      html += '<td class="' + cls(d) + '" title="' + fmtD(US.DATES[ri]) + ' → ' + fmtD(US.DATES[iNow]) + '">' + f1(d) + '</td>';
+    });
+    html += '</tr>';
+  });
+  if (!html) return;
+  // 신용스프레드(마지막 행) 앞에 끼워 넣어 국내 금리 행들 바로 다음에 오도록 한다
+  var last = body.rows[body.rows.length - 1];
+  if (last) last.insertAdjacentHTML('beforebegin', html);
+  else body.insertAdjacentHTML('beforeend', html);
+  var note = $('chg-note');
+  if (note) note.insertAdjacentHTML('beforeend',
+    '<br><b style="color:#8a5a20">미국채 행(옅은 베이지)은 기준일이 다릅니다 — 국내 ' + fmtD(DATES[LAST]) +
+    ', 미국 ' + asof + '.</b> 표 머리글의 날짜는 국내 기준일에서 역산한 것이며, ' +
+    '미국 행은 <b>미국 자체 날짜축(data/us_rates.json)</b>에서 각자 역산한 미국 관측일 대비로 계산합니다' +
+    '(셀에 마우스를 올리면 실제 비교 구간이 보입니다). 그래서 미국 \'1일\'은 국내 \'1일\'과 같은 날이 아닙니다.');
+}
+
+(function usLoad() {
+  var URL_US = 'data/us_rates.json';
+  function ufail(msg) {
+    var s = $('us-chart');
+    if (s) s.innerHTML = '<div class="alert e"><b>미국 금리 데이터를 불러오지 못했습니다.</b><br>' + esc(msg) +
+      '<br>국내 금리·차트 등 나머지 기능은 정상 동작합니다.</div>';
+    var a = $('us-asof'); if (a) a.textContent = '';
+    if (window.console && console.warn) console.warn('[US] ' + msg);
+  }
+  if (!window.fetch || !window.JSON) { ufail('이 브라우저는 fetch / JSON 을 지원하지 않습니다.'); return; }
+  if (location.protocol === 'file:') { ufail('로컬 파일(file://)에서는 data/us_rates.json 을 읽을 수 없습니다.'); return; }
+  try {
+    fetch(URL_US, { cache: 'default' }).then(function (r) {
+      if (!r.ok) throw new Error(r.status === 404 ? 'data/us_rates.json 이 리포지토리에 없습니다 (HTTP 404).' : 'HTTP ' + r.status);
+      return r.text();
+    }).then(function (t) {
+      var J;
+      try { J = JSON.parse(t); }
+      catch (e) { throw new Error('data/us_rates.json 을 해석하지 못했습니다 — ' + e.message); }
+      if (!J || !J.meta || !J.series || !J.dates) throw new Error('형식이 올바르지 않습니다 (meta/series/dates 없음).');
+      var n = J.meta.nrows, dt = new Int32Array(n), i;
+      for (i = 0; i < n; i++) dt[i] = +J.dates.substr(i * 8, 8);
+      var col = {}, lbl = {}, mt = {};
+      J.series.forEach(function (s) {
+        try { col[s.c] = decodeSeries(s.d, n, s.fi, s.li); mt[s.c] = s; } catch (e) { }
+      });
+      US_CHIPS.forEach(function (r) { lbl[r[0]] = r[1]; });
+      US = { N: n, DATES: dt, COL: col, LBL: lbl, META: mt, LAST: n - 1, meta: J.meta };
+
+      var a = $('us-asof');
+      if (a) a.textContent = '최종 관측일 ' + fmtD(dt[n - 1]) + ' · ' + n.toLocaleString() + '영업일 (' +
+        fmtD(dt[0]) + ' ~) · FRED';
+
+      // 칩
+      var pk = $('us-pick');
+      US_CHIPS.forEach(function (r) {
+        if (!col[r[0]]) return;                       // 데이터에 없는 시리즈는 칩을 만들지 않는다
+        var b = el('button', {}, esc(r[1]));
+        var m = mt[r[0]];
+        if (m) b.title = (m.full || r[1]) + ' · ' + fmtD(dt[m.fi]) + ' ~ ' + fmtD(dt[m.li]) + ' · ' + m.n.toLocaleString() + '일';
+        if (usSel.indexOf(r[0]) >= 0) b.className = 'on';
+        b.onclick = function () {
+          var k = usSel.indexOf(r[0]);
+          if (k >= 0) usSel.splice(k, 1); else usSel.push(r[0]);
+          b.className = usSel.indexOf(r[0]) >= 0 ? 'on' : '';
+          guard('미국 시계열', drawUSTS);
+        };
+        pk.appendChild(b);
+      });
+      // 기간 프리셋
+      var rb = $('us-range');
+      [['1M', 'm', 1], ['3M', 'm', 3], ['6M', 'm', 6], ['1Y', 'y', 1], ['3Y', 'y', 3], ['5Y', 'y', 5], ['10Y', 'y', 10], ['전체', 'a', 0]].forEach(function (r) {
+        var b = el('button', {}, r[0]); b.dataset.k = r[0]; b.dataset.u = r[1]; b.dataset.n = r[2];
+        if (r[0] === usRange) b.className = 'on';
+        b.onclick = function () {
+          usRange = r[0];
+          [].forEach.call(rb.children, function (x) { x.className = x.dataset.k === usRange ? 'on' : ''; });
+          guard('미국 시계열', drawUSTS);
+        };
+        rb.appendChild(b);
+      });
+      guard('미국 시계열', drawUSTS);
+      guard('변동현황 미국행', usChgRows);
+      if (window.console && console.log) {
+        console.log('[US] ' + J.meta.nseries + '시리즈 · ' + n + '영업일 · ' + J.meta.from + '~' + J.meta.to +
+          ' · 축=' + (J.meta.axis || 'US'));
+      }
+    })['catch'](function (e) { ufail((e && e.message) ? e.message : String(e)); });
+  } catch (e) { ufail(String(e)); }
+})();
+
 /* ---- [NEW] 시작 뷰 + 리사이즈 대응 + 자가진단 ---- */
 showView('dash');
 (function () {
   var t = null;
-  window.onresize = function () { if (t) clearTimeout(t); t = setTimeout(function () { guard('리사이즈', drawTS); }, 180); };
+  window.onresize = function () {
+    if (t) clearTimeout(t);
+    t = setTimeout(function () { guard('리사이즈', drawTS); guard('리사이즈(미국)', drawUSTS); }, 180);
+  };
 })();
 (function selfCheck() {
   try {
