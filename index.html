@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="robots" content="noindex,nofollow">
-<title>금리 분석 대시보드 — 2026-09-16 기준</title>
+<title>금리 분석 대시보드</title>
 <style>
   html,body{margin:0;padding:0;background:#f4f6f9;}
   body{font-family:"맑은 고딕","Malgun Gothic","Apple SD Gothic Neo",AppleGothic,Dotum,sans-serif;color:#1c2530;font-size:13px;}
@@ -1249,6 +1249,7 @@ var LAST = N - 1, PREV = N - 2;
   var wd = ['일', '월', '화', '수', '목', '금', '토'][toJS(DATES[LAST]).getDay()];
   $('asof').textContent = fmtD(DATES[LAST]) + ' (' + wd + ')';
   try { if (window.__NEWS_RATES_ASOF) window.__NEWS_RATES_ASOF(DATA.meta.to); } catch (e) { }
+  try { document.title = '금리 분석 대시보드 — ' + fmtD(DATES[LAST]) + ' 기준'; } catch (e) { }
   $('asofcnt').textContent = '수록 ' + (SERIES.length + 1) + '개 시리즈 · ' + N.toLocaleString() + '영업일 (' + fmtD(DATES[0]) + ' ~ ' + fmtD(DATES[LAST]) + ')';
   var br = pct(DATA.base.c, LAST);
   $('baserate').textContent = isNaN(br) ? '—' : br.toFixed(2) + '%';
