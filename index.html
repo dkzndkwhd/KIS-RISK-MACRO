@@ -920,6 +920,18 @@ var GROUPS = [];
      full     검색·툴팁용 정식명
      note     이 시리즈가 선택됐을 때 결과 화면에 붙일 해석 주석 (없으면 생략)
    ================================================================ */
+/* 미국 시리즈 공통 주석 */
+var US_NOTE =
+  '<b>미국 금리는 한국 영업일 축에 일자 기준으로 맞춰 실려 있습니다.</b> ' +
+  '미국 휴일(연 10일 안팎)과 한국 공휴일이 어긋나므로 값이 비는 날이 정상적으로 생기며, ' +
+  '또한 미국 금리는 한국 종가 이후에 형성되는 <b>같은 날짜의 뉴욕 시장 값</b>이므로, ' +
+  '국내 금리가 그것을 반영하는 것은 <b>다음 영업일</b>입니다. ' +
+  '그래서 같은 날짜끼리의 일간 변동 상관은 낮게 나옵니다 — 국고10년 × 미국채10년 기준 ' +
+  '동일자 r ≈ 0.12(전기간) / 0.23(2023년~)인 반면, 미국을 하루 앞당기면 ' +
+  'r ≈ 0.27 / 0.42 로 올라가고 이틀 앞당기면 0 근처로 꺼집니다. ' +
+  '동일자 상관이 국내 시리즈끼리(0.85~0.99)보다 훨씬 낮은 것은 데이터 오류가 아니라 이 시차 때문입니다. ' +
+  '미국 데이터는 현재 <b>수동 적재</b>라 마스터 최신일보다 며칠 뒤처질 수 있습니다.';
+
 var EXTRA_SERIES = [
   {
     key: 'BOK_BASE', label: '한국은행 기준금리', group: '기준지표',
@@ -929,10 +941,49 @@ var EXTRA_SERIES = [
       '대부분의 영업일에 일간 변동이 정확히 0이므로 변동(차분) 상관은 구조적으로 0 근처로 낮게 나오고, ' +
       '스프레드는 기준금리가 고정된 구간에서 상대 시리즈의 금리 움직임을 그대로 따라갑니다. 해석에 주의하십시오.'
   }
-  /* 예시 — 해외금리를 넣을 때 (데이터에 컬럼이 없으면 이 줄은 조용히 무시된다)
-  , { key: 'UST10Y', label: '미국채', group: '해외금리', col: '미국채_10년', maturity: 120,
-      full: 'US Treasury 10Y', note: '해외금리는 한국 영업일 기준으로 정렬되어 있어 휴일 차이로 결측이 생길 수 있습니다.' }
-  */
+
+  /* ---- 미국 금리 (FRED, 2000~ / 수동 적재) ------------------------------
+     마스터 CSV 에 한국 영업일 기준 left join 으로 실려 있고, rates.json 의
+     extra[] 로 나온다. 미국 휴일에는 값이 없으므로(연 10일 안팎) 결측이 정상이다.
+     데이터에 컬럼이 없으면 아래 줄들은 조용히 무시된다. ------------------- */
+  , {
+    key: 'US_DFF', label: '미국 연방기금금리(DFF)', group: '기준지표',
+    col: '미국기준금리_DFF', maturity: null,
+    full: 'Federal Funds Effective Rate, daily (FRED: DFF)',
+    note: US_NOTE + ' <b>DFF 는 일별 실효 연방기금금리</b>로, FOMC 목표범위가 바뀐 날 외에는 ' +
+      '거의 움직이지 않는 준(準)계단식 시계열입니다. 일간 변동 상관은 구조적으로 낮게 나옵니다.'
+  }
+  , {
+    key: 'US_EFFR', label: '미국 실효연방기금금리(EFFR)', group: '기준지표',
+    col: '미국단기금리_EFFR', maturity: null,
+    full: 'Effective Federal Funds Rate (FRED: EFFR)',
+    note: US_NOTE + ' <b>EFFR 은 DFF 와 사실상 같은 금리</b>입니다(출처·집계만 다름). ' +
+      'DFF 와 함께 쓰면 거의 동일한 두 시리즈를 비교하게 되므로 주의하십시오.'
+  }
+  , {
+    key: 'US_SOFR', label: '미국 SOFR(담보부익일물)', group: '기준지표',
+    col: '미국단기금리_SOFR', maturity: null,
+    full: 'Secured Overnight Financing Rate (FRED: SOFR)',
+    note: US_NOTE + ' <b>SOFR 은 2018-04-03 부터만 존재</b>합니다. 그 이전 구간을 포함해 ' +
+      '계산하면 표본이 자동으로 잘리니 기간 표시를 확인하십시오. 분기말·연말에 담보 수급으로 ' +
+      '일시 급등(스파이크)하는 성질이 있습니다.'
+  }
+  , { key: 'UST_1M', label: '미국채', group: '해외금리', col: '미국채_1월', maturity: 1, full: 'US Treasury Constant Maturity 1M', note: US_NOTE }
+  , { key: 'UST_3M', label: '미국채', group: '해외금리', col: '미국채_3월', maturity: 3, full: 'US Treasury Constant Maturity 3M', note: US_NOTE }
+  , { key: 'UST_6M', label: '미국채', group: '해외금리', col: '미국채_6월', maturity: 6, full: 'US Treasury Constant Maturity 6M', note: US_NOTE }
+  , { key: 'UST_1Y', label: '미국채', group: '해외금리', col: '미국채_1년', maturity: 12, full: 'US Treasury Constant Maturity 1Y', note: US_NOTE }
+  , { key: 'UST_2Y', label: '미국채', group: '해외금리', col: '미국채_2년', maturity: 24, full: 'US Treasury Constant Maturity 2Y', note: US_NOTE }
+  , { key: 'UST_3Y', label: '미국채', group: '해외금리', col: '미국채_3년', maturity: 36, full: 'US Treasury Constant Maturity 3Y', note: US_NOTE }
+  , { key: 'UST_5Y', label: '미국채', group: '해외금리', col: '미국채_5년', maturity: 60, full: 'US Treasury Constant Maturity 5Y', note: US_NOTE }
+  , {
+    key: 'UST_7Y', label: '미국채', group: '해외금리', col: '미국채_7년', maturity: 84,
+    full: 'US Treasury Constant Maturity 7Y',
+    note: US_NOTE + ' <b>7년물은 이 데이터셋에서 2021-09-17 부터만 존재</b>합니다(그 이전 구간 공백). ' +
+      '장기 비교에는 5년·10년을 쓰십시오.'
+  }
+  , { key: 'UST_10Y', label: '미국채', group: '해외금리', col: '미국채_10년', maturity: 120, full: 'US Treasury Constant Maturity 10Y', note: US_NOTE }
+  , { key: 'UST_20Y', label: '미국채', group: '해외금리', col: '미국채_20년', maturity: 240, full: 'US Treasury Constant Maturity 20Y', note: US_NOTE }
+  , { key: 'UST_30Y', label: '미국채', group: '해외금리', col: '미국채_30년', maturity: 360, full: 'US Treasury Constant Maturity 30Y', note: US_NOTE }
 ];
 
 /* rates.json 에 extra[] 가 있으면 COL 에 디코드해 올린다 (없어도 무해) */
