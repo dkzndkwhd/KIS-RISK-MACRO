@@ -419,7 +419,10 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
   <section class="card span2" id="ts-sec">
     <h2>금리 시계열 (%)</h2>
     <div class="serpick" id="ts-pick"></div>
-    <div class="rangebar" id="ts-range" style="margin-top:10px"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin:10px 0 10px">
+      <div class="rangebar" id="ts-range" style="flex:1;margin:0"></div>
+      <button type="button" class="btn" id="ts-dl" style="margin-right:0;white-space:nowrap" title="선택한 시리즈의 표시 구간 전체를 일자별 로데이터로 내려받습니다">CSV 다운로드</button>
+    </div>
     <div class="chartbox" id="ts-chart"></div>
     <div class="lgd" id="ts-legend"></div>
     <p class="note">결측 구간은 선을 끊는다(보간하지 않음). 세로 점선은 2023-01-09 산출기준 변경일. <b>x축은 한국 영업일</b>이며, 미국 금리는 아래 별도 카드에서 미국 자체 날짜축으로 본다.</p>
@@ -439,7 +442,10 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
   <section class="card span2" id="us-sec">
     <h2>미국 금리 시계열 (%) <span id="us-asof" style="font-weight:400;color:#67727f;font-size:11.5px">—</span></h2>
     <div class="serpick" id="us-pick"></div>
-    <div class="rangebar" id="us-range" style="margin-top:10px"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin:10px 0 10px">
+      <div class="rangebar" id="us-range" style="flex:1;margin:0"></div>
+      <button type="button" class="btn" id="us-dl" style="margin-right:0;white-space:nowrap" title="선택한 시리즈의 표시 구간 전체를 일자별 로데이터로 내려받습니다">CSV 다운로드</button>
+    </div>
     <div class="chartbox" id="us-chart"><p class="note" id="us-stat">미국 금리 데이터(data/us_rates.json)를 불러오는 중…</p></div>
     <div class="lgd" id="us-legend"></div>
     <!-- 2026-09-22: 이 note 가 국내 카드 note 보다 3~4배 길어 카드 높이를 벌렸다. 본문은 인라인 접기(.inlx)로
@@ -565,7 +571,7 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
   </div>
     </section>
     <section class="card resultpanel">
-      <div class="panelhead"><h2>스트레스테스트 · 결과</h2><button type="button" class="dlbtn" id="st-dl" disabled title="화면에 표시된 표를 계산 근거 주석과 함께 CSV 로 내려받습니다">CSV 다운로드</button></div>
+      <div class="panelhead"><h2>스트레스테스트 · 결과</h2><button type="button" class="dlbtn" id="st-dl" disabled title="화면 표 + 계산 근거 주석 + 그래프가 담고 있는 로데이터 전부를 하나의 CSV 로 내려받습니다">CSV 다운로드</button></div>
       <div class="out" id="st-out"><div class="placeholder">좌측에서 조건을 설정한 뒤 [분석 실행] 을 누르십시오.</div></div>
     </section>
   </div>
@@ -609,7 +615,7 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
   </div>
     </section>
     <section class="card resultpanel">
-      <div class="panelhead"><h2>VaR · 결과</h2><button type="button" class="dlbtn" id="vr-dl" disabled title="화면에 표시된 표를 계산 근거 주석과 함께 CSV 로 내려받습니다">CSV 다운로드</button></div>
+      <div class="panelhead"><h2>VaR · 결과</h2><button type="button" class="dlbtn" id="vr-dl" disabled title="화면 표 + 계산 근거 주석 + 그래프가 담고 있는 로데이터 전부를 하나의 CSV 로 내려받습니다">CSV 다운로드</button></div>
       <div class="out" id="vr-out"><div class="placeholder">좌측에서 조건을 설정한 뒤 [산출] 을 누르십시오.</div></div>
     </section>
   </div>
@@ -643,7 +649,7 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
   </div>
     </section>
     <section class="card resultpanel">
-      <div class="panelhead"><h2>커브 분석 · 결과</h2><button type="button" class="dlbtn" id="cv-dl" disabled title="화면에 표시된 표를 계산 근거 주석과 함께 CSV 로 내려받습니다">CSV 다운로드</button></div>
+      <div class="panelhead"><h2>커브 분석 · 결과</h2><button type="button" class="dlbtn" id="cv-dl" disabled title="화면 표 + 계산 근거 주석 + 그래프가 담고 있는 로데이터 전부를 하나의 CSV 로 내려받습니다">CSV 다운로드</button></div>
       <div class="out" id="cv-out"><div class="placeholder">좌측에서 조건을 설정한 뒤 [비교] 을 누르십시오.</div></div>
     </section>
   </div>
@@ -670,7 +676,7 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
   </div>
     </section>
     <section class="card resultpanel">
-      <div class="panelhead"><h2>스프레드 분석 · 결과</h2><button type="button" class="dlbtn" id="sp-dl" disabled title="화면에 표시된 표를 계산 근거 주석과 함께 CSV 로 내려받습니다">CSV 다운로드</button></div>
+      <div class="panelhead"><h2>스프레드 분석 · 결과</h2><button type="button" class="dlbtn" id="sp-dl" disabled title="화면 표 + 계산 근거 주석 + 그래프가 담고 있는 로데이터 전부를 하나의 CSV 로 내려받습니다">CSV 다운로드</button></div>
       <div class="out" id="sp-out"><div class="placeholder">좌측에서 조건을 설정한 뒤 [분석] 을 누르십시오.</div></div>
     </section>
   </div>
@@ -700,7 +706,7 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
   </div>
     </section>
     <section class="card resultpanel">
-      <div class="panelhead"><h2>커브+스프레드 분석 · 결과</h2><button type="button" class="dlbtn" id="cs-dl" disabled title="화면에 표시된 표를 계산 근거 주석과 함께 CSV 로 내려받습니다">CSV 다운로드</button></div>
+      <div class="panelhead"><h2>커브+스프레드 분석 · 결과</h2><button type="button" class="dlbtn" id="cs-dl" disabled title="화면 표 + 계산 근거 주석 + 그래프가 담고 있는 로데이터 전부를 하나의 CSV 로 내려받습니다">CSV 다운로드</button></div>
       <div class="out" id="cs-out"><div class="placeholder">좌측에서 조건을 설정한 뒤 [분석] 을 누르십시오.</div></div>
     </section>
   </div>
@@ -752,7 +758,7 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
   </div>
     </section>
     <section class="card resultpanel">
-      <div class="panelhead"><h2>상관관계 분석 · 결과</h2><button type="button" class="dlbtn" id="co-dl" disabled title="화면에 표시된 표를 계산 근거 주석과 함께 CSV 로 내려받습니다">CSV 다운로드</button></div>
+      <div class="panelhead"><h2>상관관계 분석 · 결과</h2><button type="button" class="dlbtn" id="co-dl" disabled title="화면 표 + 계산 근거 주석 + 그래프가 담고 있는 로데이터 전부를 하나의 CSV 로 내려받습니다">CSV 다운로드</button></div>
       <div class="out" id="co-out"><div class="placeholder">좌측에서 두 시리즈를 고른 뒤 [분석] 을 누르십시오.</div></div>
     </section>
   </div>
@@ -1138,6 +1144,23 @@ function f2(x) { return (isNaN(x) ? '—' : x.toFixed(2)); }
 function cls(x) { return isNaN(x) ? 'na' : (x > 0.0001 ? 'up' : (x < -0.0001 ? 'dn' : 'fl')); }
 function bpCell(x) { return '<td class="' + cls(x) + '">' + f1(x) + '</td>'; }
 function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+/* ================================================================
+   [로데이터] 각 분석 도구가 화면을 그릴 때 실제로 쓴 원자료 전체.
+   CSV 다운로드에서 화면 표 뒤에 '로데이터' 섹션으로 이어 붙인다.
+   구조 : RAWDATA[key] = { sections: [ {title, note, head:[], rows:[[..],..]} ] }
+          rows 대신 build:function(){return [[..],..];} 를 주면 다운로드 시점에 만든다
+          (화면을 그릴 때마다 큰 배열을 들고 있지 않기 위해서다).
+   원칙 : 화면 표시용 반올림을 거치지 않은 값을 넣는다. 결측은 빈 칸(0 채움·보간 금지).
+   ================================================================ */
+var RAWDATA = {};
+/** 숫자 → CSV 셀. NaN/null 은 빈 칸. 뒤따르는 0 은 떼어 파일 크기를 줄인다. */
+function nnum(v, d) {
+  if (v === null || v === undefined || v === '' || isNaN(v)) return '';
+  return String(+(+v).toFixed(d === undefined ? 6 : d));
+}
+/** DATES 인덱스 → 'YYYY-MM-DD' */
+function dcell(i) { return (i === undefined || i === null || i < 0) ? '' : fmtD(DATES[i]); }
 
 /* ================================================================
    퍼센타일 (히스토리컬 VaR) — 두 가지 정의를 모두 계산한다.
@@ -1845,6 +1868,7 @@ function classify(dl, ds_, thL, thS) {
 }
 
 function runStress() {
+  RAWDATA.st = null;                       // 이전 실행의 로데이터가 따라붙지 않게 초기화
   var _sc = document.querySelector('input[name=st-sc]:checked');
   if (_sc && _sc.value === 'pivot') { return guard('피벗', runPivot); }
   if (_sc && _sc.value === 'spread') { return guard('스프레드 확대', runSpreadStress); }
@@ -1868,19 +1892,23 @@ function runStress() {
   for (var i = i0; i <= i1; i++) if (!isNaN(COL[cs][i]) && !isNaN(COL[cl][i])) { eff = i; break; }
   if (eff < 0) { out.innerHTML = '<div class="alert e">해당 범위에 유효 관측치가 없습니다.</div>'; return; }
 
-  var cands = [], evalN = 0, exMiss = 0, exReg = 0;
+  var cands = [], evalN = 0, exMiss = 0, exReg = 0, allWin = [];
   for (var t = i0 + W; t <= i1; t++) {
     var b = t - W;
     if (b < i0) continue;
     evalN++;
     var ysB = COL[cs][b], ysT = COL[cs][t], ylB = COL[cl][b], ylT = COL[cl][t];
-    if (isNaN(ysB) || isNaN(ysT) || isNaN(ylB) || isNaN(ylT)) { exMiss++; continue; }
-    if (regime === 'exclude' && crossesRegime(b, t)) { exReg++; continue; }
+    var rec = { b: b, t: t, ysB: ysB, ysT: ysT, ylB: ylB, ylT: ylT, ex: '', c: null };
+    allWin.push(rec);
+    if (isNaN(ysB) || isNaN(ysT) || isNaN(ylB) || isNaN(ylT)) { exMiss++; rec.ex = '결측'; continue; }
+    if (regime === 'exclude' && crossesRegime(b, t)) { exReg++; rec.ex = '기준변경경계'; continue; }
     var ds = (ysT - ysB) / 10, dlg = (ylT - ylB) / 10;
     var dslope = dlg - ds, dlevel = levelDef === 'average' ? (ds + dlg) / 2 : ds;
     var kind = classify(dlevel, dslope, thL, thS);
     var strength = rankBy === 'level' ? Math.abs(dlevel) : (rankBy === 'slope' ? Math.abs(dslope) : Math.sqrt(dlevel * dlevel + dslope * dslope));
-    cands.push({ b: b, t: t, ds: ds, dl: dlg, dslope: dslope, dlevel: dlevel, kind: kind, strength: strength });
+    var cnd = { b: b, t: t, ds: ds, dl: dlg, dslope: dslope, dlevel: dlevel, kind: kind, strength: strength };
+    rec.c = cnd;
+    cands.push(cnd);
   }
   var matched = cands.filter(function (c) { return scen === 'all' ? c.kind !== 'none' : c.kind === scen; });
   matched.sort(function (a, b) { return b.strength - a.strength; });
@@ -1926,6 +1954,52 @@ function runStress() {
     pArr = matched.map(function (c) { return c.strength; });
     pSorted = pArr.slice().sort(function (a, b) { return a - b; });
   }
+
+  /* ---- 로데이터 : 탐색한 전체 롤링 윈도우 + 두 leg 의 일자별 원값 ---- */
+  (function () {
+    var rankOf = {}, mm;
+    for (mm = 0; mm < picked.length; mm++) rankOf[picked[mm].b + '_' + picked[mm].t] = mm + 1;
+    var mSet = {};
+    for (mm = 0; mm < matched.length; mm++) mSet[matched[mm].b + '_' + matched[mm].t] = 1;
+    var allSorted = cands.map(function (c) { return c.strength; }).sort(function (a, b) { return a - b; });
+    var mSorted = matched.map(function (c) { return c.strength; }).sort(function (a, b) { return a - b; });
+    RAWDATA.st = { sections: [
+      { title: '전체 롤링 윈도우 (퍼센타일 모집단 포함)',
+        note: '탐색 범위에서 평가한 모든 윈도우 ' + allWin.length.toLocaleString() + '건. 제외사유가 빈 칸인 행이 "유효 윈도우"이고, ' +
+              '시나리오부합=Y 인 행의 강도 배열이 화면 퍼센타일의 모집단이다.',
+        head: ['순번', '시작일', '종료일', '윈도우(영업일)', '시작일_' + matLabel(sm) + '(%)', '종료일_' + matLabel(sm) + '(%)',
+               '시작일_' + matLabel(lm) + '(%)', '종료일_' + matLabel(lm) + '(%)', 'Δ단기(bp)', 'Δ장기(bp)',
+               'Δlevel(bp)', 'Δslope(bp)', '강도(bp)', '유형', '제외사유', '시나리오부합',
+               '강도백분위_시나리오부합(%)', '강도백분위_전체유효(%)', '선정순위'],
+        build: function () {
+          var R = [], j;
+          for (j = 0; j < allWin.length; j++) {
+            var w = allWin[j], c = w.c, key = w.b + '_' + w.t;
+            R.push([j + 1, dcell(w.b), dcell(w.t), w.t - w.b,
+              nnum(w.ysB / 1000, 3), nnum(w.ysT / 1000, 3), nnum(w.ylB / 1000, 3), nnum(w.ylT / 1000, 3),
+              c ? nnum(c.ds, 4) : '', c ? nnum(c.dl, 4) : '', c ? nnum(c.dlevel, 4) : '', c ? nnum(c.dslope, 4) : '',
+              c ? nnum(c.strength, 6) : '', c ? SC_NAME[c.kind].split('(')[0] : '', w.ex,
+              c ? (mSet[key] ? 'Y' : 'N') : '',
+              (c && mSet[key]) ? nnum(pctlRankOf(mSorted, c.strength), 4) : '',
+              c ? nnum(pctlRankOf(allSorted, c.strength), 4) : '',
+              rankOf[key] || '']);
+          }
+          return R;
+        } },
+      { title: '두 leg 의 일자별 원값 (탐색 범위 전체)',
+        note: '윈도우 계산에 쓰인 원자료. 결측은 빈 칸(보간·전방채움 없음).',
+        head: ['일자', cs + '(%)', cl + '(%)', '스프레드_장기-단기(bp)'],
+        build: function () {
+          var R = [], j, a = COL[cs], b2 = COL[cl];
+          for (j = i0; j <= i1; j++) {
+            var x = a[j], y = b2[j];
+            R.push([fmtD(DATES[j]), nnum(x / 1000, 3), nnum(y / 1000, 3),
+              (isNaN(x) || isNaN(y)) ? '' : nnum((y - x) / 10, 4)]);
+          }
+          return R;
+        } }
+    ] };
+  })();
 
   if (!picked.length) {
     h.push('<div class="alert e">조건에 부합하는 구간이 없습니다. θ를 낮추거나 윈도우·범위를 조정해 보십시오.</div>');
@@ -2201,18 +2275,22 @@ function runSpreadStress() {
   for (var i = i0; i <= i1; i++) if (!isNaN(A[i]) && !isNaN(B[i])) { eff = i; break; }
   if (eff < 0) { out.innerHTML = '<div class="alert e">해당 범위에 양쪽 모두 값이 있는 날이 없습니다.</div>'; return; }
 
-  var cands = [], evalN = 0, exMiss = 0, exReg = 0;
+  var cands = [], evalN = 0, exMiss = 0, exReg = 0, allWin = [];
   for (var t = i0 + W; t <= i1; t++) {
     var b = t - W;
     if (b < i0) continue;
     evalN++;
+    var rec = { b: b, t: t, ex: '', c: null };
+    allWin.push(rec);
     // A 또는 B 중 하나라도 결측인 날(윈도우 양 끝)은 그 윈도우를 계산에서 제외
-    if (isNaN(A[b]) || isNaN(A[t]) || isNaN(B[b]) || isNaN(B[t])) { exMiss++; continue; }
-    if (regime === 'exclude' && crossesRegime(b, t)) { exReg++; continue; }
+    if (isNaN(A[b]) || isNaN(A[t]) || isNaN(B[b]) || isNaN(B[t])) { exMiss++; rec.ex = '결측'; continue; }
+    if (regime === 'exclude' && crossesRegime(b, t)) { exReg++; rec.ex = '기준변경경계'; continue; }
     var s0 = (A[b] - B[b]) / 10, s1 = (A[t] - B[t]) / 10;
     var d = s1 - s0, dA = (A[t] - A[b]) / 10, dB = (B[t] - B[b]) / 10;
     var strength = dir === 'widen' ? d : (dir === 'narrow' ? -d : Math.abs(d));
-    cands.push({ b: b, t: t, s0: s0, s1: s1, d: d, dA: dA, dB: dB, strength: strength });
+    var cnd = { b: b, t: t, s0: s0, s1: s1, d: d, dA: dA, dB: dB, strength: strength };
+    rec.c = cnd;
+    cands.push(cnd);
   }
   cands.sort(function (x, y) { return y.strength - x.strength; });
   var picked = [];
@@ -2255,6 +2333,45 @@ function runSpreadStress() {
     pArr = cands.map(function (c) { return c.strength; });
     pSorted = pArr.slice().sort(function (a, b) { return a - b; });
   }
+
+  /* ---- 로데이터 : 탐색한 전체 롤링 윈도우 + 양 leg 의 일자별 원값 ---- */
+  (function () {
+    var rankOf = {}, mm;
+    for (mm = 0; mm < picked.length; mm++) rankOf[picked[mm].b + '_' + picked[mm].t] = mm + 1;
+    var allSorted = cands.map(function (c) { return c.strength; }).sort(function (a, b) { return a - b; });
+    RAWDATA.st = { sections: [
+      { title: '전체 롤링 윈도우 (퍼센타일 모집단 포함)',
+        note: '탐색 범위에서 평가한 모든 윈도우 ' + allWin.length.toLocaleString() + '건. 제외사유가 빈 칸인 행이 유효 윈도우이며, ' +
+              '그 강도 배열이 화면 퍼센타일의 모집단이다. 스프레드 = A − B.',
+        head: ['순번', '시작일', '종료일', '윈도우(영업일)', '시작_A(%)', '종료_A(%)', '시작_B(%)', '종료_B(%)',
+               '시작_스프레드(bp)', '종료_스프레드(bp)', 'Δ스프레드(bp)', 'ΔA(bp)', 'ΔB(bp)', '강도(bp)',
+               '제외사유', '강도백분위_유효(%)', '선정순위'],
+        build: function () {
+          var R = [], j;
+          for (j = 0; j < allWin.length; j++) {
+            var w = allWin[j], c = w.c, key = w.b + '_' + w.t;
+            R.push([j + 1, dcell(w.b), dcell(w.t), w.t - w.b,
+              nnum(A[w.b] / 1000, 3), nnum(A[w.t] / 1000, 3), nnum(B[w.b] / 1000, 3), nnum(B[w.t] / 1000, 3),
+              c ? nnum(c.s0, 4) : '', c ? nnum(c.s1, 4) : '', c ? nnum(c.d, 4) : '',
+              c ? nnum(c.dA, 4) : '', c ? nnum(c.dB, 4) : '', c ? nnum(c.strength, 6) : '',
+              w.ex, c ? nnum(pctlRankOf(allSorted, c.strength), 4) : '', rankOf[key] || '']);
+          }
+          return R;
+        } },
+      { title: '양 leg 의 일자별 원값 (탐색 범위 전체)',
+        note: '윈도우 계산에 쓰인 원자료. 결측은 빈 칸(보간·전방채움 없음).',
+        head: ['일자', ca + '(%)', cb + '(%)', '스프레드_A-B(bp)'],
+        build: function () {
+          var R = [], j;
+          for (j = i0; j <= i1; j++) {
+            var x = A[j], y = B[j];
+            R.push([fmtD(DATES[j]), nnum(x / 1000, 3), nnum(y / 1000, 3),
+              (isNaN(x) || isNaN(y)) ? '' : nnum((x - y) / 10, 4)]);
+          }
+          return R;
+        } }
+    ] };
+  })();
 
   if (!picked.length) {
     h.push('<div class="alert e">유효한 윈도우가 없습니다. 윈도우 길이·탐색 범위를 조정해 보십시오.</div>');
@@ -2530,6 +2647,59 @@ function runPivot() {
     out.innerHTML = h.join(''); return;
   }
 
+  /* ---- 로데이터 : 피벗별 전 만기 값 + 기간 내 일자별 원값 ---- */
+  (function () {
+    var GT0 = typeByName('국고채권');
+    RAWDATA.st = { sections: [
+      { title: '피벗 × 만기별 전체 값 (' + typeName + ')',
+        note: '화면 상단 표·막대의 원자료. 윈도우 = 전환일 t₀ ~ t₀+' + W + '영업일. Δ = (y(t₁) − y(t₀)) × 100 [bp].',
+        head: ['피벗순번', '전환일', '전환유형', '기준금리_before(%)', '기준금리_after(%)', '윈도우종료일', '윈도우(영업일)',
+               '부분윈도우', '기준변경경계포함', '만기', '컬럼', '전환일값(%)', '종료일값(%)', 'Δ(bp)'],
+        build: function () {
+          var R = [], j, k;
+          for (j = 0; j < rows.length; j++) {
+            var r = rows[j];
+            for (k = 0; k < r.mats.length; k++) {
+              var m = r.mats[k];
+              R.push([j + 1, dcell(r.b), (r.p.dir > 0 ? '인상 전환' : '인하 전환'),
+                nnum(r.p.from / 1000, 3), nnum(r.p.to / 1000, 3), dcell(r.t), r.bizDays,
+                r.truncated ? 'Y' : '', r.reg ? 'Y' : '',
+                m.k, m.col, nnum(m.v0, 3), nnum(m.v1, 3), nnum(m.v, 4)]);
+            }
+          }
+          return R;
+        } },
+      { title: '피벗 × 국고채권 전 만기 변동 (화면 표와 동일, 전체 정밀도)',
+        note: '전환일 → 윈도우 종료일 변동(bp).',
+        head: ['피벗순번', '전환일', '전환유형', '윈도우종료일', '만기', '컬럼', '전환일값(%)', '종료일값(%)', 'Δ(bp)'],
+        build: function () {
+          var R = [], j, k;
+          for (j = 0; j < rows.length; j++) {
+            var r = rows[j];
+            for (k = 0; k < GT0.mats.length; k++) {
+              var m = GT0.mats[k], v0 = pct(m.col, r.b), v1 = pct(m.col, r.t);
+              R.push([j + 1, dcell(r.b), (r.p.dir > 0 ? '인상 전환' : '인하 전환'), dcell(r.t),
+                m.label, m.col, nnum(v0, 3), nnum(v1, 3),
+                (isNaN(v0) || isNaN(v1)) ? '' : nnum((v1 - v0) * 100, 4)]);
+            }
+          }
+          return R;
+        } },
+      { title: '일자별 원값 (탐색 범위 전체) — 하단 차트의 모든 점',
+        note: '결측은 빈 칸(보간·전방채움 없음). 기준금리는 전방채움된 고시 계열이다.',
+        head: ['일자', cs + '(%)', cl + '(%)', DATA.base.c + '(%)', '피벗여부'],
+        build: function () {
+          var R = [], j, pvSet = {};
+          for (j = 0; j < rows.length; j++) pvSet[rows[j].b] = (rows[j].p.dir > 0 ? '인상 전환' : '인하 전환');
+          for (j = i0; j <= i1; j++) {
+            R.push([fmtD(DATES[j]), nnum(pct(cs, j), 3), nnum(pct(cl, j), 3),
+              nnum(COL[DATA.base.c][j] / 1000, 3), pvSet[j] || '']);
+          }
+          return R;
+        } }
+    ] };
+  })();
+
   var nTrunc = rows.filter(function (r) { return r.truncated; }).length;
   var nReg = rows.filter(function (r) { return r.reg; }).length;
   if (nTrunc) {
@@ -2754,6 +2924,7 @@ var vrAvail = null;
 })();
 
 function runVar() {
+  RAWDATA.vr = null;
   var typeName = $('vr-type').value, m = +$('vr-mat').value, c = colOf(typeName, m);
   var hz = Math.max(1, Math.round(+$('vr-h').value || 1));
   var p = +$('vr-p').value, side = $('vr-side').value, interp = $('vr-interp').value;
@@ -2763,16 +2934,20 @@ function runVar() {
   var i0 = idxGE(parseD($('vr-from').value)), i1 = idxLE(parseD($('vr-to').value));
   if (i0 < 0 || i1 < 0 || i1 - i0 <= hz) { out.innerHTML = '<div class="alert e">표본기간이 변동기간 h보다 짧습니다.</div>'; return; }
 
-  var A = COL[c], samples = [], exMiss = 0, exReg = 0, exCal = 0, total = 0;
+  var A = COL[c], samples = [], exMiss = 0, exReg = 0, exCal = 0, total = 0, allObs = [];
   var calLimit = hz * 3 + 10;
   var step = ovl ? 1 : hz;
   for (var t = i0 + hz; t <= i1; t += step) {
     total++;
     var b = t - hz;
-    if (isNaN(A[b]) || isNaN(A[t])) { exMiss++; continue; }
-    if (regime === 'exclude' && crossesRegime(b, t)) { exReg++; continue; }
-    if (dayDiff(DATES[t], DATES[b]) > calLimit) { exCal++; continue; }
-    samples.push({ x: (A[t] - A[b]) / 10, t: t, b: b });
+    var orec = { b: b, t: t, ex: '', s: null };
+    allObs.push(orec);
+    if (isNaN(A[b]) || isNaN(A[t])) { exMiss++; orec.ex = '결측'; continue; }
+    if (regime === 'exclude' && crossesRegime(b, t)) { exReg++; orec.ex = '기준변경경계'; continue; }
+    if (dayDiff(DATES[t], DATES[b]) > calLimit) { exCal++; orec.ex = '달력일이상치'; continue; }
+    var smp = { x: (A[t] - A[b]) / 10, t: t, b: b };
+    orec.s = smp;
+    samples.push(smp);
   }
   if (samples.length < 2) { out.innerHTML = '<div class="alert e">유효 표본이 부족합니다 (n=' + samples.length + ').</div>'; return; }
 
@@ -2841,6 +3016,45 @@ function runVar() {
     '<div class="panel"><h3>상위 극단 10건 (상승)</h3><div class="bd"><table>' + hd + '<tbody>' + rowsHtml(top) + '</tbody></table></div></div>' +
     '<div class="panel"><h3>하위 극단 10건 (하락)</h3><div class="bd"><table>' + hd + '<tbody>' + rowsHtml(bot) + '</tbody></table></div></div></div>');
 
+  /* ---- 로데이터 : 전체 변동 관측치 + 히스토그램 구간 + 일자별 원값 ---- */
+  (function () {
+    var srt = sorted;
+    RAWDATA.vr = { sections: [
+      { title: '전체 변동 관측치 (VaR·분포·히스토그램의 모집단)',
+        note: '평가한 표본 후보 ' + allObs.length.toLocaleString() + '건 전부. 제외사유가 빈 칸인 행(n=' + n.toLocaleString() +
+              ')이 VaR 계산에 실제로 들어간 관측치다. X = (y(t) − y(t−h)) × 100 [bp].',
+        head: ['순번', '시작일(t−h)', '종료일(t)', '달력일수', '시작값(%)', '종료값(%)', '변동X(bp)', '|X|(bp)',
+               '제외사유', '오름차순순위', '백분위(%)'],
+        build: function () {
+          var R = [], j;
+          for (j = 0; j < allObs.length; j++) {
+            var o = allObs[j], s = o.s;
+            R.push([j + 1, dcell(o.b), dcell(o.t), dayDiff(DATES[o.t], DATES[o.b]),
+              nnum(A[o.b] / 1000, 3), nnum(A[o.t] / 1000, 3),
+              s ? nnum(s.x, 4) : '', s ? nnum(Math.abs(s.x), 4) : '', o.ex,
+              s ? (srt.indexOf(s.x) + 1) : '', s ? nnum(pctlRankOf(srt, s.x), 4) : '']);
+          }
+          return R;
+        } },
+      { title: '히스토그램 구간 (화면 분포 차트의 모든 막대)',
+        note: '구간폭 ' + bw.toFixed(6) + 'bp · 구간수 ' + nb + ' · 경계는 [하한, 상한) (마지막 구간만 상한 포함).',
+        head: ['구간번호', '하한(bp)', '상한(bp)', '도수', '비율(%)'],
+        build: function () {
+          var R = [], j;
+          for (j = 0; j < bins.length; j++) R.push([j + 1, nnum(bins[j].a, 6), nnum(bins[j].b, 6), bins[j].c, nnum(100 * bins[j].c / n, 6)]);
+          return R;
+        } },
+      { title: '일자별 원값 (표본기간 전체)',
+        note: '변동 계산에 쓰인 원자료. 결측은 빈 칸.',
+        head: ['일자', c + '(%)'],
+        build: function () {
+          var R = [], j;
+          for (j = i0; j <= i1; j++) R.push([fmtD(DATES[j]), nnum(A[j] / 1000, 3)]);
+          return R;
+        } }
+    ] };
+  })();
+
   h.push(evid([
     ['사용 컬럼', esc(c)],
     ['요청 표본기간', fmtD(reqFrom) + ' ~ ' + fmtD(parseD($('vr-to').value))],
@@ -2899,6 +3113,7 @@ function curveAt(typeName, ymd) {
   return { t: t, i: i, pts: t.mats.map(function (m) { return { label: m.label, months: m.months, col: m.col, v: i < 0 ? NaN : pct(m.col, i) }; }) };
 }
 function runCurve() {
+  RAWDATA.cv = null;
   var mode = document.querySelector('input[name=cv-mode]:checked').value;
   var xLog = $('cv-x').value === 'log';
   var out = $('cv-out'), h = [];
@@ -2982,6 +3197,24 @@ function runCurve() {
   var miss = rows.filter(function (r) { return isNaN(r.d); });
   if (miss.length) h.push('<div class="alert i" style="margin-top:10px">한쪽 결측/미고시로 차이를 계산하지 않은 만기: ' + miss.map(function (r) { return esc(r.k); }).join(', ') + '.</div>');
 
+  /* ---- 로데이터 : 만기별 전체 값 (그린 선의 모든 점) ---- */
+  RAWDATA.cv = { sections: [
+    { title: '만기별 전체 값 — 두 커브의 모든 점',
+      note: '차트에 그려진 점과 만기별 차이 막대의 원자료. 한쪽만 있는 만기도 값 그대로 싣고 차이만 빈 칸으로 둔다(보간 없음).',
+      head: ['만기(개월)', '만기라벨', 'x축값(' + (xLog ? 'log10(개월)' : '개월') + ')',
+             'A_이름', 'A_컬럼', 'A_일자', 'A_값(%)', 'B_이름', 'B_컬럼', 'B_일자', 'B_값(%)', '차이_A-B(bp)'],
+      build: function () {
+        var R = [], j;
+        for (j = 0; j < rows.length; j++) {
+          var r = rows[j];
+          R.push([r.m, r.k, nnum(X(r.m), 6),
+            nameA, r.ca || '', fmtD(DATES[A.i]), nnum(r.va, 3),
+            nameB, r.cb || '', fmtD(DATES[B.i]), nnum(r.vb, 3), nnum(r.d, 4)]);
+        }
+        return R;
+      } }
+  ] };
+
   h.push(evid([
     ['커브 A', esc(nameA) + ' · 실제 사용일 ' + fmtD(DATES[A.i]) + ' (요청 ' + fmtD(reqA) + ')'],
     ['커브 B', esc(nameB) + ' · 실제 사용일 ' + fmtD(DATES[B.i]) + ' (요청 ' + fmtD(reqB) + ')'],
@@ -3015,6 +3248,7 @@ var spAvailA = null, spAvailB = null;
 })();
 
 function runSpread() {
+  RAWDATA.sp = null;
   var ta = $('sp-ta').value, ma = +$('sp-ma').value, tb = $('sp-tb').value, mb = +$('sp-mb').value;
   var ca = colOf(ta, ma), cb = colOf(tb, mb), out = $('sp-out');
   if (!ca || !cb) { out.innerHTML = '<div class="alert e">선택한 조합의 컬럼이 없습니다.</div>'; return; }
@@ -3090,6 +3324,34 @@ function runSpread() {
   var qs = [0, 5, 10, 25, 50, 75, 90, 95, 100];
   h.push('<table style="width:auto;margin-top:16px"><thead><tr><th>분위</th>' + qs.map(function (q) { return '<th>p' + q + '</th>'; }).join('') + '</tr></thead><tbody><tr><td class="l">스프레드 (bp)</td>' +
     qs.map(function (q) { return '<td>' + percentile(sorted, q, 'linear').toFixed(1) + '</td>'; }).join('') + '</tr></tbody></table>');
+
+  /* ---- 로데이터 : 전 기간 일자별 스프레드 시계열 (양 leg 원값 포함) ---- */
+  (function () {
+    var srt = sorted;
+    RAWDATA.sp = { sections: [
+      { title: '일자별 스프레드 시계열 (차트의 모든 점)',
+        note: '요청 기간의 모든 영업일. 한쪽이라도 결측이면 스프레드를 정의하지 않고 빈 칸으로 둔다(inner join, 보간·전방채움 없음). ' +
+              '백분위 = 100 × #{S ≤ 해당일 S} / n, n = ' + n.toLocaleString() + '. 평균 μ=' + mean.toFixed(6) + ', 표본표준편차 σ=' + sd.toFixed(6) + '.',
+        head: ['일자', 'A_' + ca + '(%)', 'B_' + cb + '(%)', '스프레드(bp)', '결측여부', 'z-score', '백분위(%)'],
+        build: function () {
+          var R = [], j;
+          for (j = i0; j <= i1; j++) {
+            var x = A[j], y = B[j], ok = !(isNaN(x) || isNaN(y)), s = ok ? (x - y) / 10 : NaN;
+            R.push([fmtD(DATES[j]), nnum(x / 1000, 3), nnum(y / 1000, 3), nnum(s, 4),
+              ok ? '' : '결측', ok && sd ? nnum((s - mean) / sd, 6) : '', ok ? nnum(pctlRankOf(srt, s), 6) : '']);
+          }
+          return R;
+        } },
+      { title: '스프레드 분포 (오름차순 정렬 전체)',
+        note: '화면 분위표(p0~p100)를 재현하기 위한 정렬된 모집단 n=' + n.toLocaleString() + '건.',
+        head: ['오름차순순위', '스프레드(bp)'],
+        build: function () {
+          var R = [], j;
+          for (j = 0; j < srt.length; j++) R.push([j + 1, nnum(srt[j], 4)]);
+          return R;
+        } }
+    ] };
+  })();
 
   h.push(evid([
     ['leg A 컬럼', esc(ca)], ['leg B 컬럼', esc(cb)],
@@ -3171,6 +3433,7 @@ function csLagHTML(names) {
 })();
 
 function runCurveSpread() {
+  RAWDATA.cs = null;
   var out = $('cs-out'), h = [];
   var nameA = $('cs-ta').value, nameB = $('cs-tb').value, xLog = $('cs-x').value === 'log';
   var req1 = parseD($('cs-d1').value), req2 = parseD($('cs-d2').value);
@@ -3313,6 +3576,26 @@ function runCurveSpread() {
   var miss = rows.filter(function (r) { return isNaN(r.d); });
   if (miss.length) h.push('<div class="alert i" style="margin-top:10px">네 값 중 하나 이상이 결측/미고시라 <b>Δ스프레드를 계산하지 않은 만기 ' + miss.length + '개</b>: ' +
     miss.map(function (r) { return esc(r.k); }).join(', ') + '. (보간·전방채움 없음)</div>');
+
+  /* ---- 로데이터 : 4개 커브의 만기별 값 + 만기별 Δ (표시 반올림 전 값) ---- */
+  RAWDATA.cs = { sections: [
+    { title: '만기별 전체 값 — 커브 4개와 Δ스프레드',
+      note: '화면 "만기별 명세" 표와 같은 행이되 표시 반올림을 거치지 않은 값이다. 차트 4개 선의 모든 점이 여기에 있다. ' +
+            '네 값 중 하나라도 결측이면 s1·s2·Δ 를 계산하지 않고 빈 칸으로 둔다(보간 없음).',
+      head: ['만기(개월)', '만기라벨', 'x축값(' + (xLog ? 'log10(개월)' : '개월') + ')',
+             'A_' + nameA + '@' + L1 + '(%)', 'A_' + nameA + '@' + L2 + '(%)',
+             'B_' + nameB + '@' + L1 + '(%)', 'B_' + nameB + '@' + L2 + '(%)',
+             '스프레드@' + L1 + '(bp)', '스프레드@' + L2 + '(bp)', 'Δ스프레드(bp)'],
+      build: function () {
+        var R = [], j;
+        for (j = 0; j < rows.length; j++) {
+          var r = rows[j];
+          R.push([r.m, r.k, nnum(X(r.m), 6), nnum(r.a1, 3), nnum(r.a2, 3), nnum(r.b1, 3), nnum(r.b2, 3),
+            nnum(r.s1, 4), nnum(r.s2, 4), nnum(r.d, 4)]);
+        }
+        return R;
+      } }
+  ] };
 
   h.push(evid([
     ['커브 A', esc(nameA) + ' · ' + esc(A1.t.full)],
@@ -3526,6 +3809,7 @@ var coAvailA = null, coAvailB = null;
 })();
 
 function runCorr() {
+  RAWDATA.co = null;
   var ta = $('co-ta').value, ma = +$('co-ma').value;
   var tb = $('co-tb').value, mb = +$('co-mb').value;
   var ca = colOf(ta, ma), cb = colOf(tb, mb), out = $('co-out');
@@ -3615,7 +3899,8 @@ function runCorr() {
     var g = corrGrade(st.n);
     segRows.push({
       no: si + 1, a: sg.a, b: sg.b, st: st, g: g, regCut: regCut, miss: miss, avail: rows_avail,
-      first: pr.i.length ? pr.i[0] : -1, last: pr.i.length ? pr.i[pr.i.length - 1] : -1
+      first: pr.i.length ? pr.i[0] : -1, last: pr.i.length ? pr.i[pr.i.length - 1] : -1,
+      pairs: pr                                   // 로데이터 — 이 구간에 실제로 들어간 관측쌍
     });
     var lbl = ('' + sg.b).substr(2, 2) + '.' + ('' + sg.b).substr(4, 2);
     if (WIN.kind === 'd') lbl = ('' + sg.b).substr(4, 2) + '/' + ('' + sg.b).substr(6, 2);
@@ -3752,6 +4037,55 @@ function runCorr() {
       ', β(A on B)=' + (isNaN(whole.beta) ? '—' : whole.beta.toFixed(6)) + ', σA=' + (isNaN(whole.sdx) ? '—' : whole.sdx.toFixed(4)) + unit + ', σB=' + (isNaN(whole.sdy) ? '—' : whole.sdy.toFixed(4)) + unit],
     ['2023-01-09 기준변경', regime === 'exclude' ? (isLvl ? '제외 — 경계를 넘는 구간은 신기준 구간만 사용' : '제외 — 경계 교차 차분 1건 제외') : '무시(연속 취급)']
   ]));
+
+  /* ---- 로데이터 : 구간별 상관계수 + 각 구간에 들어간 관측쌍 전부 ---- */
+  RAWDATA.co = { sections: [
+    { title: '구간별 상관계수 (막대차트의 모든 막대)',
+      note: '비중첩 ' + WIN.nm + ' 구간 ' + segRows.length + '개. r·β·σ 는 표시 반올림 전 값이다.',
+      head: ['구간번호', '구간시작(달력)', '구간종료(달력)', '실제첫관측일', '실제마지막관측일', '관측수n', '영업일수', '제외일수',
+             '기준변경절단', 'r', 'R^2', 'beta_AonB', 'mean_A(' + unit + ')', 'mean_B(' + unit + ')',
+             'sd_A(' + unit + ')', 'sd_B(' + unit + ')', '신뢰도등급'],
+      build: function () {
+        var R = [], j;
+        for (j = 0; j < segRows.length; j++) {
+          var r = segRows[j], s = r.st;
+          R.push([r.no, fmtD(r.a), fmtD(r.b), dcell(r.first), dcell(r.last), s.n, r.avail, r.miss,
+            r.regCut ? 'Y' : '', nnum(s.r, 8), isNaN(s.r) ? '' : nnum(s.r * s.r, 8), nnum(s.beta, 8),
+            nnum(s.mx, 6), nnum(s.my, 6), nnum(s.sdx, 6), nnum(s.sdy, 6), r.g.t]);
+        }
+        return R;
+      } },
+    { title: '구간별 관측쌍 원자료 (재검산용)',
+      note: '각 구간의 상관계수 계산에 실제로 들어간 (x, y) 쌍 전부. ' +
+            (isLvl ? '레벨 모드 — x·y 는 당일 수준(%).' : '변동 모드 — x·y 는 전 영업일 대비 일간 차분(bp), 직전영업일은 차분의 기준일이다.') +
+            ' 엑셀 CORREL(x범위, y범위) 로 구간별 r 을 그대로 재현할 수 있다.',
+      head: ['구간번호', '구간시작(달력)', '구간종료(달력)', '일자', (isLvl ? '직전영업일' : '직전영업일(차분기준)'),
+             'x_A_' + ca + '(' + unit + ')', 'y_B_' + cb + '(' + unit + ')',
+             'A_원값(%)', 'B_원값(%)', 'A_직전값(%)', 'B_직전값(%)'],
+      build: function () {
+        var R = [], j, q;
+        for (j = 0; j < segRows.length; j++) {
+          var r = segRows[j], p = r.pairs;
+          for (q = 0; q < p.i.length; q++) {
+            var ix = p.i[q];
+            R.push([r.no, fmtD(r.a), fmtD(r.b), fmtD(DATES[ix]), isLvl ? '' : dcell(ix - 1),
+              nnum(p.x[q], 6), nnum(p.y[q], 6),
+              nnum(A[ix] / 1000, 3), nnum(B[ix] / 1000, 3),
+              isLvl ? '' : nnum(A[ix - 1] / 1000, 3), isLvl ? '' : nnum(B[ix - 1] / 1000, 3)]);
+          }
+        }
+        return R;
+      } },
+    { title: '전 구간 통계 (분할 전, 참고) 의 관측쌍',
+      note: '화면 산점도·전 구간 통계에 쓰인 배열. n=' + whole.n.toLocaleString() + ', r=' + (isNaN(whole.r) ? '—' : whole.r.toFixed(8)) + '.',
+      head: ['일자', 'x_A(' + unit + ')', 'y_B(' + unit + ')'],
+      build: function () {
+        var R = [], q;
+        for (q = 0; q < wholePr.i.length; q++) R.push([fmtD(DATES[wholePr.i[q]]), nnum(wholePr.x[q], 6), nnum(wholePr.y[q], 6)]);
+        return R;
+      } }
+  ] };
+
   out.innerHTML = h.join('');
 }
 
@@ -3951,8 +4285,32 @@ var DL = (function () {
 
   function hasResult(out) { return resultTables(out).length > 0; }
 
+  /** RAWDATA 섹션들을 CSV 행 배열로.
+     한 파일에 '=== 로데이터 N ===' 구분 주석을 넣고 이어 붙인다(버튼을 늘리지 않는다). */
+  function rawLines(raw) {
+    var L = [], tot = 0;
+    if (!raw || !raw.sections || !raw.sections.length) return { lines: L, rows: 0 };
+    L.push('');
+    L.push(cmt('================================================================'));
+    L.push(cmt('=== 로데이터 — 위 표의 근거가 된 원자료 전부 ==='));
+    L.push(cmt('섹션마다 머리글 행이 따로 있습니다. 엑셀에서 섹션 단위로 잘라 쓰십시오.'));
+    L.push(cmt('결측은 빈 칸입니다 (0 채움·보간 없음).'));
+    L.push(cmt('================================================================'));
+    for (var s = 0; s < raw.sections.length; s++) {
+      var sec = raw.sections[s];
+      var rows = sec.rows || (sec.build ? sec.build() : []);
+      L.push('');
+      L.push(cmt('=== 로데이터 ' + (s + 1) + ' / ' + raw.sections.length + ' — ' + sec.title + '  (' + rows.length.toLocaleString() + '행) ==='));
+      if (sec.note) L.push(cmt(sec.note));
+      L.push(row(sec.head));
+      for (var r = 0; r < rows.length; r++) L.push(row(rows[r]));
+      tot += rows.length;
+    }
+    return { lines: L, rows: tot };
+  }
+
   /** 결과 패널 전체를 CSV 문자열로 */
-  function panelCSV(title, out, extraMeta) {
+  function panelCSV(title, out, extraMeta, raw) {
     var L = [];
     L.push(cmt('금리 분석 대시보드 (kisbond.com) — ' + title));
     L.push(cmt('생성 시각 : ' + nowStr()));
@@ -3979,6 +4337,12 @@ var DL = (function () {
       L.push(cmt('--- 경고 / 안내 ---'));
       for (var c = 0; c < al.length; c++) L.push(cmt(al[c]));
     }
+    var rw = rawLines(raw);
+    if (rw.rows) {
+      L.push(cmt(''));
+      L.push(cmt('이 파일은 [요약·화면 표] + [로데이터 ' + raw.sections.length + '섹션 / 총 ' + rw.rows.toLocaleString() + '행] 으로 구성됩니다.'));
+    }
+
     L.push(cmt(''));
     L.push(cmt('--- 표 ---  (화면에 표시된 표를 그대로 옮긴 것입니다. — 는 해당일 미고시)'));
 
@@ -3990,11 +4354,12 @@ var DL = (function () {
       var g = tableGrid(tbls[i]);
       for (var r = 0; r < g.length; r++) L.push(row(g[r]));
     }
+    for (i = 0; i < rw.lines.length; i++) L.push(rw.lines[i]);
     return L.join(CRLF) + CRLF;
   }
 
   /** 도구 결과 패널에 다운로드 버튼을 연결 */
-  function bindPanel(outId, btnId, title, nameFn, metaFn) {
+  function bindPanel(outId, btnId, title, nameFn, metaFn, rawFn) {
     var out = $(outId), btn = $(btnId);
     if (!out || !btn) return;
     var upd = function () {
@@ -4002,11 +4367,15 @@ var DL = (function () {
     };
     btn.onclick = function () {
       if (btn.disabled) return;
+      var old = btn.textContent;
       try {
-        var text = panelCSV(title, out, metaFn ? metaFn() : null);
+        btn.textContent = 'CSV 생성 중…'; btn.disabled = true;
+        var text = panelCSV(title, out, metaFn ? metaFn() : null, rawFn ? rawFn() : null);
         saveText(nameFn(), text);
       } catch (e) {
         alert('CSV 생성 중 오류: ' + (e && e.message ? e.message : e));
+      } finally {
+        btn.textContent = old; btn.disabled = false; upd();
       }
     };
     if (window.MutationObserver) {
@@ -4158,7 +4527,7 @@ guard('다운로드·스트레스', function () {
     '채권종류 : ' + $('st-type').value,
     '만기 : 단기 ' + matLabel(+$('st-short').value) + ' / 장기 ' + matLabel(+$('st-long').value),
     '시나리오 : ' + v + ' · 윈도우 ' + $('st-win').value + '영업일 · 상위 ' + $('st-topn').value + '건'].concat(pc);
-  });
+  }, function () { return RAWDATA.st; });
 });
 guard('다운로드·VaR', function () {
   DL.bindPanel('vr-out', 'vr-dl', 'VaR · 결과', function () {
@@ -4169,7 +4538,7 @@ guard('다운로드·VaR', function () {
     '채권종류 / 만기 : ' + $('vr-type').value + ' ' + matLabel(+$('vr-mat').value),
     '변동기간 h : ' + $('vr-h').value + '영업일 · 퍼센타일 ' + $('vr-p').value + '% · 방향 ' + $('vr-side').value,
     '보간 : ' + $('vr-interp').value + ' · 표본추출 ' + ($('vr-ovl').value === '1' ? '오버래핑' : '비오버래핑') + ' · 기준변경 ' + $('vr-reg').value];
-  });
+  }, function () { return RAWDATA.vr; });
 });
 guard('다운로드·커브', function () {
   DL.bindPanel('cv-out', 'cv-dl', '커브 분석 · 결과', function () {
@@ -4187,7 +4556,7 @@ guard('다운로드·커브', function () {
       '채권종류 : ' + $('cv-type').value, '시점 A / B : ' + $('cv-da').value + ' / ' + $('cv-db').value]
       : ['도구 : 커브 분석 — (b) 같은 시점 · 두 채권종류 비교',
       '채권종류 A / B : ' + $('cv-ta').value + ' / ' + $('cv-tb').value, '기준 시점 : ' + $('cv-d').value];
-  });
+  }, function () { return RAWDATA.cv; });
 });
 guard('다운로드·스프레드', function () {
   DL.bindPanel('sp-out', 'sp-dl', '스프레드 분석 · 결과', function () {
@@ -4198,7 +4567,7 @@ guard('다운로드·스프레드', function () {
     '시리즈 A : ' + serName($('sp-ta').value, +$('sp-ma').value),
     '시리즈 B : ' + serName($('sp-tb').value, +$('sp-mb').value),
     '기간 : ' + $('sp-from').value + ' ~ ' + $('sp-to').value];
-  });
+  }, function () { return RAWDATA.sp; });
 });
 
 guard('다운로드·커브스프레드', function () {
@@ -4214,7 +4583,7 @@ guard('다운로드·커브스프레드', function () {
     '스프레드 정의 : S(m) = ( B(m) - A(m) ) x 100 bp',
     'Δ스프레드 정의 : S(m)@시점2 - S(m)@시점1  (양수 = 확대, 음수 = 축소)',
     '※ 네 값(A@T1,A@T2,B@T1,B@T2)이 모두 있는 만기만 계산. 보간·전방채움 없음.'];
-  });
+  }, function () { return RAWDATA.cs; });
 });
 
 guard('다운로드·상관관계', function () {
@@ -4234,7 +4603,85 @@ guard('다운로드·상관관계', function () {
     '자투리 : 앞쪽에 윈도우를 못 채운 구간은 제외 (화면의 경고 문구 참조)',
     '2023-01-09 기준변경 : ' + ($('co-reg').value === 'exclude' ? '제외' : '무시'),
     '결측 처리 : 양쪽 모두 값이 있는 날만(inner join), 보간 없음'];
-  });
+  }, function () { return RAWDATA.co; });
+});
+
+/* ---------------- 대시보드 시계열 차트 로데이터 다운로드 (국내 · 미국) ----------------
+   차트에 그려진 선택 시리즈 × 표시 구간 전체를 일자별 wide CSV 로 내려준다.
+   화면 요약이 따로 없는 카드라 섹션 구분 없이 단일 표 + 상단 메타 주석만 둔다. */
+guard('다운로드·국내시계열', function () {
+  var btn = $('ts-dl');
+  if (!btn) return;
+  function rangeLabel(id) {
+    var rb = $(id); if (!rb) return '';
+    var on = [].filter.call(rb.children, function (x) { return x.className === 'on'; })[0];
+    return on ? on.dataset.k : '';
+  }
+  btn.onclick = function () {
+    try {
+      var i0 = tsWindow(), i1 = LAST;
+      var cols = tsSel.map(function (key) {
+        var p = key.split('|');
+        return {
+          c: p[0] === '한국은행기준금리' ? DATA.base.c : colOf(p[0], +p[1]),
+          nm: TS_LABEL[key] || (p[0] + (p[1] !== '0' ? ' ' + matLabel(+p[1]) : ''))
+        };
+      }).filter(function (x) { return !!x.c; });
+      if (!cols.length) { alert('선택된 시리즈가 없습니다.'); return; }
+      var rl = rangeLabel('ts-range');
+      var L = [];
+      L.push(DL.cmt('금리 분석 대시보드 (kisbond.com) — 금리 시계열 차트 로데이터'));
+      L.push(DL.cmt('생성 시각 : ' + DL.nowStr()));
+      L.push(DL.cmt('원자료 : KOFIA 채권정보센터 채권시가평가수익률 (마스터 ' + DATA.meta.source + ')'));
+      L.push(DL.cmt('데이터 기준일 : ' + fmtD(DATES[LAST]) + ' · x축 = 한국 영업일'));
+      L.push(DL.cmt('표시 구간 : ' + rl + ' — ' + fmtD(DATES[i0]) + ' ~ ' + fmtD(DATES[i1]) + ' (' + (i1 - i0 + 1).toLocaleString() + '영업일)'));
+      L.push(DL.cmt('선택 시리즈 : ' + cols.length + '개 — ' + cols.map(function (x) { return x.nm; }).join(', ')));
+      L.push(DL.cmt('단위 : % (연율) · 값은 원본 고시치 그대로 · 결측은 빈 칸(보간·전방채움 없음)'));
+      L.push(DL.cmt('산출기준 변경 : ' + fmtD(REGIME) + ' — 이전/이후 산정방식이 달라 단순 비교 시 주의'));
+      L.push(DL.cmt('정렬 : 일자 오름차순 (차트 왼쪽→오른쪽) · 인코딩 UTF-8 (BOM), 줄바꿈 CRLF'));
+      L.push('');
+      L.push(DL.row(['일자'].concat(cols.map(function (x) { return x.c; }))));
+      for (var i = i0; i <= i1; i++) {
+        var r = [fmtD(DATES[i])];
+        for (var k = 0; k < cols.length; k++) r.push(nnum(pct(cols[k].c, i), 3));
+        L.push(DL.row(r));
+      }
+      DL.saveText('금리시계열차트_' + DL.safe(rl || '전체') + '_' + DL.today() + '.csv', L.join(DL.CRLF) + DL.CRLF);
+    } catch (e) { alert('CSV 생성 중 오류: ' + (e && e.message ? e.message : e)); }
+  };
+});
+
+guard('다운로드·미국시계열', function () {
+  var btn = $('us-dl');
+  if (!btn) return;
+  btn.onclick = function () {
+    try {
+      if (!US) { alert('미국 금리 데이터가 아직 로드되지 않았습니다.'); return; }
+      var i0 = usWindow(), i1 = US.LAST;
+      var cols = usSel.slice();
+      if (!cols.length) { alert('선택된 시리즈가 없습니다.'); return; }
+      var rb = $('us-range');
+      var on = rb ? [].filter.call(rb.children, function (x) { return x.className === 'on'; })[0] : null;
+      var rl = on ? on.dataset.k : '';
+      var L = [];
+      L.push(DL.cmt('금리 분석 대시보드 (kisbond.com) — 미국 금리 시계열 차트 로데이터'));
+      L.push(DL.cmt('생성 시각 : ' + DL.nowStr()));
+      L.push(DL.cmt('원자료 : FRED (미 국채 H.15 · EFFR · SOFR), 평일 저녁 자동 수집'));
+      L.push(DL.cmt('데이터 기준일 : ' + fmtD(US.DATES[US.LAST]) + ' · x축 = 미국 영업일 (한국 영업일축 아님)'));
+      L.push(DL.cmt('표시 구간 : ' + rl + ' — ' + fmtD(US.DATES[i0]) + ' ~ ' + fmtD(US.DATES[i1]) + ' (' + (i1 - i0 + 1).toLocaleString() + '영업일)'));
+      L.push(DL.cmt('선택 시리즈 : ' + cols.length + '개 — ' + cols.map(function (c) { return (US.LBL[c] || c); }).join(', ')));
+      L.push(DL.cmt('단위 : % (연율) · 결측은 빈 칸(보간·전방채움 없음)'));
+      L.push(DL.cmt('정렬 : 일자 오름차순 · 인코딩 UTF-8 (BOM), 줄바꿈 CRLF'));
+      L.push('');
+      L.push(DL.row(['일자'].concat(cols.map(function (c) { return (US.LBL[c] || c) + '(' + c + ')'; }))));
+      for (var i = i0; i <= i1; i++) {
+        var r = [fmtD(US.DATES[i])];
+        for (var k = 0; k < cols.length; k++) r.push(nnum(uPct(cols[k], i), 4));
+        L.push(DL.row(r));
+      }
+      DL.saveText('미국금리시계열차트_' + DL.safe(rl || '전체') + '_' + DL.today() + '.csv', L.join(DL.CRLF) + DL.CRLF);
+    } catch (e) { alert('CSV 생성 중 오류: ' + (e && e.message ? e.message : e)); }
+  };
 });
 
 /* ---------------- 시계열 원본 다운로드 탭 ---------------- */
