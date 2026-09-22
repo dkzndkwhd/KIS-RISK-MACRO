@@ -213,6 +213,59 @@ body{font-size:13px;}
 .feed .news > li{padding:10px 12px 11px;margin-bottom:9px;}
 .feed .news h3{font-size:13px;}
 .feed .news p{font-size:12px;line-height:1.65;}
+
+/* ===== 대시보드 2·3행 정렬 (2026-09-22) =====================================
+   왼쪽에 '금리 시계열'(#ts-sec) · '미국 금리 시계열'(#us-sec) 두 카드를 같은 폭(span2)으로
+   세로로 쌓고, 오른쪽 '주요 이슈'(#news-sec) 카드를 그 두 행에 걸쳐(grid-row 2/span 2)
+   높이를 두 카드 + 간격의 합에 맞춘다.
+     · grid-template-rows 의 1fr 1fr 이 2·3행 높이를 서로 같게 만든다. 그리드 높이가
+       미정(auto)일 때 fr 행은 행들의 max-content 중 최댓값으로 균등 분배되기 때문이다.
+     · 이슈 카드는 내용(10선 ≈ 2,400px)이 길어 그대로 두면 제가 속한 fr 행 높이를 끌어올린다.
+       feedbody 를 height:0 + flex:1 1 auto 로 두어 '고유 높이 기여'를 0 으로 만들고,
+       실제 높이는 카드가 행에서 받은 높이만큼만 차지하게 한 뒤 내부 스크롤로 처리한다.
+       => 행 높이는 왼쪽 두 시계열 카드만이 결정한다.
+     · 1200px 이하에서는 아래 @media 의 1열 스택 규칙이 살아야 하므로 min-width:1201px 로 가둔다.
+       (높이 강제·행 배치가 전부 이 블록 안에만 있다) */
+@media (min-width:1201px){
+  .dashgrid{grid-template-rows:auto 1fr 1fr auto;}
+  #ts-sec,#us-sec,#news-sec{align-self:stretch;}
+  #news-sec{grid-row:2 / span 2;grid-column:3;display:flex;flex-direction:column;
+       position:relative;min-height:0;}
+  #news-sec .feedbody{max-height:none;height:0;min-height:0;flex:1 1 auto;overflow-y:auto;}
+  /* 아래에 내용이 더 있다는 표시. 끝까지 내리면 JS 가 .scrollfx 를 떼어 사라진다. */
+  #news-sec::after{content:'';position:absolute;left:16px;right:22px;bottom:16px;height:40px;
+       pointer-events:none;border-radius:0 0 7px 7px;opacity:0;transition:opacity .18s;
+       background:linear-gradient(to top,#fff 16%,rgba(255,255,255,.92) 48%,rgba(255,255,255,0));}
+  #news-sec.scrollfx::after{opacity:1;}
+}
+/* 스크롤바는 폭에 상관없이 항상 보이게 둔다 — 잘린 게 아니라 스크롤된다는 신호가 필요하다 */
+#news-sec .feedbody{scrollbar-width:thin;scrollbar-color:#b9c6d6 #eef1f6;}
+#news-sec .feedbody::-webkit-scrollbar{width:9px;}
+#news-sec .feedbody::-webkit-scrollbar-track{background:#eef1f6;border-radius:5px;}
+#news-sec .feedbody::-webkit-scrollbar-thumb{background:#b9c6d6;border-radius:5px;border:2px solid #eef1f6;}
+#news-sec .feedbody::-webkit-scrollbar-thumb:hover{background:#94a6bb;}
+/* 이슈 건수가 적어 카드 아래가 남을 때, 목록이 거기서 끝났음을 알리는 가는 선 */
+#news-sec .feedbody > .news::after{content:'';display:block;height:1px;margin:3px 2px 0;
+     background:linear-gradient(to right,#dfe5ee,rgba(223,229,238,0) 70%);}
+
+/* note 안에서 쓰는 인라인 접기. display:inline 이라 접혀 있을 때 '자세히' 한 낱말만 문장 끝에
+   얹히고 줄 수가 늘지 않는다 → 카드 높이에 영향이 없다. 펼치면 본문이 같은 문단에 이어 흐른다. */
+.inlx{display:inline;}
+.inlx > summary{display:inline;cursor:pointer;color:#17456b;font-weight:600;list-style:none;}
+.inlx > summary::-webkit-details-marker{display:none;}
+.inlx > summary::after{content:' ▸';font-weight:400;}
+.inlx[open] > summary::after{content:' ▾';}
+.inlx[open] > summary{margin-right:3px;}
+/* 기준일 시차 — 눈에 걸려야 하는 정보라 색을 준다(표의 '부분' 경고와 같은 톤) */
+#us-lag{color:#b06000;font-weight:600;}
+#us-lag:not(:empty)::after{content:' ';}
+/* 두 시계열 카드의 note 는 같은 줄 수(2줄)를 바닥으로 깔아, 문구 길이가 달라져도 아래가 어긋나지 않게 한다.
+   1열로 스택되는 좁은 화면에선 어차피 2줄을 넘으므로 무의미하고, 높이 강제는 브레이크포인트
+   안쪽에만 두는 원칙이라 min-width:1201px 로 가둔다. */
+@media (min-width:1201px){
+  #ts-sec > .note,#us-sec > .note{min-height:35px;}
+}
+
 .tool{display:grid;grid-template-columns:minmax(300px,390px) minmax(0,1fr);gap:14px;align-items:start;}
 .formpanel .frm{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px 14px;}
 .formpanel .fld.w2{grid-column:span 2;}
@@ -360,7 +413,7 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
     <p class="note">셀 표기: <b>금리(%)</b> / 아래 작은 수치는 전영업일 대비 증감(bp). <span class="up">상승(빨강)</span> · <span class="dn">하락(파랑)</span> · <span class="na">—</span>는 해당일 미고시. 신용스프레드 = 회사채I(공모사채) 무보증 AA- − 국고채권, 동일 만기 단순차(bp).</p>
   </section>
 
-  <section class="card span2">
+  <section class="card span2" id="ts-sec">
     <h2>금리 시계열 (%)</h2>
     <div class="serpick" id="ts-pick"></div>
     <div class="rangebar" id="ts-range" style="margin-top:10px"></div>
@@ -377,14 +430,19 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
     </div>
   </section>
 
-  <!-- 미국 금리 — 한국 영업일축에 맞추지 않고 data/us_rates.json 의 미국 자체 날짜축으로 그린다 -->
-  <section class="card span3" id="us-sec">
+  <!-- 미국 금리 — 한국 영업일축에 맞추지 않고 data/us_rates.json 의 미국 자체 날짜축으로 그린다.
+       2026-09-22: span3(전체폭) → span2. 위 '금리 시계열' 카드와 폭·높이를 맞추기 위함이며,
+       차트 viewBox 는 cw('us-chart') 가 컨테이너 실폭을 읽으므로 종횡비는 자동으로 따라온다. -->
+  <section class="card span2" id="us-sec">
     <h2>미국 금리 시계열 (%) <span id="us-asof" style="font-weight:400;color:#67727f;font-size:11.5px">—</span></h2>
     <div class="serpick" id="us-pick"></div>
     <div class="rangebar" id="us-range" style="margin-top:10px"></div>
     <div class="chartbox" id="us-chart"><p class="note" id="us-stat">미국 금리 데이터(data/us_rates.json)를 불러오는 중…</p></div>
     <div class="lgd" id="us-legend"></div>
-    <p class="note" id="us-note"><b>x축이 미국 영업일</b>입니다. 위 '금리 시계열' 카드(한국 영업일축)에서는 한국 공휴일에 해당하는 미국 관측일이 버려지지만(전 기간 327일 · 2025년 16일), 이 카드에는 그 날들이 모두 들어 있습니다. 결측 구간은 선을 끊습니다(보간하지 않음). 출처 FRED · 수동 적재이므로 국내 기준일보다 며칠 뒤처질 수 있습니다.</p>
+    <!-- 2026-09-22: 이 note 가 국내 카드 note 보다 3~4배 길어 카드 높이를 벌렸다. 본문은 인라인 접기(.inlx)로
+         내려 접힌 상태에서 줄을 차지하지 않게 하고, 대신 기준일 시차만은 숫자로 항상 노출한다(#us-lag).
+         시차를 감추면 미국 변동 수치를 국내와 같은 날 기준으로 오해하므로 이 한 줄은 접지 않는다. -->
+    <p class="note" id="us-note"><b>x축이 미국 영업일</b>입니다. 결측 구간은 선을 끊습니다(보간하지 않음). <span id="us-lag"></span><details class="inlx"><summary>자세히</summary>위 '금리 시계열' 카드(한국 영업일축)에서는 한국 공휴일에 해당하는 미국 관측일이 버려지지만(전 기간 327일 · 2025년 16일), 이 카드에는 그 날들이 모두 들어 있습니다. 출처 FRED · 수동 적재이므로 국내 기준일보다 며칠 뒤처질 수 있습니다.</details></p>
   </section>
 
   <section class="card span2">
@@ -1237,6 +1295,7 @@ var LAST = N - 1, PREV = N - 2;
   var wd = ['일', '월', '화', '수', '목', '금', '토'][toJS(DATES[LAST]).getDay()];
   $('asof').textContent = fmtD(DATES[LAST]) + ' (' + wd + ')';
   try { if (window.__NEWS_RATES_ASOF) window.__NEWS_RATES_ASOF(DATA.meta.to); } catch (e) { }
+  try { usLagNote(); } catch (e) { }   // 국내 기준일이 정해진 시점 — 미국 카드 시차 줄을 갱신한다
   try { document.title = '금리 분석 대시보드 — ' + fmtD(DATES[LAST]) + ' 기준'; } catch (e) { }
   $('asofcnt').textContent = '수록 ' + (SERIES.length + 1) + '개 시리즈 · ' + N.toLocaleString() + '영업일 (' + fmtD(DATES[0]) + ' ~ ' + fmtD(DATES[LAST]) + ')';
   var br = pct(DATA.base.c, LAST);
@@ -3955,6 +4014,7 @@ function usChgRows() {
       var a = $('us-asof');
       if (a) a.textContent = '최종 관측일 ' + fmtD(dt[n - 1]) + ' · ' + n.toLocaleString() + '영업일 (' +
         fmtD(dt[0]) + ' ~) · FRED';
+      try { usLagNote(); } catch (e) { }
 
       // 칩
       var pk = $('us-pick');
@@ -3996,11 +4056,50 @@ function usChgRows() {
 
 /* ---- [NEW] 시작 뷰 + 리사이즈 대응 + 자가진단 ---- */
 showView('dash');
+
+/* 주요 이슈 카드 — 높이는 왼쪽 두 시계열 카드에 맞춰 고정되고 넘치는 내용은 내부 스크롤이다.
+   잘린 것처럼 보이지 않도록, 아래에 더 있을 때만 하단 페이드(.scrollfx)를 켠다.
+   항목 수·필터·뷰포트에 따라 스크롤 여부가 바뀌므로 렌더·스크롤·리사이즈에서 모두 다시 판정한다. */
+/* 미국 금리 카드의 기준일 시차 한 줄. 미국 데이터는 FRED 수동 적재라 국내 기준일보다 며칠 뒤처지고,
+   그 사실이 화면에 없으면 두 카드의 변동 수치를 같은 날 기준으로 착각한다.
+   국내(rates.json)·미국(us_rates.json) 로딩 순서가 보장되지 않으므로 양쪽 렌더에서 모두 부르고,
+   아직 안 들어온 쪽이 있으면 조용히 비워 둔다(다른 쪽이 도착하면 다시 채운다). */
+function usLagNote() {
+  var e = document.getElementById('us-lag'); if (!e) return;
+  function toUTC(v) { v = '' + v; return Date.UTC(+v.substr(0, 4), +v.substr(4, 2) - 1, +v.substr(6, 2)); }
+  var ud = 0, kd = 0;
+  try { if (window.US && US.DATES && US.N) ud = US.DATES[US.N - 1]; } catch (x) { }
+  try { if (typeof DATES !== 'undefined' && typeof LAST !== 'undefined' && LAST >= 0) kd = DATES[LAST]; } catch (x) { }
+  if (!ud || !kd) { e.textContent = ''; return; }
+  var gap = Math.round((toUTC(kd) - toUTC(ud)) / 86400000);
+  e.innerHTML = '기준일 미국 <b>' + fmtD(ud) + '</b> / 국내 <b>' + fmtD(kd) + '</b>' +
+    (gap > 0 ? ' — ' + gap + '일 시차(변동 수치 직접 비교 주의).'
+             : (gap < 0 ? ' — 미국이 ' + (-gap) + '일 앞섭니다.' : ' — 동일.'));
+}
+
+function newsScrollFx() {
+  var s = document.getElementById('news-sec'); if (!s) return;
+  var b = s.querySelector('.feedbody'); if (!b) return;
+  if (!b.__fxBound) {
+    b.__fxBound = 1;
+    b.addEventListener('scroll', newsScrollFx, { passive: true });
+  }
+  var canScroll = b.scrollHeight > b.clientHeight + 2;
+  var atEnd = b.scrollTop + b.clientHeight >= b.scrollHeight - 4;
+  s.className = s.className.replace(/\s*\bscrollfx\b/g, '') + (canScroll && !atEnd ? ' scrollfx' : '');
+}
+/* 뉴스 로더는 별도 <script> 블록에 있어 BOOT() 스코프 안이 보이지 않는다. 목록을 다시 그릴 때마다
+   스크롤 여부가 바뀌므로, 거기서 부를 수 있도록 window 에 걸어 둔다(위 __NEWS_RATES_ASOF 와 같은 방식). */
+window.__NEWS_SCROLLFX = newsScrollFx;
+
 (function () {
   var t = null;
   window.onresize = function () {
     if (t) clearTimeout(t);
-    t = setTimeout(function () { guard('리사이즈', drawTS); guard('리사이즈(미국)', drawUSTS); }, 180);
+    t = setTimeout(function () {
+      guard('리사이즈', drawTS); guard('리사이즈(미국)', drawUSTS);
+      guard('리사이즈(이슈스크롤)', newsScrollFx);
+    }, 180);
   };
 })();
 (function selfCheck() {
@@ -4019,6 +4118,8 @@ showView('dash');
   } catch (e) { __banner('[자가진단] ' + e.message); }
 })();
 
+/* 뉴스가 BOOT 보다 먼저 도착했다면 위 renderNews 의 판정이 건너뛰어졌다 — 여기서 한 번 더 본다. */
+try{ newsScrollFx(); }catch(_e){}
 try{ window.__DONE(); }catch(_e){}
 }  /* end BOOT */
 </script>
@@ -4111,6 +4212,10 @@ try{ window.__DONE(); }catch(_e){}
     }
     ol.innerHTML = out.join('');
     syncBadge();
+    /* 항목 수가 바뀌면 카드 안에서 스크롤이 생기거나 없어진다 → 하단 페이드를 다시 판정한다.
+       BOOT() 스코프 밖이라 window 경유로 부르고, 아직 BOOT 이 끝나지 않았으면 건너뛴다
+       (그 경우 BOOT 끝의 초기 호출과 리사이즈 핸들러가 이어서 판정한다). */
+    try { if (window.__NEWS_SCROLLFX) window.__NEWS_SCROLLFX(); } catch (e) { }
   }
 
   function failNews(msg) {
