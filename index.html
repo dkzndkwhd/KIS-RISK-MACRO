@@ -686,10 +686,10 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
     <section class="card formpanel">
       <h2>커브+스프레드 분석 · 입력</h2>
       <div class="frm">
+    <!-- .formpanel .frm 은 2열 그리드다. w2 는 한 줄 전체를 먹고, 일반 .fld 두 개가 한 줄을 이룬다.
+         빈 칸용 .fld 를 잘못 끼우면 뒤따르는 항목이 엉뚱한 칸으로 밀리니 열 수를 세어 가며 배치할 것. -->
     <div class="fld w2"><label>커브 A (기준)</label><select id="cs-ta"></select></div>
-    <div class="fld"></div>
     <div class="fld w2"><label>커브 B (비교)</label><select id="cs-tb"></select></div>
-    <div class="fld"></div>
     <div class="fld"><label>시점 1 (과거)</label><input type="date" id="cs-d1"></div>
     <div class="fld"><label>시점 2 (최근)</label><input type="date" id="cs-d2"></div>
     <div class="fld w2"><label>시점 1 프리셋</label><div class="presets" id="cs-t1-p"></div>
