@@ -259,6 +259,8 @@ body{font-size:13px;}
 /* 기준일 시차 — 눈에 걸려야 하는 정보라 색을 준다(표의 '부분' 경고와 같은 톤) */
 #us-lag{color:#b06000;font-weight:600;}
 #us-lag:not(:empty)::after{content:' ';}
+/* 국내 note 는 <p>(UA 기본 아래 여백 있음), 미국 note 는 <div>(없음) — 여백을 맞춰 바닥을 같게 한다 */
+#ts-sec > .note,#us-sec > .note{margin-bottom:0;}
 /* 두 시계열 카드의 note 는 같은 줄 수(2줄)를 바닥으로 깔아, 문구 길이가 달라져도 아래가 어긋나지 않게 한다.
    1열로 스택되는 좁은 화면에선 어차피 2줄을 넘으므로 무의미하고, 높이 강제는 브레이크포인트
    안쪽에만 두는 원칙이라 min-width:1201px 로 가둔다. */
@@ -442,7 +444,9 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
     <!-- 2026-09-22: 이 note 가 국내 카드 note 보다 3~4배 길어 카드 높이를 벌렸다. 본문은 인라인 접기(.inlx)로
          내려 접힌 상태에서 줄을 차지하지 않게 하고, 대신 기준일 시차만은 숫자로 항상 노출한다(#us-lag).
          시차를 감추면 미국 변동 수치를 국내와 같은 날 기준으로 오해하므로 이 한 줄은 접지 않는다. -->
-    <p class="note" id="us-note"><b>x축이 미국 영업일</b>입니다. 결측 구간은 선을 끊습니다(보간하지 않음). <span id="us-lag"></span><details class="inlx"><summary>자세히</summary>위 '금리 시계열' 카드(한국 영업일축)에서는 한국 공휴일에 해당하는 미국 관측일이 버려지지만(전 기간 327일 · 2025년 16일), 이 카드에는 그 날들이 모두 들어 있습니다. 출처 FRED · 수동 적재이므로 국내 기준일보다 며칠 뒤처질 수 있습니다.</details></p>
+    <!-- p 가 아니라 div 다: <details> 는 블록 요소이고 <p> 안에 올 수 없어 파서가 p 를 먼저 닫아버린다
+         (그러면 '자세히' 가 문단 밖 별도 줄로 떨어져 카드가 다시 높아진다). div 로 담아 인라인으로 흐르게 한다. -->
+    <div class="note" id="us-note"><b>x축이 미국 영업일</b>입니다. 결측 구간은 선을 끊습니다(보간하지 않음). <span id="us-lag"></span><details class="inlx"><summary>자세히</summary>위 '금리 시계열' 카드(한국 영업일축)에서는 한국 공휴일에 해당하는 미국 관측일이 버려지지만(전 기간 327일 · 2025년 16일), 이 카드에는 그 날들이 모두 들어 있습니다. 출처 FRED · 수동 적재이므로 국내 기준일보다 며칠 뒤처질 수 있습니다.</details></div>
   </section>
 
   <section class="card span2">
