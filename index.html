@@ -390,6 +390,7 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
     <button type="button" data-v="var">VaR</button>
     <button type="button" data-v="curve">커브 분석</button>
     <button type="button" data-v="spread">스프레드 분석</button>
+    <button type="button" data-v="cs">커브+스프레드 분석</button>
     <button type="button" data-v="corr">상관관계 분석</button>
     <button type="button" data-v="dl">데이터 다운로드</button>
   </nav>
@@ -671,6 +672,36 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
     <section class="card resultpanel">
       <div class="panelhead"><h2>스프레드 분석 · 결과</h2><button type="button" class="dlbtn" id="sp-dl" disabled title="화면에 표시된 표를 계산 근거 주석과 함께 CSV 로 내려받습니다">CSV 다운로드</button></div>
       <div class="out" id="sp-out"><div class="placeholder">좌측에서 조건을 설정한 뒤 [분석] 을 누르십시오.</div></div>
+    </section>
+  </div>
+</div>
+
+<!-- ===================== 커브+스프레드 분석 =====================
+     커브 2개 × 시점 2개 = 선 4개를 한 화면에 겹쳐 그리고,
+     그 아래에 만기별 스프레드(B−A)의 기간 증감을 0선 기준 막대로 본다.
+     커브 분석(도구 3)의 만기 교집합·결측 처리 관행과
+     스프레드 분석(도구 4)의 bp 단위·부호 표기를 그대로 재사용한다. -->
+<div class="view" id="view-cs" style="display:none">
+  <div class="tool">
+    <section class="card formpanel">
+      <h2>커브+스프레드 분석 · 입력</h2>
+      <div class="frm">
+    <div class="fld w2"><label>커브 A (기준)</label><select id="cs-ta"></select></div>
+    <div class="fld"></div>
+    <div class="fld w2"><label>커브 B (비교)</label><select id="cs-tb"></select></div>
+    <div class="fld"></div>
+    <div class="fld"><label>시점 1 (과거)</label><input type="date" id="cs-d1"></div>
+    <div class="fld"><label>시점 2 (최근)</label><input type="date" id="cs-d2"></div>
+    <div class="fld w2"><label>시점 1 프리셋</label><div class="presets" id="cs-t1-p"></div>
+      <div class="availbox">시점 2 는 데이터 최신일로 맞추고 시점 1 만 뒤로 옮깁니다.</div></div>
+    <div class="fld"><label>x축</label><select id="cs-x"><option value="log">로그(개월)</option><option value="linear">선형(개월)</option></select></div>
+    <div class="fld"></div>
+    <div class="runrow"><button class="run" id="cs-run">분석</button></div>
+  </div>
+    </section>
+    <section class="card resultpanel">
+      <div class="panelhead"><h2>커브+스프레드 분석 · 결과</h2><button type="button" class="dlbtn" id="cs-dl" disabled title="화면에 표시된 표를 계산 근거 주석과 함께 CSV 로 내려받습니다">CSV 다운로드</button></div>
+      <div class="out" id="cs-out"><div class="placeholder">좌측에서 조건을 설정한 뒤 [분석] 을 누르십시오.</div></div>
     </section>
   </div>
 </div>
@@ -1718,7 +1749,7 @@ function setRange(fromEl, toEl, unit, n) {
 }
 
 /* ---- [NEW] 좌측 내비게이션 / 뷰 전환 ---- */
-var VIEWS = ['dash', 'stress', 'var', 'curve', 'spread', 'corr', 'dl'];
+var VIEWS = ['dash', 'stress', 'var', 'curve', 'spread', 'cs', 'corr', 'dl'];
 function showView(v) {
   var nav = $('navbar');
   if (nav) [].forEach.call(nav.getElementsByTagName('button'), function (b) {
@@ -3073,7 +3104,231 @@ function runSpread() {
 
 
 /* ================================================================
-   도구 5 — 상관관계 분석
+   도구 5 — 커브+스프레드 분석
+   ----------------------------------------------------------------
+   커브 2개(A·B) × 시점 2개(T1·T2) = 선 4개를 만기축에 겹쳐 그리고,
+   그 아래에 만기별 스프레드 S(m)=B(m)−A(m) 의 기간 증감을 막대로 본다.
+
+   · 시리즈 선택은 도구 3(커브 분석)과 같은 data-reg='mat' — 만기축이 있는
+     시리즈만 들어온다(미국채 ○ / DFF·SOFR·기준금리 ×).
+   · 만기 교집합 : 네 값(A@T1,A@T2,B@T1,B@T2)이 모두 있는 만기만 Δ를 계산한다.
+     보간 금지. 제외된 만기는 화면에 나열한다(도구 3의 관행 그대로).
+   · 결측 : 선택 시점에 커브가 통째로 비면 마지막 관측일을 안내한다(도구 3과 동일).
+   · 부호 : Δ스프레드 = S(m)@T2 − S(m)@T1.  양수 = 확대 = 막대 위(빨강).
+   ================================================================ */
+var CS_COL = { a1: '#7ea6c9', a2: '#17456b', b1: '#e58b98', b2: '#d0021b' };
+
+/** 커브+스프레드 — 선택 종류의 만기 커버리지 안내 (도구 3 cvInfo 와 같은 방식) */
+function csInfo() {
+  ['cs-ta', 'cs-tb'].forEach(function (id) {
+    var sel = $(id); if (!sel) return;
+    var box = sel.__avail;
+    if (!box) { box = document.createElement('div'); box.className = 'availbox'; sel.parentNode.appendChild(box); sel.__avail = box; }
+    var t = typeByName(sel.value);
+    if (!t) { box.innerHTML = ''; return; }
+    var fi = 1e9, li = -1;
+    t.mats.forEach(function (m) { if (m.fi < fi) fi = m.fi; if (m.li > li) li = m.li; });
+    box.innerHTML = '만기 <b>' + t.mats.length + '</b>개 · 가용 <b>' + fmtD(DATES[fi]) + ' ~ ' + fmtD(DATES[li]) + '</b>' +
+      '<br><span style="color:#8a939e">' + esc(t.full) + '</span>';
+  });
+}
+/** 해외금리(미국채) 를 고르면 국내 기준일과의 발표 시차를 결과에도 붙인다 (#us-lag 와 같은 사실) */
+function csLagHTML(names) {
+  var seen = {}, out = [];
+  names.forEach(function (nm) {
+    var t = typeByName(nm);
+    if (!t || !t.reg || t.g !== '해외금리' || seen[nm]) return;
+    seen[nm] = 1;
+    var li = -1; t.mats.forEach(function (m) { if (m.li > li) li = m.li; });
+    if (li < 0) return;
+    var gap = dayDiff(DATES[LAST], DATES[li]);
+    out.push('<div class="alert i">ℹ <b>' + esc(nm) + '</b>는 FRED 출처로 <b>영업일 T 의 값이 T+1 영업일에 발표</b>됩니다. ' +
+      '이 시리즈의 최종 관측일은 <b>' + fmtD(DATES[li]) + '</b>, 국내 데이터 기준일은 <b>' + fmtD(DATES[LAST]) + '</b>' +
+      (gap > 0 ? ' — <b>' + gap + '일 시차</b>(정상)입니다. ' : ' 입니다. ') +
+      '국내 최신일을 시점으로 고르면 이 커브만 비거나 한 영업일 뒤처진 값이 쓰일 수 있으니 실제 사용일 표기를 확인하십시오.</div>');
+  });
+  return out.join('');
+}
+
+(function initCurveSpread() {
+  // 커브를 그리는 도구이므로 만기축 필수 — 미국채는 들어오고 DFF·SOFR·기준금리는 빠진다
+  ['cs-ta', 'cs-tb'].forEach(function (id) { $(id).setAttribute('data-reg', 'mat'); });
+  fillTypes($('cs-ta'), '국고채권'); fillTypes($('cs-tb'), '회사채AA-');
+  var setT1 = function (unit, n) {
+    $('cs-d2').value = fmtD(DATES[LAST]);
+    $('cs-d1').value = fmtD(Math.max(DATES[0], shiftCal(DATES[LAST], unit, n)));
+  };
+  presets($('cs-t1-p'), [['1개월', 'm', 1], ['3개월', 'm', 3], ['6개월', 'm', 6], ['1년', 'y', 1], ['3년', 'y', 3]],
+    function (p) { setT1(p[1], p[2]); });
+  setT1('m', 3);                       // 기본 = 3개월 전 vs 최신
+  ['cs-ta', 'cs-tb'].forEach(function (id) {
+    var e = $(id); if (!e) return;
+    attachTypeFilter(e, function () { csInfo(); });
+    if (e.addEventListener) e.addEventListener('change', function () { pushRecent(e.value); csInfo(); });
+  });
+  csInfo();
+  $('cs-run').onclick = runCurveSpread;
+})();
+
+function runCurveSpread() {
+  var out = $('cs-out'), h = [];
+  var nameA = $('cs-ta').value, nameB = $('cs-tb').value, xLog = $('cs-x').value === 'log';
+  var req1 = parseD($('cs-d1').value), req2 = parseD($('cs-d2').value);
+  if (!req1 || !req2) { out.innerHTML = '<div class="alert e">두 시점을 모두 지정하십시오.</div>'; return; }
+
+  // 순서 뒤바뀜 — 막지 않고 자동 정렬한다(계산 정의가 T2−T1 이므로 부호가 뒤집히는 사고를 막는다)
+  var swapped = false;
+  if (req1 > req2) { var tmp = req1; req1 = req2; req2 = tmp; swapped = true; }
+  var sameDate = (req1 === req2), sameType = (nameA === nameB);
+
+  var A1 = curveAt(nameA, req1), A2 = curveAt(nameA, req2);
+  var B1 = curveAt(nameB, req1), B2 = curveAt(nameB, req2);
+  if (A1.i < 0 || A2.i < 0 || B1.i < 0 || B2.i < 0) { out.innerHTML = '<div class="alert e">요청 날짜 이전의 영업일이 데이터 범위 안에 없습니다.</div>'; return; }
+  var i1 = A1.i, i2 = A2.i;            // 두 커브 모두 같은 날짜축(한국 영업일)을 쓰므로 인덱스는 동일하다
+
+  if (swapped) h.push('<div class="alert w">⚠ 시점 1 이 시점 2 보다 늦어 <b>자동으로 순서를 바꿨습니다</b> — 시점 1 <b>' + fmtD(req1) + '</b> → 시점 2 <b>' + fmtD(req2) + '</b>. Δ는 항상 <b>나중 − 먼저</b>로 계산합니다.</div>');
+  if (DATES[i1] !== req1) h.push('<div class="alert w">⚠ 시점 1 <b>' + fmtD(req1) + '</b>은 영업일이 아니어서 <b>' + fmtD(DATES[i1]) + '</b>로 대체했습니다.</div>');
+  if (DATES[i2] !== req2) h.push('<div class="alert w">⚠ 시점 2 <b>' + fmtD(req2) + '</b>은 영업일이 아니어서 <b>' + fmtD(DATES[i2]) + '</b>로 대체했습니다.</div>');
+  if (sameDate) h.push('<div class="alert w">⚠ 두 시점이 <b>같은 날(' + fmtD(DATES[i1]) + ')</b>입니다. 정의상 Δ스프레드는 전 만기 <b>0.0bp</b>가 됩니다 — 커브 중첩만 보십시오.</div>');
+  if (sameType) h.push('<div class="alert w">⚠ 커브 A 와 B 가 <b>같은 채권종류(' + esc(nameA) + ')</b>입니다. 스프레드는 정의상 전 만기 <b>0.0bp</b>이고 Δ도 0 입니다 — 두 시점의 커브 이동만 보십시오.</div>');
+  if (crossesRegime(i1, i2))
+    h.push('<div class="alert w">⚠ 두 시점이 <b>2023-01-09 산출기준 변경일</b>을 사이에 두고 있습니다. 다만 여기서 보는 Δ는 <b>스프레드의 차</b>(B−A 의 시점간 차)이므로 두 시리즈가 같은 방향으로 점프한 부분은 상당히 상쇄됩니다. 완전한 상쇄는 아닙니다.</div>');
+
+  /* 선택 시점에 값이 통째로 없는 커브 경고 — 도구 3(커브 분석)과 같은 장치.
+     미국채처럼 한국 영업일 축에 얹힌 시리즈는 발표 시차·미국 휴일 때문에 국내 최신일에 값이 없을 수 있다. */
+  [[A1, nameA, '시점 1'], [A2, nameA, '시점 2'], [B1, nameB, '시점 1'], [B2, nameB, '시점 2']].forEach(function (x) {
+    var cv = x[0];
+    if (cv.pts.some(function (p) { return !isNaN(p.v); })) return;
+    var li = -1; cv.t.mats.forEach(function (m) { if (m.li > li) li = m.li; });
+    h.push('<div class="alert w">⚠ <b>' + esc(x[1]) + '</b>는 ' + x[2] + ' <b>' + fmtD(DATES[cv.i]) +
+      '</b>에 값이 없습니다' + (li >= 0 ? ' — 이 시리즈의 마지막 관측일은 <b>' + fmtD(DATES[li]) + '</b>입니다.' : '.') +
+      ' 날짜를 그날 이전으로 옮겨 주십시오. (보간·전방채움은 하지 않습니다)</div>');
+  });
+  h.push(csLagHTML([nameA, nameB]));
+  h.push(regNoteHTML([(A1.pts[0] || {}).col, (B1.pts[0] || {}).col]));
+
+  // ---- 만기축 : 두 커브의 합집합. Δ는 네 값이 모두 있는 만기(교집합)만. ----
+  var monthsSet = {};
+  A1.pts.forEach(function (p) { monthsSet[p.months] = p.label; });
+  B1.pts.forEach(function (p) { monthsSet[p.months] = p.label; });
+  var months = Object.keys(monthsSet).map(Number).sort(function (a, b) { return a - b; });
+  var get = function (C, m) { for (var i = 0; i < C.pts.length; i++) if (C.pts[i].months === m) return C.pts[i]; return null; };
+  var X = function (m) { return xLog ? Math.log(m) / Math.LN10 : m; };
+
+  var sA1 = [], sA2 = [], sB1 = [], sB2 = [], rows = [], nOk = 0;
+  months.forEach(function (m) {
+    var pa1 = get(A1, m), pa2 = get(A2, m), pb1 = get(B1, m), pb2 = get(B2, m);
+    var a1 = pa1 ? pa1.v : NaN, a2 = pa2 ? pa2.v : NaN, b1 = pb1 ? pb1.v : NaN, b2 = pb2 ? pb2.v : NaN;
+    sA1.push(isNaN(a1) ? null : [X(m), a1]); sA2.push(isNaN(a2) ? null : [X(m), a2]);
+    sB1.push(isNaN(b1) ? null : [X(m), b1]); sB2.push(isNaN(b2) ? null : [X(m), b2]);
+    var s1 = (isNaN(a1) || isNaN(b1)) ? NaN : (b1 - a1) * 100;
+    var s2 = (isNaN(a2) || isNaN(b2)) ? NaN : (b2 - a2) * 100;
+    var d = (isNaN(s1) || isNaN(s2)) ? NaN : s2 - s1;
+    if (!isNaN(d)) nOk++;
+    rows.push({ m: m, k: monthsSet[m], a1: a1, a2: a2, b1: b1, b2: b2, s1: s1, s2: s2, d: d });
+  });
+  var xt = months.filter(function (_, k) { return months.length <= 12 || k % 2 === 0; }).map(function (m) { return { x: X(m), label: monthsSet[m] }; });
+
+  var L1 = fmtD(DATES[i1]), L2 = fmtD(DATES[i2]);
+  var lblA1 = nameA + ' · ' + L1, lblA2 = nameA + ' · ' + L2;
+  var lblB1 = nameB + ' · ' + L1, lblB2 = nameB + ' · ' + L2;
+
+  h.push('<div class="defbox"><b>계산 정의</b> — 만기 m 별로<br>' +
+    '<span class="mono">S(m)@T = ( y<sub>B</sub>(m,T) − y<sub>A</sub>(m,T) ) × 100 [bp]</span>  ·  ' +
+    '<span class="mono">Δ스프레드(m) = S(m)@T2 − S(m)@T1 [bp]</span><br>' +
+    '<b>부호 규약</b> — <span class="up">Δ &gt; 0 = 스프레드 확대</span>(B 가 A 대비 상대적으로 더 올랐거나 덜 내렸다) → 막대가 <b>0선 위</b>. ' +
+    '<span class="dn">Δ &lt; 0 = 축소</span> → 막대가 <b>0선 아래</b>.<br>' +
+    '네 값(A@T1·A@T2·B@T1·B@T2)이 <b>모두 있는 만기만</b> 계산한다. 하나라도 없으면 Δ를 내지 않고 커브 선은 그 만기에서 끊는다. ' +
+    '<b>만기 간 보간 금지</b> — 4년물이 없는 기간에 3년·5년으로 4년을 만들지 않는다.</div>');
+
+  if (!nOk) {
+    h.push('<div class="alert e">네 값이 모두 있는 만기가 <b>0개</b>입니다 — 스프레드 증감을 계산할 수 없습니다. 두 커브의 가용 만기·가용 기간이 겹치는지 확인하십시오.</div>');
+  } else if (nOk === 1) {
+    h.push('<div class="alert w">⚠ 비교 가능한 만기가 <b>1개뿐</b>입니다(' + esc(rows.filter(function (r) { return !isNaN(r.d); })[0].k) + '). 커브 형태 비교로는 의미가 약하니 만기 커버리지가 겹치는 조합을 고르십시오.</div>');
+  }
+
+  // ---- KPI ----
+  var okRows = rows.filter(function (r) { return !isNaN(r.d); });
+  var at = function (m, f) { for (var i = 0; i < rows.length; i++) if (rows[i].m === m) return rows[i][f]; return NaN; };
+  var avgD = okRows.length ? okRows.reduce(function (a, r) { return a + r.d; }, 0) / okRows.length : NaN;
+  var wid = null, nar = null;
+  okRows.forEach(function (r) { if (!wid || r.d > wid.d) wid = r; if (!nar || r.d < nar.d) nar = r; });
+  h.push('<div class="kpis">' +
+    kpi('3년 스프레드 @' + L1, f1n(at(36, 's1')), 'bp') +
+    kpi('3년 스프레드 @' + L2, f1n(at(36, 's2')), 'bp', true) +
+    kpi('3년 Δ스프레드', f1(at(36, 'd')), 'bp') +
+    kpi('10년 Δ스프레드', f1(at(120, 'd')), 'bp') +
+    kpi('전 만기 평균 Δ', f1(avgD), 'bp') +
+    kpi('Δ 최대' + (wid ? ' · ' + esc(wid.k) : ''), wid ? f1(wid.d) : '—', 'bp') +
+    kpi('Δ 최소' + (nar ? ' · ' + esc(nar.k) : ''), nar ? f1(nar.d) : '—', 'bp') +
+    kpi('비교 가능 만기', nOk + ' / ' + months.length, '개') + '</div>');
+  /* 방향 문구는 값의 부호로 정한다 — 전 만기가 축소된 구간에서 'Δ 최대'를 '확대'라 부르면 거짓말이 된다. */
+  var dir = function (v) { return v > 0.0001 ? '<span class="up">확대</span>' : (v < -0.0001 ? '<span class="dn">축소</span>' : '변화 없음'); };
+  if (wid && nar) h.push('<p class="hint wrapc" style="margin:-6px 0 14px">Δ가 가장 <b>큰</b> 만기 <b>' + esc(wid.k) + '</b> ' + f1(wid.d) + 'bp (' + dir(wid.d) + ')' +
+    ' · Δ가 가장 <b>작은</b> 만기 <b>' + esc(nar.k) + '</b> ' + f1(nar.d) + 'bp (' + dir(nar.d) + ')' +
+    ' · 스프레드 = <b>' + esc(nameB) + ' − ' + esc(nameA) + '</b> · 기간 ' + L1 + ' ~ ' + L2 + ' (영업일 ' + (i2 - i1) + '일)</p>');
+
+  // ---- 상단 : 커브 4개 중첩 ----
+  h.push('<div class="panel"><h3>만기축 커브 중첩 (%) — 커브 2개 × 시점 2개 · x축 ' + (xLog ? '로그(개월)' : '선형(개월)') + '</h3><div class="bd chartbox">' +
+    svgLine({
+      w: cw('cs-out', 900), h: 320, xTicks: xt,
+      series: [
+        { name: lblA1, pts: sA1, color: CS_COL.a1, dash: '6 4', dots: true },
+        { name: lblA2, pts: sA2, color: CS_COL.a2, dots: true, wd: 2 },
+        { name: lblB1, pts: sB1, color: CS_COL.b1, dash: '6 4', dots: true },
+        { name: lblB2, pts: sB2, color: CS_COL.b2, dots: true, wd: 2 }
+      ]
+    }) + '</div>' +
+    '<div class="lgd" style="padding:0 12px;flex-wrap:wrap">' +
+    '<span><i style="background:' + CS_COL.a1 + '"></i>' + esc(lblA1) + '</span>' +
+    '<span><i style="background:' + CS_COL.a2 + '"></i>' + esc(lblA2) + '</span>' +
+    '<span><i style="background:' + CS_COL.b1 + '"></i>' + esc(lblB1) + '</span>' +
+    '<span><i style="background:' + CS_COL.b2 + '"></i>' + esc(lblB2) + '</span></div>' +
+    '<p class="note wrapc" style="padding:0 12px 10px">같은 커브는 <b>같은 색 계열</b>(A=남색 / B=빨강), 시점은 <b>선 종류와 농도</b>로 구분합니다 — ' +
+    '<b>시점 1(과거)</b> = 옅은 색 <b>점선</b>, <b>시점 2(최근)</b> = 진한 색 <b>실선·굵게</b>. 두 색 계열의 세로 간격이 그 만기의 스프레드입니다.</p></div>');
+
+  // ---- 하단 : 만기별 스프레드 증감 막대 ----
+  // 교집합이 0개면 막대가 하나도 없다 — svgBars 의 '데이터 없음' 에러 박스를 또 띄우지 않고 패널째 생략한다(위에 이미 안내함).
+  if (nOk) h.push('<div class="panel" style="margin-top:16px"><h3>만기별 스프레드 증감 (bp) — (' + esc(nameB) + ' − ' + esc(nameA) + ') @' + L2 + ' − @' + L1 + '</h3><div class="bd chartbox">' +
+    svgBars(rows.map(function (r) { return { k: r.k, v: r.d }; }), { w: cw('cs-out', 900), h: 230 }) + '</div>' +
+    '<p class="note wrapc" style="padding:0 12px 10px">0선 기준 양방향입니다. <span class="up">위(빨강) = 확대</span> · <span class="dn">아래(파랑) = 축소</span> · <b>—</b> 는 네 값 중 하나라도 결측이라 계산하지 않은 만기입니다.</p></div>');
+
+  // ---- 표 : 만기별 전체 ----
+  h.push('<div class="panel" style="margin-top:16px"><h3>만기별 명세</h3><div class="bd"><div class="tblwrap"><table><thead><tr>' +
+    '<th class="l" style="width:86px">만기</th>' +
+    '<th class="wrapc">' + esc(nameA) + '<br>@' + L1 + ' (%)</th>' +
+    '<th class="wrapc">' + esc(nameA) + '<br>@' + L2 + ' (%)</th>' +
+    '<th class="wrapc">' + esc(nameB) + '<br>@' + L1 + ' (%)</th>' +
+    '<th class="wrapc">' + esc(nameB) + '<br>@' + L2 + ' (%)</th>' +
+    '<th class="wrapc">스프레드<br>@' + L1 + ' (bp)</th>' +
+    '<th class="wrapc">스프레드<br>@' + L2 + ' (bp)</th>' +
+    '<th class="wrapc">Δ스프레드<br>(bp)</th></tr></thead><tbody>' +
+    rows.map(function (r) {
+      return '<tr><td class="l"><b>' + esc(r.k) + '</b></td>' +
+        '<td>' + f3(r.a1) + '</td><td>' + f3(r.a2) + '</td>' +
+        '<td>' + f3(r.b1) + '</td><td>' + f3(r.b2) + '</td>' +
+        '<td>' + f1n(r.s1) + '</td><td>' + f1n(r.s2) + '</td>' + bpCell(r.d) + '</tr>';
+    }).join('') + '</tbody></table></div></div></div>');
+
+  var miss = rows.filter(function (r) { return isNaN(r.d); });
+  if (miss.length) h.push('<div class="alert i" style="margin-top:10px">네 값 중 하나 이상이 결측/미고시라 <b>Δ스프레드를 계산하지 않은 만기 ' + miss.length + '개</b>: ' +
+    miss.map(function (r) { return esc(r.k); }).join(', ') + '. (보간·전방채움 없음)</div>');
+
+  h.push(evid([
+    ['커브 A', esc(nameA) + ' · ' + esc(A1.t.full)],
+    ['커브 B', esc(nameB) + ' · ' + esc(B1.t.full)],
+    ['시점 1', '실제 사용일 ' + L1 + ' (요청 ' + fmtD(req1) + ')' + (swapped ? ' · 입력 순서 자동 정렬됨' : '')],
+    ['시점 2', '실제 사용일 ' + L2 + ' (요청 ' + fmtD(req2) + ')'],
+    ['기간', L1 + ' ~ ' + L2 + ' · 영업일 ' + (i2 - i1) + '일 (달력 ' + dayDiff(DATES[i2], DATES[i1]) + '일)'],
+    ['스프레드 정의', 'S(m) = ( ' + esc(nameB) + '(m) − ' + esc(nameA) + '(m) ) × 100 bp · Δ = S@' + L2 + ' − S@' + L1 + ' (양수=확대)'],
+    ['만기 교집합', '합집합 ' + months.length + '개 중 네 값 모두 관측 ' + nOk + '개 (결측 ' + miss.length + '개는 계산 제외, 보간 없음)'],
+    ['x축', xLog ? 'log(개월)' : 'linear(개월)']
+  ]));
+  out.innerHTML = h.join('');
+}
+
+/* ================================================================
+   도구 6 — 상관관계 분석
    ----------------------------------------------------------------
    · 기본은 '변동(일간 차분)' 상관. 금리는 추세가 강해 레벨 상관은
      거의 항상 높게 나오고 두 시리즈가 같이 움직였는지를 말해주지 않는다.
@@ -3946,6 +4201,22 @@ guard('다운로드·스프레드', function () {
   });
 });
 
+guard('다운로드·커브스프레드', function () {
+  DL.bindPanel('cs-out', 'cs-dl', '커브+스프레드 분석 · 결과', function () {
+    var d = function (x) { return DL.safe(x).replace(/-/g, ''); };
+    return '커브스프레드_' + DL.safe($('cs-ta').value) + '_' + DL.safe($('cs-tb').value) +
+      '_' + d($('cs-d1').value) + '-' + d($('cs-d2').value) + '_' + DL.today() + '.csv';
+  }, function () {
+    return ['도구 : 커브+스프레드 분석 (커브 2개 × 시점 2개)',
+    '커브 A (기준) : ' + $('cs-ta').value,
+    '커브 B (비교) : ' + $('cs-tb').value,
+    '시점 1 / 시점 2 : ' + $('cs-d1').value + ' / ' + $('cs-d2').value,
+    '스프레드 정의 : S(m) = ( B(m) - A(m) ) x 100 bp',
+    'Δ스프레드 정의 : S(m)@시점2 - S(m)@시점1  (양수 = 확대, 음수 = 축소)',
+    '※ 네 값(A@T1,A@T2,B@T1,B@T2)이 모두 있는 만기만 계산. 보간·전방채움 없음.'];
+  });
+});
+
 guard('다운로드·상관관계', function () {
   DL.bindPanel('co-out', 'co-dl', '상관관계 분석 · 결과', function () {
     return '상관관계_' + DL.safe(serName($('co-ta').value, +$('co-ma').value)) +
@@ -4385,7 +4656,7 @@ window.__NEWS_SCROLLFX = newsScrollFx;
 })();
 (function selfCheck() {
   try {
-    var ids = ['st-type', 'st-short', 'st-long', 'st-sa', 'st-sb', 'st-sma', 'st-smb', 'vr-type', 'vr-mat', 'cv-type', 'cv-ta', 'cv-tb', 'sp-ta', 'sp-tb', 'sp-ma', 'sp-mb', 'co-ta', 'co-tb', 'co-ma', 'co-mb'];
+    var ids = ['st-type', 'st-short', 'st-long', 'st-sa', 'st-sb', 'st-sma', 'st-smb', 'vr-type', 'vr-mat', 'cv-type', 'cv-ta', 'cv-tb', 'sp-ta', 'sp-tb', 'sp-ma', 'sp-mb', 'cs-ta', 'cs-tb', 'co-ta', 'co-tb', 'co-ma', 'co-mb'];
     var minOpt = 1e9, tot = 0;
     ids.forEach(function (id) { var e = $(id); var n = e ? e.options.length : 0; tot += n; if (n < minOpt) minOpt = n; });
     var lv = $('tbl-level'), cg = $('tbl-chg');
