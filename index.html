@@ -532,6 +532,24 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
     <div class="fld"><label>상위 N건</label><input type="number" id="st-topn" value="5" min="1" max="30"></div>
     <div class="fld"><label>구간 중복</label><select id="st-ovl"><option value="0">중복 제외(greedy)</option><option value="1">중복 허용</option></select></div>
 
+    <div class="fld w2" id="st-f-pctl">
+      <label style="font-weight:600;color:#5a6673;display:inline-flex;align-items:center;gap:5px;cursor:pointer">
+        <input type="checkbox" id="st-pctl-on" style="width:auto;margin:0"> 퍼센타일 (히스토리컬 VaR) 함께 보기
+      </label>
+      <div id="st-pctl-box" style="display:none">
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:5px">
+          <input type="number" id="st-pctl" value="95" min="0" max="100" step="0.5" style="flex:0 0 96px">
+          <span style="font-size:11.5px;color:#67727f">퍼센타일 (%) · 0 ~ 100</span>
+        </div>
+        <div class="presets" id="st-pctl-p"></div>
+        <div style="margin-top:6px;font-size:11px;color:#67727f;line-height:1.5">
+          상위 N건(최악 사례)과 <b>같은 모집단·같은 강도 지표</b>로 분포의 분위수를 계산해 함께 보여줍니다.
+          예) 95 → “과거 윈도우 중 95%는 이보다 변동이 작았다”. <b>선형보간</b>과 <b>최근접순위</b> 두 정의를 모두 표기합니다.<br>
+          피벗(정책 전환)은 롤링 탐색이 아니라 이벤트 기준이므로 이 옵션을 쓰지 않습니다.
+        </div>
+      </div>
+    </div>
+
     <details class="adv"><summary>고급 설정</summary>
       <div class="frm">
         <div class="fld" id="st-f-lvl"><label>레벨 정의</label><select id="st-lvl">
@@ -1093,6 +1111,81 @@ function f2(x) { return (isNaN(x) ? '—' : x.toFixed(2)); }
 function cls(x) { return isNaN(x) ? 'na' : (x > 0.0001 ? 'up' : (x < -0.0001 ? 'dn' : 'fl')); }
 function bpCell(x) { return '<td class="' + cls(x) + '">' + f1(x) + '</td>'; }
 function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+/* ================================================================
+   퍼센타일 (히스토리컬 VaR) — 두 가지 정의를 모두 계산한다.
+   입력 sorted 는 반드시 오름차순 정렬된 숫자 배열(결측 없음).
+
+   1) 선형보간 (linear interpolation)
+        h = (n − 1) × p/100
+        v = x[⌊h⌋] + (h − ⌊h⌋) × ( x[⌊h⌋+1] − x[⌊h⌋] )
+      numpy.percentile(x, p) 의 기본 method='linear' 과 같은 정의.
+      p=0 → 최소, p=100 → 최대, p=50 → 중위값(짝수 n 이면 두 값 평균).
+      실제로 존재하지 않는 값이 나올 수 있다(두 관측치 사이).
+
+   2) 최근접순위 (nearest-rank, 관측치를 그대로 지목)
+        k = ⌈ n × p/100 ⌉   (p=0 이면 k=1),  v = x[k−1]
+      "누적확률이 p% 에 처음 도달하는 관측치". 항상 실제 관측치 하나다.
+      numpy.percentile(x, p, method='inverted_cdf') 과 같은 정의.
+      p=100 → 최대(= 상위 1위와 동일).
+
+   두 정의는 값이 다를 수 있다. 실무 화면이므로 둘 다 표기하고,
+   "어느 윈도우인가" 를 지목할 때는 최근접순위를 쓴다.
+   ================================================================ */
+function pctlLinear(sorted, p) {
+  var n = sorted.length;
+  if (!n) return NaN;
+  if (n === 1) return sorted[0];
+  var h = (n - 1) * (p / 100);
+  if (h <= 0) return sorted[0];
+  if (h >= n - 1) return sorted[n - 1];
+  var lo = Math.floor(h), fr = h - lo;
+  return sorted[lo] + fr * (sorted[lo + 1] - sorted[lo]);
+}
+/* 최근접순위 — 값과 함께 정렬배열 내 0-based 인덱스를 반환 */
+function pctlNearestIdx(n, p) {
+  if (n <= 0) return -1;
+  var k = Math.ceil(n * (p / 100));
+  if (k < 1) k = 1;
+  if (k > n) k = n;
+  return k - 1;
+}
+/* 퍼센타일 p 에 대해 선형보간·최근접순위 값을 한 번에.
+   arr : 강도(또는 임의 지표) 배열 — 정렬 안 된 상태로 넘겨도 된다.
+   반환 { n, lin, near, nearRank, nearIdxAsc } (nearRank = 상위 몇 번째인가, 1-based) */
+function pctlBoth(arr, p) {
+  var s = arr.slice().sort(function (a, b) { return a - b; });
+  var n = s.length;
+  if (!n) return { n: 0, lin: NaN, near: NaN, nearRank: 0, nearIdxAsc: -1 };
+  var ia = pctlNearestIdx(n, p);
+  return { n: n, lin: pctlLinear(s, p), near: s[ia], nearRank: n - ia, nearIdxAsc: ia };
+}
+/* 값 v 가 arr 분포에서 차지하는 퍼센타일 순위 (최근접순위 정의의 역함수)
+   = (v 이하인 관측치 수 / n) × 100.  상위표의 각 구간이 분포상 어디인지 표시할 때 쓴다. */
+function pctlRankOf(sortedAsc, v) {
+  var n = sortedAsc.length;
+  if (!n) return NaN;
+  var lo = 0, hi = n;
+  while (lo < hi) { var mid = (lo + hi) >> 1; if (sortedAsc[mid] <= v + 1e-12) lo = mid + 1; else hi = mid; }
+  return (lo / n) * 100;
+}
+/* 퍼센타일 추정 안정성 경고 — 꼬리 쪽 표본 수를 근거로 */
+function pctlWarnHTML(n, p) {
+  if (!n) return '';
+  var tail = Math.min(p, 100 - p) / 100;           // 가까운 꼬리까지의 비율
+  var tailN = n * tail;                            // 그 꼬리에 들어가는 관측치 기대 개수
+  if (p >= 100 - 1e-9) return '<div class="alert w">⚠ <b>100퍼센타일 = 표본 최대값</b>입니다. 분포 추정이 아니라 상위 1위 그 자체이므로, 퍼센타일로서의 의미는 없습니다(정의 확인용).</div>';
+  if (p <= 1e-9) return '<div class="alert w">⚠ <b>0퍼센타일 = 표본 최소값</b>입니다. 분포 추정이 아니라 하위 1위 그 자체입니다.</div>';
+  if (tailN < 2) return '<div class="alert e">⚠ <b>추정 불가 수준</b> — 표본 n=' + n.toLocaleString() + '건에서 ' + f1n(p) + '퍼센타일의 꼬리에 들어가는 관측치가 ' + tailN.toFixed(1) + '건뿐입니다. 사실상 상위 1~2개 관측치가 곧 답이 되어(최악 사례와 구별되지 않음) 값이 표본 하나에 좌우됩니다. 퍼센타일을 낮추거나 탐색 범위를 늘리십시오.</div>';
+  if (tailN < 10) return '<div class="alert w">⚠ <b>추정 불안정</b> — 표본 n=' + n.toLocaleString() + '건에서 ' + f1n(p) + '퍼센타일의 꼬리 관측치는 약 ' + tailN.toFixed(1) + '건입니다. 관측치 한두 개가 바뀌면 값이 크게 움직입니다(경험칙: 꼬리 표본 10건 이상 권장).</div>';
+  if (n < 100 && p >= 99) return '<div class="alert w">⚠ 표본 n=' + n.toLocaleString() + '건(&lt;100)에서 99퍼센타일 이상은 상위 1개 관측치에 근접합니다. 최악 사례와 사실상 같은 값이 될 수 있습니다.</div>';
+  return '';
+}
+/* 롤링 윈도우는 서로 겹친다 — 독립 표본이 아니라는 고지 (VaR 해석의 핵심 한계) */
+function pctlOvlNote(W) {
+  return '롤링 윈도우는 하루씩 밀며 만들어 서로 <b>' + (W - 1) + '영업일씩 겹친다</b>. 즉 n건이 독립 표본 n개가 아니다(실효 독립 표본 수는 대략 n/W 수준). ' +
+    '따라서 이 퍼센타일은 <b>“과거 같은 길이의 구간을 아무 날짜에서나 잡았을 때의 변동폭 분포”</b> 로 읽어야 하고, 신뢰구간을 좁게 해석하면 안 된다.';
+}
 function $(id) { return document.getElementById(id); }
 function el(tag, attrs, html) {
   var e = document.createElement(tag);
@@ -1668,6 +1761,16 @@ var stAvailS = null, stAvailL = null;
   presets($('st-win-p'), [['1M', 20], ['3M', 61], ['6M', 122], ['1Y', 244], ['2Y', 488]], function (p) { $('st-win').value = p[1]; });
   presets($('st-range-p'), [['3Y', 'y', 3], ['5Y', 'y', 5], ['10Y', 'y', 10], ['20Y', 'y', 20], ['전 기간', 'a', 0]], function (p) { setRange($('st-from'), $('st-to'), p[1], p[2]); });
   setRange($('st-from'), $('st-to'), 'y', 10);
+  /* 퍼센타일 옵션 — 체크 해제 시(기본) 화면·결과가 기존과 완전히 동일하다 */
+  presets($('st-pctl-p'), [['90%', 90], ['95%', 95], ['97.5%', 97.5], ['99%', 99]], function (p) {
+    $('st-pctl').value = p[1]; if ($('st-pctl-on').checked) guard('스트레스', runStress);
+  });
+  var pctlSync = function () {
+    var on = $('st-pctl-on').checked;
+    $('st-pctl-box').style.display = on ? '' : 'none';
+  };
+  $('st-pctl-on').onchange = pctlSync;
+  pctlSync();
   var pvSync = function () {
     var r = document.querySelector('input[name=st-sc]:checked');
     var v = r ? r.value : '';
@@ -1678,6 +1781,8 @@ var stAvailS = null, stAvailL = null;
     ['st-f-type', 'st-f-short', 'st-f-long', 'st-f-rank', 'st-f-lvl', 'st-f-thl', 'st-f-ths'].forEach(function (id) {
       var e = $(id); if (e) e.style.display = hide ? 'none' : '';
     });
+    // 피벗은 이벤트 기준(롤링 윈도우 분포가 없다) → 퍼센타일 옵션 자체를 숨긴다
+    var pf = $('st-f-pctl'); if (pf) pf.style.display = (v === 'pivot') ? 'none' : '';
   };
   [].forEach.call(document.getElementsByName('st-sc'), function (r) {
     if (r.addEventListener) r.addEventListener('change', pvSync); else r.onclick = pvSync;
@@ -1786,20 +1891,47 @@ function runStress() {
     kpi('평가 윈도우', evalN.toLocaleString(), '건') + kpi('유효 윈도우', cands.length.toLocaleString(), '건') +
     kpi('시나리오 부합', matched.length.toLocaleString(), '건') + kpi('출력', picked.length, '건') + '</div>');
 
+  /* 퍼센타일 옵션 — 모집단은 상위 N건을 뽑은 것과 동일한 matched(시나리오 부합 윈도우).
+     결측·기준변경 제외가 이미 반영된 배열이므로 두 수치의 모집단이 어긋나지 않는다. */
+  var PO = pctlOpt();
+  var pArr = null, pSorted = null;
+  if (PO.on && matched.length) {
+    pArr = matched.map(function (c) { return c.strength; });
+    pSorted = pArr.slice().sort(function (a, b) { return a - b; });
+  }
+
   if (!picked.length) {
     h.push('<div class="alert e">조건에 부합하는 구간이 없습니다. θ를 낮추거나 윈도우·범위를 조정해 보십시오.</div>');
     out.innerHTML = h.join(''); return;
   }
 
   h.push('<h3 style="font-size:13px;margin:16px 0 8px;color:#17456b">결과 — ' + esc(SC_NAME[scen]) + ' 상위 ' + picked.length + '구간 <span style="font-weight:400;color:#67727f;font-size:11.5px">(행 클릭 → 상세)</span></h3>');
-  h.push('<div class="tblwrap"><table class="clickrow" id="st-tbl"><thead><tr><th style="width:44px">순위</th><th class="l">구간 (시작 ~ 종료)</th><th>Δ' + matLabel(sm) + '</th><th>Δ' + matLabel(lm) + '</th><th>Δlevel</th><th>Δslope</th><th>강도</th><th>유형</th></tr></thead><tbody>');
+  h.push('<div class="tblwrap"><table class="clickrow" id="st-tbl"><thead><tr><th style="width:44px">순위</th><th class="l">구간 (시작 ~ 종료)</th><th>Δ' + matLabel(sm) + '</th><th>Δ' + matLabel(lm) + '</th><th>Δlevel</th><th>Δslope</th><th>강도</th>' + (pSorted ? '<th>분포 위치</th>' : '') + '<th>유형</th></tr></thead><tbody>');
   picked.forEach(function (c, i) {
     h.push('<tr data-i="' + i + '"' + (i === 0 ? ' class="sel"' : '') + '><td>' + (i + 1) + '</td>' +
       '<td class="l mono">' + fmtD(DATES[c.b]) + ' ~ ' + fmtD(DATES[c.t]) + '<span style="color:#8a939e"> (' + (c.t - c.b) + '영업일)</span></td>' +
       bpCell(c.ds) + bpCell(c.dl) + bpCell(c.dlevel) + bpCell(c.dslope) +
-      '<td><b>' + c.strength.toFixed(1) + '</b></td><td style="text-align:center">' + esc(SC_NAME[c.kind].split('(')[0]) + '</td></tr>');
+      '<td><b>' + c.strength.toFixed(1) + '</b></td>' +
+      (pSorted ? pctlPosCell(pSorted, c.strength) : '') +
+      '<td style="text-align:center">' + esc(SC_NAME[c.kind].split('(')[0]) + '</td></tr>');
   });
   h.push('</tbody></table></div>');
+
+  if (pSorted) {
+    h.push(pctlBlockHTML({
+      p: PO.p, arr: pArr, rows: matched, W: W, picked: picked,
+      popTxt: '시나리오 <b>' + esc(SC_NAME[scen].split('(')[0]) + '</b> 에 부합한 롤링 윈도우 ' + matched.length.toLocaleString() + '건. ' +
+        '평가 ' + evalN.toLocaleString() + '건에서 결측 ' + exMiss.toLocaleString() + '건' + (exReg ? ' · 기준변경 경계 ' + exReg.toLocaleString() + '건' : '') +
+        ' 을 제외해 유효 ' + cands.length.toLocaleString() + '건, 그중 유형 판정을 통과한 것이 ' + matched.length.toLocaleString() + '건이다. ' +
+        '<b>상위 N건 표와 같은 배열</b>을 쓴다(해당없음으로 분류된 윈도우는 상위표에도 들어가지 않으므로 여기서도 뺀다).',
+      metric: (rankBy === 'norm' ? '√(Δlevel² + Δslope²)' : (rankBy === 'level' ? '|Δlevel|' : '|Δslope|')) + ' [bp]',
+      signTxt: '강도는 <b>부호 없는 변동폭</b>(' + (rankBy === 'norm' ? '노름' : '절대값') + ')이며 <b>클수록 악화</b>로 본다. 금리 상승·하락 방향은 강도에 섞이지 않고 <b>유형</b> 열(불/베어 · 플랫/스팁)로 구분된다. 정렬은 강도 내림차순',
+      extraTh: '<th>Δlevel</th><th>Δslope</th><th>유형</th>',
+      extraTd: function (c) { return bpCell(c.dlevel) + bpCell(c.dslope) + '<td style="text-align:center">' + esc(SC_NAME[c.kind].split('(')[0]) + '</td>'; },
+      ovlNote: allowOvl ? '중복 허용 모드' : 'greedy 비중복 선택이라 강도가 더 큰 구간과 날짜가 겹쳐 밀려났을 수 있다'
+    }));
+  }
+
   h.push('<div id="st-detail"></div>');
   h.push(evid([
     ['사용 컬럼 (단기)', esc(cs)], ['사용 컬럼 (장기)', esc(cl)],
@@ -1809,7 +1941,11 @@ function runStress() {
     ['윈도우 길이', W + '영업일 (영업일 = 데이터에 행이 존재하는 날)'],
     ['평가 / 유효 / 부합', evalN + ' / ' + cands.length + ' / ' + matched.length + '  (결측제외 ' + exMiss + ', 기준변경제외 ' + exReg + ')'],
     ['파라미터', 'level_def=' + levelDef + ', θ_level=' + thL + 'bp, θ_slope=' + thS + 'bp, rank_by=' + rankBy + ', overlap=' + allowOvl + ', regime=' + regime]
-  ]));
+  ].concat(pSorted ? [
+    ['퍼센타일 모집단', '시나리오 부합 윈도우 n=' + matched.length.toLocaleString() + '건 (상위 N건 표와 동일)'],
+    ['퍼센타일 파라미터', 'p=' + f1n(PO.p) + '%, 선형보간=numpy method=linear, 최근접순위=numpy method=inverted_cdf'],
+    ['퍼센타일 값', f1n(PO.p) + '%p 선형보간 ' + f1n(pctlLinear(pSorted, PO.p)) + 'bp / 최근접순위 ' + f1n(pctlBoth(pArr, PO.p).near) + 'bp · 100%p(최대) ' + f1n(pSorted[pSorted.length - 1]) + 'bp']
+  ] : [])));
   out.innerHTML = h.join('');
 
   stressLast = { picked: picked, typeName: typeName, cs: cs, cl: cl, sm: sm, lm: lm };
@@ -1823,6 +1959,111 @@ function runStress() {
   renderStressDetail(0);
 }
 function kpi(k, v, u, big) { return '<div class="kpi' + (big ? ' big' : '') + '"><div class="k">' + k + '</div><div class="v">' + v + (u ? '<span class="u">' + u + '</span>' : '') + '</div></div>'; }
+
+/* ================================================================
+   퍼센타일(히스토리컬 VaR) 블록 — 커브형·스프레드형이 공유한다.
+   o = {
+     p        선택 퍼센타일 (0~100)
+     arr      강도 배열 = 모집단.  상위 N건 표를 만든 것과 동일한 모집단이어야 한다.
+     rows     arr 과 같은 순서의 윈도우 객체 배열 ({b, t, ...}) — 해당 윈도우 지목용
+     W        윈도우 길이(영업일)
+     popTxt   모집단 정의 문장
+     metric   강도 지표 수식 문장
+     signTxt  부호 규약 문장
+     extraTh  추가 열 헤더 HTML (선택)
+     extraTd  function(c) 추가 열 셀 HTML (선택)
+     picked   상위 N건 배열 — 대조용(해당 윈도우가 상위 몇 위인지)
+   }
+   ================================================================ */
+function pctlBlockHTML(o) {
+  var p = o.p, n = o.arr.length, h = [];
+  h.push('<h3 style="font-size:13px;margin:20px 0 8px;color:#17456b">퍼센타일 (히스토리컬 VaR) — <b>' + f1n(p) + '퍼센타일</b> <span style="font-weight:400;color:#67727f;font-size:11.5px">(상위 N건과 동일 모집단)</span></h3>');
+
+  if (!n) {
+    h.push('<div class="alert e">퍼센타일을 계산할 모집단이 비어 있습니다.</div>');
+    return h.join('');
+  }
+  if (!(p >= 0 && p <= 100)) {
+    h.push('<div class="alert e">퍼센타일은 0 이상 100 이하로 입력하십시오 (입력값 ' + esc(String(p)) + ').</div>');
+    return h.join('');
+  }
+
+  // 강도 오름차순 정렬 — 인덱스를 같이 끌고 가서 '해당 윈도우' 를 지목한다
+  var idx = [], i;
+  for (i = 0; i < n; i++) idx.push(i);
+  idx.sort(function (a, b) { return o.arr[a] - o.arr[b]; });
+  var s = new Array(n);
+  for (i = 0; i < n; i++) s[i] = o.arr[idx[i]];
+
+  // 상위 N건 구간 → 순위 조회용
+  var rankOf = function (c) {
+    if (!o.picked) return 0;
+    for (var k = 0; k < o.picked.length; k++) if (o.picked[k].b === c.b && o.picked[k].t === c.t) return k + 1;
+    return 0;
+  };
+
+  h.push('<div class="defbox"><b>퍼센타일 정의</b> — 표본 크기 <b>n = ' + n.toLocaleString() + '</b>건, 강도 오름차순 정렬 x[1..n]<br>' +
+    '<span class="mono">선형보간 (linear interpolation) : h = (n−1) × p/100,&nbsp; v = x[⌊h⌋+1] + (h−⌊h⌋) × ( x[⌊h⌋+2] − x[⌊h⌋+1] )<br>' +
+    '최근접순위 (nearest-rank) : k = ⌈ n × p/100 ⌉,&nbsp; v = x[k]</span><br>' +
+    '<b>선형보간</b>은 numpy.percentile 기본값(method=\'linear\')과 같은 정의이며, 두 관측치 사이의 값이 나올 수 있다(실재하지 않는 구간).<br>' +
+    '<b>최근접순위</b>는 numpy method=\'inverted_cdf\' 와 같은 정의로, 항상 <b>실제 윈도우 하나</b>를 지목한다. 아래 “해당 윈도우” 열은 이 정의를 쓴다.<br>' +
+    '<b>모집단</b> : ' + o.popTxt + '<br>' +
+    '<b>강도</b> : ' + o.metric + '<br>' +
+    '<b>부호 규약</b> : ' + o.signTxt + ' — 상위 N건 정렬과 동일한 기준이므로 <b>100퍼센타일 = 상위 1위</b>가 된다.<br>' +
+    '<b>겹침 고지</b> : ' + pctlOvlNote(o.W) + '</div>');
+
+  h.push(pctlWarnHTML(n, p));
+
+  var sel = pctlBoth(o.arr, p);
+  var mx = s[n - 1], md = pctlLinear(s, 50);
+  h.push('<div class="kpis">' +
+    kpi(f1n(p) + '%p · 선형보간', f1n(sel.lin), 'bp', true) +
+    kpi(f1n(p) + '%p · 최근접순위', f1n(sel.near), 'bp') +
+    kpi('표본 수 n', n.toLocaleString(), '건') +
+    kpi('중위값 (50%p)', f1n(md), 'bp') +
+    kpi('최악 (100%p = 1위)', f1n(mx), 'bp') + '</div>');
+
+  // 퍼센타일 사다리 — 선택값을 끼워 넣고 중복 제거
+  var lad = [50, 75, 90, 95, 97.5, 99, 100];
+  if (lad.indexOf(p) < 0) lad.push(p);
+  lad.sort(function (a, b) { return a - b; });
+
+  h.push('<div class="tblwrap"><table><thead><tr>' +
+    '<th style="width:74px">퍼센타일</th><th>강도 — 선형보간</th><th>강도 — 최근접순위</th>' +
+    '<th class="l">해당 윈도우 (최근접순위)</th><th>분포 순위</th>' + (o.extraTh || '') +
+    '<th>상위 N건 표</th></tr></thead><tbody>');
+  lad.forEach(function (q) {
+    var r = pctlBoth(o.arr, q);
+    var c = o.rows[idx[r.nearIdxAsc]];
+    var rk = rankOf(c);
+    var isSel = Math.abs(q - p) < 1e-9;
+    h.push('<tr' + (isSel ? ' style="background:#eef3f9;font-weight:600"' : '') + '>' +
+      '<td><b>' + f1n(q) + '%</b>' + (isSel ? ' ◄' : '') + '</td>' +
+      '<td><b>' + f1n(r.lin) + '</b></td><td>' + f1n(r.near) + '</td>' +
+      '<td class="l mono">' + fmtD(DATES[c.b]) + ' ~ ' + fmtD(DATES[c.t]) + '</td>' +
+      '<td>' + r.nearRank.toLocaleString() + ' / ' + n.toLocaleString() + '</td>' +
+      (o.extraTd ? o.extraTd(c) : '') +
+      '<td>' + (rk ? '<b>' + rk + '위</b>' : '—') + '</td></tr>');
+  });
+  h.push('</tbody></table></div>');
+  h.push('<p class="hint" style="margin:8px 0 0">“분포 순위 k / n” = 강도 내림차순으로 k번째. ' +
+    '100퍼센타일 행의 분포 순위가 <b>1 / ' + n.toLocaleString() + '</b> 이고 강도가 위 “최악” KPI와 같아야 정상이다(정의 검산). ' +
+    '“상위 N건 표” 열이 —인 행은 그 윈도우가 상위 ' + (o.picked ? o.picked.length : 0) + '건 안에 들지 않았다는 뜻이다' +
+    (o.ovlNote ? ' (' + o.ovlNote + ')' : '') + '.</p>');
+  return h.join('');
+}
+/* 상위 N건 표에 붙일 '분포 위치(%p)' 셀 — 퍼센타일 옵션이 켜졌을 때만 쓴다 */
+function pctlPosCell(sortedAsc, v) {
+  var q = pctlRankOf(sortedAsc, v);
+  return '<td title="이 구간의 강도가 모집단 분포에서 차지하는 위치(누적 백분율)">' + (isNaN(q) ? '—' : q.toFixed(q >= 99.95 ? 3 : 1) + '%') + '</td>';
+}
+/* 퍼센타일 옵션 상태 읽기 — { on, p } */
+function pctlOpt() {
+  var cb = $('st-pctl-on');
+  if (!cb || !cb.checked) return { on: false, p: NaN };
+  var v = parseFloat($('st-pctl').value);
+  return { on: true, p: isNaN(v) ? 95 : v };
+}
 
 function renderStressDetail(i) {
   var S = stressLast, c = S.picked[i], t = typeByName(S.typeName);
@@ -1980,6 +2221,14 @@ function runSpreadStress() {
     kpi('출력', picked.length, '건') +
     (cands.length ? kpi(dir === 'narrow' ? '최대 축소' : (dir === 'abs' ? '최대 변동' : '최대 확대'), f1(cands[0].d), 'bp', true) : '') + '</div>');
 
+  /* 퍼센타일 옵션 — 모집단은 상위 N건과 동일한 cands(유효 윈도우, 결측·기준변경 제외 후) */
+  var PO = pctlOpt();
+  var pArr = null, pSorted = null;
+  if (PO.on && cands.length) {
+    pArr = cands.map(function (c) { return c.strength; });
+    pSorted = pArr.slice().sort(function (a, b) { return a - b; });
+  }
+
   if (!picked.length) {
     h.push('<div class="alert e">유효한 윈도우가 없습니다. 윈도우 길이·탐색 범위를 조정해 보십시오.</div>');
     out.innerHTML = h.join(''); return;
@@ -1987,7 +2236,7 @@ function runSpreadStress() {
 
   h.push('<h3 style="font-size:13px;margin:16px 0 8px;color:#17456b">결과 — 스프레드 ' + esc(SPD_DIR_NAME[dir]) + ' 상위 ' + picked.length + '구간 <span style="font-weight:400;color:#67727f;font-size:11.5px">(행 클릭 → 상세)</span></h3>');
   h.push('<div class="tblwrap"><table class="clickrow" id="st-spd-tbl"><thead><tr><th style="width:44px">순위</th><th class="l">구간 (시작 ~ 종료)</th>' +
-    '<th>시작 SPD</th><th>종료 SPD</th><th>Δ스프레드</th><th>ΔA (크레딧)</th><th>ΔB (기준)</th><th>관측치</th><th class="l wrapc" style="width:180px">분해 — 무엇이 벌렸나</th></tr></thead><tbody>');
+    '<th>시작 SPD</th><th>종료 SPD</th><th>Δ스프레드</th><th>ΔA (크레딧)</th><th>ΔB (기준)</th>' + (pSorted ? '<th>분포 위치</th>' : '') + '<th>관측치</th><th class="l wrapc" style="width:180px">분해 — 무엇이 벌렸나</th></tr></thead><tbody>');
   picked.forEach(function (c, i) {
     var at = spdAttrib(c.dA, c.dB, c.d);
     var nobs = 0;
@@ -1998,11 +2247,30 @@ function runSpreadStress() {
       '<td>' + f1n(c.s0) + '</td><td><b>' + f1n(c.s1) + '</b></td>' +
       '<td class="' + cls(c.d) + '"><b>' + f1(c.d) + '</b></td>' +
       bpCell(c.dA) + bpCell(c.dB) +
+      (pSorted ? pctlPosCell(pSorted, c.strength) : '') +
       '<td>' + nobs.toLocaleString() + '</td>' +
       '<td class="l wrapc"><b>' + esc(at.txt) + '</b>' + (at.sub ? '<span style="color:#67727f"> · ' + esc(at.sub) + '</span>' : '') + '</td></tr>');
   });
   h.push('</tbody></table></div>');
   h.push('<p class="hint" style="margin:8px 0 0">Δ스프레드 = ΔA − ΔB. 같은 +50bp 확대라도 <b>ΔA만 +50</b>(크레딧 리스크 재평가)과 <b>ΔB만 −50</b>(안전자산 선호로 국고 강세)은 성격이 전혀 다르다.</p>');
+
+  if (pSorted) {
+    h.push(pctlBlockHTML({
+      p: PO.p, arr: pArr, rows: cands, W: W, picked: picked,
+      popTxt: '유효 롤링 윈도우 ' + cands.length.toLocaleString() + '건 (평가 ' + evalN.toLocaleString() + '건에서 결측 ' + exMiss.toLocaleString() + '건' +
+        (exReg ? ' · 기준변경 경계 ' + exReg.toLocaleString() + '건' : '') + ' 제외). <b>상위 N건 표와 같은 배열</b>이며 시나리오 필터가 없다.',
+      metric: (dir === 'widen' ? 'Δ스프레드 (부호 그대로)' : (dir === 'narrow' ? '−Δ스프레드 (축소폭)' : '|Δ스프레드|')) + ' [bp]',
+      signTxt: dir === 'widen'
+        ? '강도 = Δ스프레드 <b>그 자체</b>다. <b>양수 = 확대(악화)</b>, 음수 = 축소. 분포에 음수 구간이 포함되므로 낮은 퍼센타일은 음수(축소)로 나올 수 있다. 정렬은 내림차순'
+        : (dir === 'narrow'
+          ? '강도 = <b>−Δ스프레드</b>. <b>양수 = 축소(악화로 정의)</b>, 음수 = 확대. 방향 설정이 “축소”이므로 부호를 뒤집어 축소가 클수록 강도가 크다. 정렬은 내림차순'
+          : '강도 = <b>|Δ스프레드|</b> — 방향 무관 변동폭. 확대·축소가 한 분포에 섞이므로 퍼센타일은 “방향 상관없이 이만큼 움직였다”로 읽는다. 정렬은 내림차순'),
+      extraTh: '<th>Δ스프레드</th><th>ΔA</th><th>ΔB</th>',
+      extraTd: function (c) { return '<td class="' + cls(c.d) + '"><b>' + f1(c.d) + '</b></td>' + bpCell(c.dA) + bpCell(c.dB); },
+      ovlNote: allowOvl ? '중복 허용 모드' : 'greedy 비중복 선택이라 강도가 더 큰 구간과 날짜가 겹쳐 밀려났을 수 있다'
+    }));
+  }
+
   h.push('<div id="st-spd-detail"></div>');
   h.push(evid([
     ['시리즈 A 컬럼', esc(ca)], ['시리즈 B 컬럼', esc(cb)],
@@ -2012,7 +2280,11 @@ function runSpreadStress() {
     ['윈도우 길이', W + '영업일 (영업일 = 데이터에 행이 존재하는 날)'],
     ['평가 / 유효', evalN.toLocaleString() + ' / ' + cands.length.toLocaleString() + '  (결측제외 ' + exMiss.toLocaleString() + ', 기준변경제외 ' + exReg.toLocaleString() + ')'],
     ['파라미터', 'direction=' + dir + ', W=' + W + ', topN=' + topN + ', overlap=' + allowOvl + ', regime=' + regime]
-  ]));
+  ].concat(pSorted ? [
+    ['퍼센타일 모집단', '유효 윈도우 n=' + cands.length.toLocaleString() + '건 (상위 N건 표와 동일)'],
+    ['퍼센타일 파라미터', 'p=' + f1n(PO.p) + '%, 선형보간=numpy method=linear, 최근접순위=numpy method=inverted_cdf'],
+    ['퍼센타일 값', f1n(PO.p) + '%p 선형보간 ' + f1n(pctlLinear(pSorted, PO.p)) + 'bp / 최근접순위 ' + f1n(pctlBoth(pArr, PO.p).near) + 'bp · 100%p(최대) ' + f1n(pSorted[pSorted.length - 1]) + 'bp']
+  ] : [])));
   out.innerHTML = h.join('');
 
   spdStressLast = { picked: picked, ta: ta, ma: ma, tb: tb, mb: mb, ca: ca, cb: cb, nmA: nmA, nmB: nmB, dir: dir, W: W };
@@ -3612,11 +3884,18 @@ guard('다운로드·스트레스', function () {
   }, function () {
     var sc = document.querySelector('input[name=st-sc]:checked');
     var v = sc ? sc.value : 'all';
+    // 퍼센타일 옵션이 켜져 있으면 정의를 주석으로 남긴다 (표만 떼어봐도 정의를 알 수 있게)
+    var po = pctlOpt();
+    var pc = (po.on && v !== 'pivot') ? [
+      '퍼센타일 : ' + f1n(po.p) + '% · 모집단은 상위 N건 표와 동일',
+      '퍼센타일 정의 : 선형보간 h=(n-1)p/100 (numpy method=linear) / 최근접순위 k=ceil(n*p/100) (numpy method=inverted_cdf)',
+      '※ 롤링 윈도우는 서로 겹치므로 n건이 독립 표본 n개가 아님'
+    ] : [];
     if (v === 'spread') {
       return ['도구 : 스트레스테스트 — 스프레드 확대',
       '시리즈 A(크레딧) : ' + serName($('st-sa').value, +$('st-sma').value),
       '시리즈 B(기준) : ' + serName($('st-sb').value, +$('st-smb').value),
-      '방향 : ' + $('st-sdir').value + ' · 윈도우 ' + $('st-win').value + '영업일 · 상위 ' + $('st-topn').value + '건'];
+      '방향 : ' + $('st-sdir').value + ' · 윈도우 ' + $('st-win').value + '영업일 · 상위 ' + $('st-topn').value + '건'].concat(pc);
     }
     if (v === 'pivot') {
       return ['도구 : 스트레스테스트 — 피벗(기준금리 방향 전환)',
@@ -3627,7 +3906,7 @@ guard('다운로드·스트레스', function () {
     return ['도구 : 스트레스테스트 — 커브 시나리오',
     '채권종류 : ' + $('st-type').value,
     '만기 : 단기 ' + matLabel(+$('st-short').value) + ' / 장기 ' + matLabel(+$('st-long').value),
-    '시나리오 : ' + v + ' · 윈도우 ' + $('st-win').value + '영업일 · 상위 ' + $('st-topn').value + '건'];
+    '시나리오 : ' + v + ' · 윈도우 ' + $('st-win').value + '영업일 · 상위 ' + $('st-topn').value + '건'].concat(pc);
   });
 });
 guard('다운로드·VaR', function () {
