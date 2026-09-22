@@ -4068,7 +4068,8 @@ function usLagNote() {
   var e = document.getElementById('us-lag'); if (!e) return;
   function toUTC(v) { v = '' + v; return Date.UTC(+v.substr(0, 4), +v.substr(4, 2) - 1, +v.substr(6, 2)); }
   var ud = 0, kd = 0;
-  try { if (window.US && US.DATES && US.N) ud = US.DATES[US.N - 1]; } catch (x) { }
+  /* US·DATES·LAST 는 모두 BOOT() 스코프의 지역 변수다 — window.US 로는 잡히지 않으니 typeof 로 본다. */
+  try { if (typeof US !== 'undefined' && US && US.DATES && US.N) ud = US.DATES[US.N - 1]; } catch (x) { }
   try { if (typeof DATES !== 'undefined' && typeof LAST !== 'undefined' && LAST >= 0) kd = DATES[LAST]; } catch (x) { }
   if (!ud || !kd) { e.textContent = ''; return; }
   var gap = Math.round((toUTC(kd) - toUTC(ud)) / 86400000);
