@@ -226,6 +226,19 @@ body{font-size:13px;}
        => 행 높이는 왼쪽 두 시계열 카드만이 결정한다.
      · 1200px 이하에서는 아래 @media 의 1열 스택 규칙이 살아야 하므로 min-width:1201px 로 가둔다.
        (높이 강제·행 배치가 전부 이 블록 안에만 있다) */
+/* 대시보드 하위 탭 (현물 / 선물·IRS) — 2026-09-27
+   좌측 내비의 '대시보드' 안에서만 쓰는 2단 탭. 좌측 내비(.nav nav button)와
+   구분되도록 밑줄형으로 둔다. */
+.subtabs{display:flex;gap:2px;border-bottom:1px solid #dbe2ea;margin:0 0 14px;}
+.subtabs button{font:inherit;font-size:13px;font-weight:600;letter-spacing:-.2px;
+  padding:8px 18px;border:0;background:transparent;color:#67727f;cursor:pointer;
+  border-bottom:3px solid transparent;margin-bottom:-1px;}
+.subtabs button:hover{color:#17456b;background:#f4f6f9;}
+.subtabs button.on{color:#17456b;border-bottom-color:#d0021b;}
+/* 선물 탭 그리드는 아래 min-width 블록의 행 높이 강제(auto 1fr 1fr auto)를 받지 않는다.
+   그 규칙은 현물 탭의 '시계열 2장 + 이슈 1장' 배치 전용이다. */
+.futgrid{grid-template-rows:none !important;}
+
 @media (min-width:1201px){
   .dashgrid{grid-template-rows:auto 1fr 1fr auto;}
   #ts-sec,#us-sec,#news-sec{align-self:stretch;}
@@ -408,6 +421,16 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
 
 <!-- ===================== 대시보드 ===================== -->
 <div class="view" id="view-dash">
+
+<!-- 대시보드 하위 탭 — 현물(기존 카드 전부) / 선물·IRS(2026-09-27 신설)
+     탭 이름에 IRS 를 함께 적은 것은, IRS 가 선물이 아니라 스왑 고정금리(%)이기 때문이다.
+     '선물' 한 단어로 묶으면 단위와 성격을 오해한다. -->
+<div class="subtabs" id="dash-subtabs">
+  <button type="button" data-d="spot" class="on">현물</button>
+  <button type="button" data-d="fut">선물 · IRS</button>
+</div>
+
+<div id="dash-spot">
 <div class="dashgrid">
 
   <section class="card span3">
@@ -473,6 +496,81 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
   </section>
 
 </div>
+</div><!-- /#dash-spot -->
+
+<!-- ===================== 대시보드 · 선물 · IRS =====================
+     2026-09-27 신설. 담는 것은 IRS(원화 이자율스왑, %)와 국내 국채선물 3·10·30년,
+     미국채선물 2·10·30년(ZT/ZN/ZB)이다.
+
+     표시 규칙 — 가격 컬럼을 왜 이렇게 나눠 쓰는가
+       현황(수준)  국내 '약정가' · 미국 '종가'  = 미조정 실제 체결가. 화면 숫자가
+                   HTS 와 같아야 하므로 조정계열을 쓰지 않는다.
+       시계열·분석 국내 '수정가' · 미국 '조정가' = 롤오버 조정 연속계열. 분기 롤오버
+                   때의 가격 점프를 제거한 것이라 차트가 매끄럽고 수익률이 왜곡되지 않는다.
+       최신일에는 두 계열의 값이 같다(조정 앵커가 현재 월물이다).
+
+     기준일 표기 — 국내 선물·IRS·미국 선물은 갱신 주기가 달라 최신 관측일이 서로
+     어긋날 수 있다(미국 선물은 수기 수집, IRS 는 주간 수기 갱신). 블록마다 자체
+     기준일을 잡아 국내 기준일과 다르면 행 라벨에 그 날짜를 적고, 영업일 5일 넘게
+     밀리면 '최근 데이터 없음' 배지를 붙인다 — 국내 기준일 값으로 오해하지 않게
+     하기 위함이다. 2026-09-27 보충 적재로 현재는 세 블록이 모두 같은 날이다. -->
+<div id="dash-fut" style="display:none">
+<div class="dashgrid futgrid">
+
+  <section class="card span3">
+    <h2>선물 현황 <span id="fut-lv-warn" style="font-weight:400;font-size:11.5px;color:#a3410f"></span></h2>
+    <div class="chartbox" id="box-fut-level"></div>
+    <p class="note">셀 표기: <b>가격(포인트)</b> / 아래 작은 수치는 직전 관측일 대비 증감(pt).
+      <span class="up">상승(빨강)</span> · <span class="dn">하락(파랑)</span> · <span class="na">—</span>는 해당일 미고시.
+      <b>수준은 미조정 실제 체결가</b>(국내 약정가 · 미국 종가)입니다 — 분기 롤오버일에는 계약이 바뀌므로
+      전일 대비 증감에 월물 교체분이 섞입니다. 롤오버를 제거한 값은 아래 시계열·변동 현황을 보십시오.
+      선물 가격은 금리와 반대로 움직입니다(금리↑ = 가격↓).</p>
+  </section>
+
+  <section class="card span3">
+    <h2>원화 IRS 현황 (%)</h2>
+    <div class="chartbox" id="box-irs-level"></div>
+    <p class="note">셀 표기: <b>금리(%)</b> / 아래 작은 수치는 전영업일 대비 증감(bp).
+      수록 만기는 <b>1·2·3·5·10년</b>입니다 — 마스터 데이터에는 19개 만기(6월~30년)가 모두 있으나,
+      주간 단위 수기 갱신이라 나머지 만기는 갱신이 밀린 상태로 남아 오해를 부를 수 있어 화면에 올리지 않았습니다.
+      스왑스프레드 = IRS − 국고채권, 동일 만기 단순차(bp).</p>
+  </section>
+
+  <section class="card span2">
+    <h2>선물 시계열 (pt · 롤오버 조정)</h2>
+    <div class="serpick" id="fut-pick"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin:10px 0 10px">
+      <div class="rangebar" id="fut-range" style="flex:1;margin:0"></div>
+      <button type="button" class="btn" id="fut-dl" style="margin-right:0;white-space:nowrap" title="선택한 시리즈의 표시 구간 전체를 일자별 로데이터로 내려받습니다">CSV 다운로드</button>
+    </div>
+    <div class="chartbox" id="fut-chart"></div>
+    <div class="lgd" id="fut-legend"></div>
+    <p class="note">국내는 KOFIA <b>수정가</b>(월물간 보정), 미국은 등락률을 마지막 종가에서 거꾸로 누적한 <b>조정가</b>입니다.
+      둘 다 최신일 = 실제 가격이고 과거가 소급 조정되어 있어, <b>롤오버마다 과거 값 전체가 다시 계산</b>됩니다.
+      결측 구간은 선을 끊습니다(보간하지 않음). <b>x축은 한국 영업일</b>입니다.</p>
+  </section>
+
+  <section class="card span1">
+    <h2>IRS 시계열 (%)</h2>
+    <div class="serpick" id="irs-pick"></div>
+    <div class="rangebar" id="irs-range" style="margin:10px 0 10px"></div>
+    <div class="chartbox" id="irs-chart"></div>
+    <div class="lgd" id="irs-legend"></div>
+    <p class="note">2022-08-26 부터 수록(약 4년). 결측 구간은 선을 끊습니다.</p>
+  </section>
+
+  <section class="card span3">
+    <h2>변동 현황</h2>
+    <div class="chartbox" id="box-fut-chg"></div>
+    <p class="note" id="fut-chg-note">선물 변동은 <b>롤오버 조정계열 기준(pt)</b>이라 월물 교체분이 섞이지 않습니다.
+      IRS 변동은 <b>bp</b>입니다. 과거 기준일은 달력 기준으로 역산한 뒤 <b>그 이전 가장 가까운 영업일</b>로 대체합니다.
+      양쪽 중 하나라도 결측이면 계산하지 않고 <span class="na">—</span>로 둡니다.
+      수록 시작일이 서로 달라(국채선물 30년 2024-02-19 · IRS 2022-08-26 · 미국채선물 10·30년 2013-08-28)
+      긴 기간 열에는 <span class="na">—</span>가 정상적으로 나옵니다.</p>
+  </section>
+
+</div>
+</div><!-- /#dash-fut -->
 </div>
 
 <div class="view" id="view-stress" style="display:none">
@@ -985,6 +1083,39 @@ var US_NOTE =
   'data/us_rates.json 의 미국 자체 날짜축이라 한국 공휴일에 버려지는 관측일(전 기간 327일)이 없습니다. ' +
   '여기(한국축)는 한국 시리즈와 <b>같은 날짜끼리</b> 비교해야 하는 도구 전용입니다.';
 
+/* IRS 공통 주석 */
+var IRS_NOTE =
+  '<b>원화 IRS 는 2022-08-26 부터만 수록</b>되어 있습니다(약 4년). 그 이전 구간을 포함해 ' +
+  '계산하면 표본이 자동으로 잘리니 기간 표시를 확인하십시오. ' +
+  '노출 만기는 <b>1·2·3·5·10년</b> 다섯 개입니다 — 마스터에는 19개 만기가 모두 있으나, ' +
+  '주간 단위 수기 갱신이라 나머지 만기는 갱신이 밀린 상태로 남아 오해를 부를 수 있어 화면에 올리지 않았습니다. ' +
+  'IRS 는 국채와 달리 <b>스왑 고정금리</b>이므로 같은 만기의 국고채권과는 스왑스프레드만큼 차이가 납니다.';
+
+/* 국채선물 공통 주석 */
+var KTBF_NOTE =
+  '<b>국채선물은 금리가 아니라 가격(포인트)</b>입니다. 금리가 오르면 선물가격은 내리므로 ' +
+  '금리 시리즈와의 상관계수는 음수로 나오는 것이 정상입니다. ' +
+  '여기 실린 <b>수정가</b>는 KOFIA 의 월물간 보정(백워드 조정) 연결계열로, 분기 롤오버 때 생기는 ' +
+  '가격 점프(실측 2026-09-15 기준 3년 −0.72pt · 10년 −1.21pt)를 제거한 것입니다. ' +
+  '최신일 값은 실제 체결가(약정가)와 같고 과거가 소급 조정되어 있어, <b>롤오버마다 과거 값 전체가 다시 계산</b>됩니다. ' +
+  '수록 시작일은 3년 2000-10-30 · 10년 2008-02-25 · <b>30년 2024-02-19</b>이므로, ' +
+  '30년물을 포함하면 공통 표본이 2년 반으로 짧아집니다.';
+
+/* 미국채선물 공통 주석 */
+var USF_NOTE =
+  '<b>미국채선물은 금리가 아니라 가격(포인트)</b>입니다. 금리가 오르면 선물가격은 내립니다. ' +
+  '원본에 국내 \'수정가\'에 해당하는 컬럼이 없어, <b>등락률을 마지막 실제 종가에서 거꾸로 누적</b>해 ' +
+  '롤오버 조정가격을 만들었습니다(누적은 미국 자체 날짜축에서 수행한 뒤 한국 영업일축으로 옮겼습니다). ' +
+  '수록 구간은 <b>2년물 2010-01-04~ · 10·30년물 2013-08-28~</b> 이며 국내와 같은 최신일까지 채워져 있습니다. ' +
+  '<b>제외한 값이 두 군데 있습니다.</b> ' +
+  '① ZB 2015-02-27 의 +10.24%(종가 146.81→161.84) — 전 구간에서 일간 등락 4%를 넘는 유일한 날이고, ' +
+  '같은 날 수익률은 2.933→2.896 으로 매끄러운 데다 가격이 <b>되돌아오지 않아</b>(이후 158~160 대 유지) ' +
+  '하루 스파이크가 아니라 계열이 갈아타는 지점입니다. 원본 종가·대비·등락률을 비웠고 누적에서도 뺐습니다. ' +
+  '② ZT 2010-01-04~2011-03-10 의 <b>수익률</b> 3.6~5.1% — 당시 실제 미 2년물은 0.6~1.2% 로, ' +
+  '엉뚱한 계열이 들어와 있습니다(2011-03-10 5.089 → 03-11 1.124 에서 끊김). 해당 구간 수익률만 비웠고 ' +
+  '같은 구간의 가격은 정상이라 그대로 씁니다. 어느 쪽도 보간하지 않았습니다. ' +
+  '또한 미국 값은 한국 종가 이후에 형성되므로 동일자 상관은 시차만큼 낮게 나옵니다(위 미국 금리 주석과 같은 이유).';
+
 var EXTRA_SERIES = [
   {
     key: 'BOK_BASE', label: '한국은행 기준금리', group: '기준지표',
@@ -1032,7 +1163,49 @@ var EXTRA_SERIES = [
   , { key: 'UST_10Y', label: '미국채', group: '해외금리', col: '미국채_10년', maturity: 120, full: 'US Treasury Constant Maturity 10Y', note: US_NOTE }
   , { key: 'UST_20Y', label: '미국채', group: '해외금리', col: '미국채_20년', maturity: 240, full: 'US Treasury Constant Maturity 20Y', note: US_NOTE }
   , { key: 'UST_30Y', label: '미국채', group: '해외금리', col: '미국채_30년', maturity: 360, full: 'US Treasury Constant Maturity 30Y', note: US_NOTE }
+
+  /* ---- IRS (원화 이자율스왑, 단위 %) --------------------------------------
+     금리 단위이므로 국내 채권 시리즈와 완전히 같은 취급을 받는다 — 커브·스프레드·
+     스트레스테스트·VaR·상관관계 전부에서 고를 수 있다(corrOnly 를 붙이지 않는다).
+     노출 만기는 1·2·3·5·10년 다섯 개뿐이다. 마스터에는 19개 만기가 다 들어 있지만
+     주간 단위 수기 갱신이라 나머지는 갱신이 밀려 오해를 부른다. 늘리려면
+     _scripts/futures_series.py 의 IRS_COLS 와 여기 두 곳을 함께 고친다. ------- */
+  , {
+    key: 'IRS_1Y', label: '원화 IRS', group: '스왑금리', col: 'IRS_1년', maturity: 12,
+    full: '원화 이자율스왑(IRS) 1년', note: IRS_NOTE
+  }
+  , { key: 'IRS_2Y', label: '원화 IRS', group: '스왑금리', col: 'IRS_2년', maturity: 24, full: '원화 이자율스왑(IRS) 2년', note: IRS_NOTE }
+  , { key: 'IRS_3Y', label: '원화 IRS', group: '스왑금리', col: 'IRS_3년', maturity: 36, full: '원화 이자율스왑(IRS) 3년', note: IRS_NOTE }
+  , { key: 'IRS_5Y', label: '원화 IRS', group: '스왑금리', col: 'IRS_5년', maturity: 60, full: '원화 이자율스왑(IRS) 5년', note: IRS_NOTE }
+  , { key: 'IRS_10Y', label: '원화 IRS', group: '스왑금리', col: 'IRS_10년', maturity: 120, full: '원화 이자율스왑(IRS) 10년', note: IRS_NOTE }
+
+  /* ---- 국채선물 · 미국채선물 (단위 포인트) --------------------------------
+     price:true      → 값이 금리(%)가 아니라 가격(pt)이다. 상관관계 도구가 축
+                       라벨·표준편차 단위를 bp 가 아니라 pt 로 바꾸는 근거.
+     corrOnly:true   → **상관관계 도구에서만** 고를 수 있다. 스트레스테스트·VaR 는
+                       bp 변동과 커브 유형(불/베어·플랫/스팁) 판정을 쓰고, 커브·
+                       스프레드는 만기축 위의 금리차를 쓴다. 가격 포인트를 넣으면
+                       단위가 섞이므로 애초에 선택지에서 뺀다(사용자 확정 사항).
+     대표 컬럼은 롤오버 조정계열이다 — 국내는 KOFIA 의 '수정가', 미국은 등락률을
+     누적해 만든 '조정가'. 현황표에 쓰는 미조정 실제가격(약정가·종가)은 레지스트리에
+     올리지 않고 대시보드 선물 탭이 COL 에서 직접 읽는다. ---------------------- */
+  , { key: 'KTBF_3Y', label: '국채선물(수정가)', group: '선물', col: '국채선물3년_수정가', maturity: 36, price: true, corrOnly: true, full: '국채선물 3년 — 월물간 보정 연결가격 (KRX)', note: KTBF_NOTE }
+  , { key: 'KTBF_10Y', label: '국채선물(수정가)', group: '선물', col: '국채선물10년_수정가', maturity: 120, price: true, corrOnly: true, full: '국채선물 10년 — 월물간 보정 연결가격 (KRX)', note: KTBF_NOTE }
+  , { key: 'KTBF_30Y', label: '국채선물(수정가)', group: '선물', col: '국채선물30년_수정가', maturity: 360, price: true, corrOnly: true, full: '국채선물 30년 — 월물간 보정 연결가격 (KRX)', note: KTBF_NOTE }
+  , { key: 'USF_2Y', label: '미국채선물(조정가)', group: '선물', col: '미국채선물2년_조정가', maturity: 24, price: true, corrOnly: true, full: '미국채선물 2년 ZT — 등락률 누적 롤오버 조정가격', note: USF_NOTE }
+  , { key: 'USF_10Y', label: '미국채선물(조정가)', group: '선물', col: '미국채선물10년_조정가', maturity: 120, price: true, corrOnly: true, full: '미국채선물 10년 ZN — 등락률 누적 롤오버 조정가격', note: USF_NOTE }
+  , { key: 'USF_30Y', label: '미국채선물(조정가)', group: '선물', col: '미국채선물30년_조정가', maturity: 360, price: true, corrOnly: true, full: '미국채선물 30년 ZB — 등락률 누적 롤오버 조정가격', note: USF_NOTE }
 ];
+
+/* 가격(포인트) 시리즈 컬럼 집합 — 금리(%) 시리즈와 단위가 다르다 */
+var PRICE_COLS = {};
+EXTRA_SERIES.forEach(function (e) { if (e.price) PRICE_COLS[e.col] = 1; });
+/** 컬럼의 단위 메타. 금리는 0.1bp 저장 → 변동 bp(÷10)·수준 %(÷1000).
+ *  가격은 0.001pt 저장 → 변동·수준 모두 pt(÷1000). */
+function unitOf(col, isLvl) {
+  if (PRICE_COLS[col]) return { div: 1000, sfx: 'pt' };
+  return isLvl ? { div: 1000, sfx: '%' } : { div: 10, sfx: 'bp' };
+}
 
 /* rates.json 에 extra[] 가 있으면 COL 에 디코드해 올린다 (없어도 무해) */
 (function () {
@@ -1056,7 +1229,7 @@ var REG_TYPES = [], REG_GROUPS = [], REG_NOTE = {};
     if (fi < 0) return;                                 // 전부 결측이면 건너뛴다
     var t = byLabel[e.label];
     if (!t) {
-      t = byLabel[e.label] = { name: e.label, full: e.full || e.col, g: e.group || '기타', mats: [], reg: true, noMat: true };
+      t = byLabel[e.label] = { name: e.label, full: e.full || e.col, g: e.group || '기타', mats: [], reg: true, noMat: true, corrOnly: !!e.corrOnly, price: !!e.price };
       REG_TYPES.push(t);
       if (!gseen[t.g]) { gseen[t.g] = 1; REG_GROUPS.push(t.g); }
     }
@@ -1623,6 +1796,253 @@ function drawTS() {
 function lastVal(pts) { for (var i = pts.length - 1; i >= 0; i--) if (pts[i]) return pts[i][1]; return NaN; }
 
 /* ================================================================
+   대시보드 · 선물 · IRS 탭 (2026-09-27)
+   ----------------------------------------------------------------
+   단위가 둘이다. IRS 는 금리(%)·변동 bp, 선물은 가격(pt)·변동 pt.
+   섞으면 읽을 수 없으므로 카드도 표도 끝까지 갈라 둔다.
+
+   가격 컬럼 사용 규칙 (사용자 확정)
+     현황(수준)   국내 약정가 · 미국 종가   — 미조정 실제 체결가
+     시계열·변동  국내 수정가 · 미국 조정가 — 롤오버 조정 연속계열
+   ================================================================ */
+function ptv(col, i) { var a = COL[col]; if (!a) return NaN; var v = a[i]; return isNaN(v) ? NaN : v / 1000; }
+function ptDiff(col, i, j) { var a = COL[col]; if (!a) return NaN; var x = a[i], y = a[j]; return (isNaN(x) || isNaN(y)) ? NaN : (x - y) / 1000; }
+function f2(x) { return (isNaN(x) ? '—' : x.toFixed(2)); }
+function fp2(x) { return (isNaN(x) ? '—' : (x >= 0 ? '+' : '') + x.toFixed(2)); }
+function ptCell(x) { return '<td class="' + cls(x) + '">' + fp2(x) + '</td>'; }
+/** col 에서 upto 이하의 가장 최근 관측 인덱스. 없으면 -1 */
+function lastObs(col, upto) { var a = COL[col]; if (!a) return -1; for (var i = upto; i >= 0; i--) if (!isNaN(a[i])) return i; return -1; }
+
+/* 만기 라벨 → 컬럼. 없는 조합은 null 이고 표에서 '·' 가 된다. */
+var FUT_MATS = [['2년', 24], ['3년', 36], ['10년', 120], ['30년', 360]];
+var FUT_BLOCKS = [
+  { nm: '국채선물', sub: 'KRX · 약정가', pre: '국채선물', tens: { 36: '3년', 120: '10년', 360: '30년' }, lv: '_약정가', adj: '_수정가' },
+  { nm: '미국채선물', sub: 'CME · 종가', pre: '미국채선물', tens: { 24: '2년', 120: '10년', 360: '30년' }, lv: '_종가', adj: '_조정가' }
+];
+var IRS_MATS = [['1년', 12], ['2년', 24], ['3년', 36], ['5년', 60], ['10년', 120]];
+
+/* --- 선물 현황 --- */
+guard('선물 현황', function () {
+  var th = '<tr><th class="l" style="width:190px">구분</th>';
+  FUT_MATS.forEach(function (m) { th += '<th>' + m[0] + '</th>'; });
+  th += '</tr>';
+  var body = '', stale = [];
+  FUT_BLOCKS.forEach(function (B) {
+    /* 블록 기준일 — 만기별 최신 관측일 중 가장 늦은 날. 미국채선물은 원본이
+       국내보다 뒤처져 있어 LAST 만 보면 행 전체가 '—' 가 된다. */
+    var asof = -1;
+    FUT_MATS.forEach(function (m) {
+      var c = B.pre + B.tens[m[1]] + B.lv; if (!B.tens[m[1]] || !COL[c]) return;
+      var i = lastObs(c, LAST); if (i > asof) asof = i;
+    });
+    if (asof < 0) return;
+    var lag = LAST - asof;
+    var sub = '<br><span style="font-size:10.5px;color:#67727f">' + esc(B.sub) +
+      (asof < LAST ? ' · ' + fmtD(DATES[asof]) + ' 기준' : '') + '</span>';
+    var badge = '';
+    if (lag > 5) {                       // 영업일 5일 넘게 밀리면 최신값이 아니라고 명시한다
+      badge = ' <span style="font-size:10.5px;color:#fff;background:#a3410f;border-radius:3px;padding:1px 5px">최근 데이터 없음</span>';
+      stale.push(B.nm + ' ' + fmtD(DATES[asof]));
+    }
+    body += '<tr' + (lag > 5 ? ' style="background:#fffaf5"' : '') + '><td class="l"><b>' + esc(B.nm) + '</b>' + badge + sub + '</td>';
+    FUT_MATS.forEach(function (m) {
+      var t = B.tens[m[1]];
+      if (!t) { body += '<td class="na">·</td>'; return; }
+      var c = B.pre + t + B.lv;
+      if (!COL[c]) { body += '<td class="na">·</td>'; return; }
+      var i = lastObs(c, LAST);
+      if (i < 0) { body += '<td class="na">—</td>'; return; }
+      var j = lastObs(c, i - 1);
+      var d = (j < 0) ? NaN : ptDiff(c, i, j);
+      body += '<td>' + f2(ptv(c, i)) + '<br><span class="' + cls(d) + '" style="font-size:11px">' + fp2(d) + '</span></td>';
+    });
+    body += '</tr>';
+  });
+  setTable('box-fut-level', 'tbl-fut-level', '', th, body);
+  if (stale.length) $('fut-lv-warn').textContent = '⚠ ' + stale.join(' · ') + ' 이후 원본 미갱신';
+});
+
+/* --- 원화 IRS 현황 --- */
+guard('IRS 현황', function () {
+  var th = '<tr><th class="l" style="width:190px">구분</th>';
+  IRS_MATS.forEach(function (m) { th += '<th>' + m[0] + '</th>'; });
+  th += '</tr>';
+  var asof = -1;
+  IRS_MATS.forEach(function (m) { var i = lastObs('IRS_' + m[0], LAST); if (i > asof) asof = i; });
+  if (asof < 0) { setTable('box-irs-level', 'tbl-irs-level', '', th, '<tr><td class="l na" colspan="' + (IRS_MATS.length + 1) + '">IRS 데이터가 없습니다.</td></tr>'); return; }
+  var prev = -1;
+  for (var i = asof - 1; i >= 0; i--) { if (!isNaN(COL['IRS_' + IRS_MATS[0][0]][i])) { prev = i; break; } }
+  var sub = '<br><span style="font-size:10.5px;color:#67727f">' +
+    (asof < LAST ? fmtD(DATES[asof]) + ' 기준 · ' : '') + '주간 수기 갱신</span>';
+  var body = '<tr><td class="l"><b>원화 IRS</b>' + sub + '</td>';
+  IRS_MATS.forEach(function (m) {
+    var c = 'IRS_' + m[0];
+    var v = pct(c, asof), d = (prev < 0) ? NaN : bpDiff(c, asof, prev);
+    if (isNaN(v)) { body += '<td class="na">—</td>'; return; }
+    body += '<td>' + v.toFixed(3) + '<br><span class="' + cls(d) + '" style="font-size:11px">' + f1(d) + '</span></td>';
+  });
+  body += '</tr>';
+  /* 스왑스프레드 = IRS − 국고채권. 국고는 같은 날(asof) 값을 쓴다. */
+  body += '<tr style="background:#f7fafd"><td class="l"><b>스왑스프레드</b><br><span style="font-size:10.5px;color:#67727f">IRS − 국고 (bp)</span></td>';
+  IRS_MATS.forEach(function (m) {
+    var a = 'IRS_' + m[0], b = colOf('국고채권', m[1]);
+    if (!b || !COL[a]) { body += '<td class="na">·</td>'; return; }
+    var s = (raw(a, asof) - raw(b, asof)) / 10;
+    var sp = (prev < 0) ? NaN : (raw(a, prev) - raw(b, prev)) / 10;
+    if (isNaN(s)) { body += '<td class="na">—</td>'; return; }
+    body += '<td><b>' + s.toFixed(1) + '</b><br><span class="' + cls(s - sp) + '" style="font-size:11px">' + f1(s - sp) + '</span></td>';
+  });
+  body += '</tr>';
+  setTable('box-irs-level', 'tbl-irs-level', '', th, body);
+});
+
+/* --- 선물 시계열 (조정계열, pt) --- */
+var FUT_TS = [
+  ['국채선물 3년', '국채선물3년_수정가'], ['국채선물 10년', '국채선물10년_수정가'], ['국채선물 30년', '국채선물30년_수정가'],
+  ['미국채선물 2년', '미국채선물2년_조정가'], ['미국채선물 10년', '미국채선물10년_조정가'], ['미국채선물 30년', '미국채선물30년_조정가']
+].filter(function (r) { return !!COL[r[1]]; });
+var futSel = FUT_TS.slice(0, 3).map(function (r) { return r[1]; });
+var IRS_TS = IRS_MATS.map(function (m) { return ['IRS ' + m[0], 'IRS_' + m[0]]; })
+  .filter(function (r) { return !!COL[r[1]]; });
+var irsSel = IRS_TS.map(function (r) { return r[1]; });
+
+/** 칩·기간 바를 만들고 그리기 함수를 붙인다 (선물·IRS 두 카드가 공유) */
+function buildPickBar(pickId, rangeId, list, sel, ranges, def, draw) {
+  var pk = $(pickId); if (!pk) return;
+  list.forEach(function (r) {
+    var b = el('button', {}, esc(r[0]));
+    if (sel.indexOf(r[1]) >= 0) b.className = 'on';
+    b.onclick = function () {
+      var k = sel.indexOf(r[1]);
+      if (k >= 0) sel.splice(k, 1); else sel.push(r[1]);
+      b.className = sel.indexOf(r[1]) >= 0 ? 'on' : '';
+      draw();
+    };
+    pk.appendChild(b);
+  });
+  var rb = $(rangeId);
+  ranges.forEach(function (r) {
+    var b = el('button', {}, r[0]);
+    b.dataset.k = r[0]; b.dataset.u = r[1]; b.dataset.n = r[2];
+    if (r[0] === def) b.className = 'on';
+    b.onclick = function () {
+      [].forEach.call(rb.children, function (x) { x.className = x.dataset.k === r[0] ? 'on' : ''; });
+      draw();
+    };
+    rb.appendChild(b);
+  });
+}
+function barWindow(rangeId) {
+  var rb = $(rangeId); if (!rb) return 0;
+  var b = [].filter.call(rb.children, function (x) { return x.className === 'on'; })[0];
+  if (!b || b.dataset.u === 'a') return 0;
+  var i = idxLE(shiftCal(DATES[LAST], b.dataset.u, +b.dataset.n));
+  return i < 0 ? 0 : i;
+}
+function barLabel(rangeId) {
+  var rb = $(rangeId); if (!rb) return '';
+  var b = [].filter.call(rb.children, function (x) { return x.className === 'on'; })[0];
+  return b ? b.dataset.k : '';
+}
+var RANGES = [['1M', 'm', 1], ['3M', 'm', 3], ['6M', 'm', 6], ['1Y', 'y', 1], ['3Y', 'y', 3], ['5Y', 'y', 5], ['10Y', 'y', 10], ['전체', 'a', 0]];
+
+function drawFutTS() {
+  var i0 = barWindow('fut-range'), i1 = LAST;
+  var ser = futSel.map(function (c) {
+    var pts = [], nm = c;
+    FUT_TS.forEach(function (r) { if (r[1] === c) nm = r[0]; });
+    for (var i = i0; i <= i1; i++) { var v = ptv(c, i); pts.push(isNaN(v) ? null : [i, v]); }
+    return { name: nm, pts: pts, color: PAL[FUT_TS.map(function (r) { return r[1]; }).indexOf(c) % PAL.length] };
+  });
+  $('fut-chart').innerHTML = svgLine({ w: cw('fut-chart', 860), h: 340, series: ser, xTicks: dateTicks(i0, i1, 9), yFmt: function (v) { return v.toFixed(1); } });
+  $('fut-legend').innerHTML = ser.map(function (s) {
+    return '<span><i style="background:' + s.color + '"></i>' + esc(s.name) + ' <b>' + f2(lastVal(s.pts)) + 'pt</b></span>';
+  }).join('') || '<span class="na">선택된 시리즈가 없습니다.</span>';
+}
+function drawIrsTS() {
+  var i0 = barWindow('irs-range'), i1 = LAST;
+  var ser = irsSel.map(function (c) {
+    var pts = [], nm = c;
+    IRS_TS.forEach(function (r) { if (r[1] === c) nm = r[0]; });
+    for (var i = i0; i <= i1; i++) { var v = pct(c, i); pts.push(isNaN(v) ? null : [i, v]); }
+    return { name: nm, pts: pts, color: PAL[IRS_TS.map(function (r) { return r[1]; }).indexOf(c) % PAL.length] };
+  });
+  $('irs-chart').innerHTML = svgLine({ w: cw('irs-chart', 380), h: 300, series: ser, xTicks: dateTicks(i0, i1, 4), yFmt: function (v) { return v.toFixed(2); } });
+  $('irs-legend').innerHTML = ser.map(function (s) {
+    return '<span><i style="background:' + s.color + '"></i>' + esc(s.name) + ' <b>' + f3(lastVal(s.pts)) + '%</b></span>';
+  }).join('') || '<span class="na">선택된 시리즈가 없습니다.</span>';
+}
+guard('선물·IRS 시계열 컨트롤', function () {
+  buildPickBar('fut-pick', 'fut-range', FUT_TS, futSel, RANGES, '3Y', drawFutTS);
+  buildPickBar('irs-pick', 'irs-range', IRS_TS, irsSel, RANGES, '3Y', drawIrsTS);
+});
+
+/* --- 선물·IRS 변동 현황 --- */
+guard('선물·IRS 변동 현황', function () {
+  var refs = CHG_HORIZ.map(function (hz) {
+    if (hz[1] === 'd' && hz[2] === 1) return PREV;
+    return idxLE(shiftCal(DATES[LAST], hz[1], hz[2]));
+  });
+  var th = '<tr><th class="l" style="width:190px">구분</th><th>현재</th>';
+  CHG_HORIZ.forEach(function (hz, i) {
+    th += '<th>' + hz[0] + '<br><span style="font-weight:400;font-size:10px;color:#7d8794">' + (refs[i] >= 0 ? fmtD(DATES[refs[i]]) : '—') + '</span></th>';
+  });
+  th += '</tr>';
+  var body = '';
+  /* 선물 — 조정계열 기준, 단위 pt. 기준일에 값이 없으면(미국 휴일 등) '현재'를
+     마지막 관측일 값으로 적고 그 날짜를 함께 보여 준다(변동도 그 날 기준으로 계산). */
+  FUT_TS.forEach(function (r) {
+    var c = r[1], i = lastObs(c, LAST);
+    if (i < 0) return;
+    var sub = (i < LAST) ? ' <span style="font-size:10px;color:#a3410f">(' + fmtD(DATES[i]) + ')</span>' : '';
+    body += '<tr><td class="l">' + esc(r[0]) + ' <span style="font-size:10.5px;color:#67727f">pt</span>' + sub + '</td>' +
+      '<td><b>' + f2(ptv(c, i)) + '</b></td>';
+    refs.forEach(function (ri) {
+      if (ri < 0 || ri > i) { body += '<td class="na">—</td>'; return; }
+      body += ptCell(ptDiff(c, i, ri));
+    });
+    body += '</tr>';
+  });
+  /* IRS — 단위 bp */
+  IRS_TS.forEach(function (r) {
+    var c = r[1], i = lastObs(c, LAST);
+    if (i < 0) return;
+    var sub = (i < LAST) ? ' <span style="font-size:10px;color:#a3410f">(' + fmtD(DATES[i]) + ')</span>' : '';
+    body += '<tr style="background:#f7fafd"><td class="l">' + esc(r[0]) + ' <span style="font-size:10.5px;color:#67727f">bp</span>' + sub + '</td>' +
+      '<td><b>' + f3(pct(c, i)) + '</b></td>';
+    refs.forEach(function (ri) {
+      if (ri < 0 || ri > i) { body += '<td class="na">—</td>'; return; }
+      body += bpCell(bpDiff(c, i, ri));
+    });
+    body += '</tr>';
+  });
+  setTable('box-fut-chg', 'tbl-fut-chg', '', th, body);
+});
+
+/* --- 하위 탭 전환 ---
+   숨어 있는 컨테이너는 폭이 0이라 cw() 가 0을 돌려주고 SVG 가 찌그러진다.
+   그래서 차트는 '탭이 처음 보이는 순간'과 그 뒤 매번 다시 그린다. */
+var dashSub = 'spot';
+function showDashSub(d) {
+  dashSub = d;
+  var bar = $('dash-subtabs');
+  if (bar) [].forEach.call(bar.getElementsByTagName('button'), function (b) {
+    b.className = (b.getAttribute('data-d') === d) ? 'on' : '';
+  });
+  var sp = $('dash-spot'), ft = $('dash-fut');
+  if (sp) sp.style.display = (d === 'spot') ? '' : 'none';
+  if (ft) ft.style.display = (d === 'fut') ? '' : 'none';
+  if (d === 'spot') guard('시계열', drawTS);
+  else { guard('선물 시계열', drawFutTS); guard('IRS 시계열', drawIrsTS); }
+}
+guard('대시보드 하위 탭', function () {
+  var bar = $('dash-subtabs'); if (!bar) return;
+  [].forEach.call(bar.getElementsByTagName('button'), function (b) {
+    b.onclick = function () { showDashSub(b.getAttribute('data-d')); };
+  });
+});
+
+/* ================================================================
    공통 — 셀렉트 채우기 / 탭 / 프리셋
    ================================================================ */
 function _norm(x) { return String(x || '').toLowerCase().replace(/[\s()]/g, ''); }
@@ -1642,12 +2062,17 @@ function typeMatches(t, q) {
  *    "1"     레지스트리 전부 (만기 없는 기준금리·SOFR 포함)
  *    "mat"   만기축이 있는 레지스트리 시리즈만 (미국채 ○ / DFF·SOFR·기준금리 ×)
  *            커브처럼 만기축이 필수인 도구, 단기·장기 두 만기를 고르는 도구에 쓴다.
- *            만기가 하나뿐인 시리즈를 넣으면 화면은 뜨지만 결과가 무의미하기 때문이다. */
+ *            만기가 하나뿐인 시리즈를 넣으면 화면은 뜨지만 결과가 무의미하기 때문이다.
+ *    "corr"  레지스트리 전부 + corrOnly 시리즈(국채선물·미국채선물)까지.
+ *            선물은 값이 금리(%)가 아니라 가격(pt)이라 bp 변동·커브 유형 판정을 쓰는
+ *            도구에 넣으면 단위가 섞인다. 변동률의 상관만 보는 상관관계 도구에서는
+ *            단위가 달라도 무해하므로 거기에서만 연다. */
 function fillTypes(sel, def, q) {
   if (!sel) return 0;
   var regMode = (sel.getAttribute && sel.getAttribute('data-reg')) || '';
-  var allowReg = (regMode === '1' || regMode === 'mat');
+  var allowReg = (regMode === '1' || regMode === 'mat' || regMode === 'corr');
   var regNeedsMat = (regMode === 'mat');
+  var allowCorrOnly = (regMode === 'corr');
   while (sel.firstChild) sel.removeChild(sel.firstChild);
   var list = TYPES.filter(function (t) { return typeMatches(t, q); });
   var n = 0;
@@ -1665,7 +2090,8 @@ function fillTypes(sel, def, q) {
   }
   if (allowReg) REG_GROUPS.forEach(function (g) {
     grp(g, REG_TYPES.filter(function (t) {
-      return t.g === g && typeMatches(t, q) && !(regNeedsMat && t.noMat);
+      return t.g === g && typeMatches(t, q) && !(regNeedsMat && t.noMat)
+        && !(t.corrOnly && !allowCorrOnly);
     }));
   });
   var rc = recentTypes().map(function (nm) { return typeByName(nm); })
@@ -1779,7 +2205,9 @@ function showView(v) {
     b.className = (b.getAttribute('data-v') === v) ? 'on' : '';
   });
   VIEWS.forEach(function (t) { var p = $('view-' + t); if (p) p.style.display = (t === v ? '' : 'none'); });
-  if (v === 'dash') guard('시계열', drawTS);
+  /* 대시보드로 돌아올 때는 '현재 열려 있는 하위 탭'을 다시 그린다.
+     숨어 있던 동안 컨테이너 폭이 0이었으므로 SVG 를 새로 만들어야 한다. */
+  if (v === 'dash') guard('대시보드', function () { showDashSub(dashSub); });
 }
 guard('내비게이션', function () {
   var nav = $('navbar'); if (!nav) return;
@@ -3690,20 +4118,24 @@ function svgCorrBars(items, opts) {
   return o.join('');
 }
 
-/** 두 컬럼의 정렬된 관측쌍. mode='diff' 면 일간 차분(bp), 'level' 이면 레벨(%) */
+/** 두 컬럼의 정렬된 관측쌍. mode='diff' 면 일간 차분(금리 bp / 선물 pt),
+ *  'level' 이면 레벨(금리 % / 선물 pt).
+ *  단위 환산 제수는 컬럼마다 다르다 — unitOf() 참조. 상관계수 자체는 배율에
+ *  불변이지만 축 라벨·평균·표준편차는 단위를 맞춰야 읽을 수 있다. */
 function corrPairs(ca, cb, i0, i1, mode, dropRegime) {
   var A = COL[ca], B = COL[cb], xs = [], ys = [], ix = [], k;
+  var da = unitOf(ca, mode === 'level').div, db = unitOf(cb, mode === 'level').div;
   if (mode === 'level') {
     for (k = i0; k <= i1; k++) {
       if (isNaN(A[k]) || isNaN(B[k])) continue;
-      xs.push(A[k] / 1000); ys.push(B[k] / 1000); ix.push(k);
+      xs.push(A[k] / da); ys.push(B[k] / db); ix.push(k);
     }
   } else {
     for (k = Math.max(i0 + 1, 1); k <= i1; k++) {
       if (dropRegime && k === REGIME_IDX) continue;     // 2023-01-09 경계를 넘는 차분 1건
       var x = A[k] - A[k - 1], y = B[k] - B[k - 1];
       if (isNaN(x) || isNaN(y)) continue;
-      xs.push(x / 10); ys.push(y / 10); ix.push(k);     // bp
+      xs.push(x / da); ys.push(y / db); ix.push(k);     // 금리 bp / 선물 pt
     }
   }
   return { x: xs, y: ys, i: ix };
@@ -3783,7 +4215,8 @@ function svgScatter(xs, ys, opts) {
 
 var coAvailA = null, coAvailB = null;
 (function initCorr() {
-  $('co-ta').setAttribute('data-reg', '1'); $('co-tb').setAttribute('data-reg', '1');
+  /* 'corr' = 레지스트리 전부 + 선물(corrOnly). 선물을 여는 유일한 도구다. */
+  $('co-ta').setAttribute('data-reg', 'corr'); $('co-tb').setAttribute('data-reg', 'corr');
   fillTypes($('co-ta'), '국고채권'); fillTypes($('co-tb'), '국고채권');
   var sa = function () { syncMats($('co-ta'), $('co-ma'), 36); };
   var sb = function () { syncMats($('co-tb'), $('co-mb'), 120); };
@@ -3840,7 +4273,9 @@ function runCorr() {
 
   var nmA = serName(ta, ma), nmB = serName(tb, mb);
   var isLvl = (mode === 'level');
-  var unit = isLvl ? '%' : 'bp';
+  /* A·B 의 단위가 다를 수 있다 (금리 bp/% vs 선물 pt). 라벨은 각각 쓴다. */
+  var unitA = unitOf(ca, isLvl).sfx, unitB = unitOf(cb, isLvl).sfx;
+  var unit = (unitA === unitB) ? unitA : (unitA + '/' + unitB);
   var h = [];
 
   h.push(regNoteHTML([ca, cb]));
@@ -3849,8 +4284,11 @@ function runCorr() {
   h.push('<div class="defbox"><b>계산 정의</b> — 피어슨 상관계수 ' +
     '<span class="mono">r = Σ(xᵢ−x̄)(yᵢ−ȳ) / √( Σ(xᵢ−x̄)² · Σ(yᵢ−ȳ)² )</span>, 양쪽 모두 값이 있는 날만 사용(inner join, 보간·전방채움 없음)<br>' +
     (isLvl
-      ? '대상 = <b>수준(레벨, %)</b>. <span class="etxt">⚠ 금리는 추세가 강해 레벨 상관은 거의 항상 높게 나오고, 두 시리즈가 같이 오르내렸는지를 말해주지 않습니다 — 추세 때문에 <b>과대평가될 수 있습니다</b>.</span> 같이 움직인 정도는 <b>변동(차분)</b> 으로 보십시오.'
-      : '대상 = <b>변동(일간 차분, bp)</b> — <span class="mono">xᵢ = ( y<sub>A</sub>(tᵢ) − y<sub>A</sub>(tᵢ₋₁) ) × 100</span>. ' +
+      ? '대상 = <b>수준(레벨, ' + unit + ')</b>. <span class="etxt">⚠ 금리는 추세가 강해 레벨 상관은 거의 항상 높게 나오고, 두 시리즈가 같이 오르내렸는지를 말해주지 않습니다 — 추세 때문에 <b>과대평가될 수 있습니다</b>.</span> 같이 움직인 정도는 <b>변동(차분)</b> 으로 보십시오.'
+      : '대상 = <b>변동(일간 차분, ' + unit + ')</b>' +
+        (PRICE_COLS[ca] || PRICE_COLS[cb]
+          ? ' — 금리 시리즈는 <span class="mono">(y(tᵢ) − y(tᵢ₋₁)) × 100 [bp]</span>, 선물은 <span class="mono">가격 차분 [pt]</span>. 단위가 서로 달라도 상관계수는 배율에 불변이라 그대로 비교됩니다. '
+          : ' — <span class="mono">xᵢ = ( y<sub>A</sub>(tᵢ) − y<sub>A</sub>(tᵢ₋₁) ) × 100</span>. ') +
         '금리는 추세가 강해 레벨 상관은 거의 항상 높게 나오고 의미가 없으므로, 두 시리즈가 <b>같이 오르내린 정도</b>는 일간 변동 간 상관으로 봅니다(기본값).') + '<br>' +
     '<b>비중첩(non-overlapping) 구간 방식</b> — 시작일~종료일을 <b>' + esc(WIN.nm) + '</b> 단위로 겹치지 않게 연속 분할해 각 구간마다 상관계수를 1개씩 냅니다. ' +
     '구간은 <b>종료일에서 거꾸로</b> 달력 기준으로 자르므로 최신 구간이 항상 온전하고, 앞쪽 자투리는 계산에서 제외합니다.<br>' +
@@ -4002,10 +4440,10 @@ function runCorr() {
 
   /* --- 3) 산점도 (선택 전 구간, 분할 전) --- */
   var wholeLbl = fmtD(wholePr.i.length ? DATES[wholePr.i[0]] : segStart) + ' ~ ' + fmtD(wholePr.i.length ? DATES[wholePr.i[wholePr.i.length - 1]] : DATES[iEnd]);
-  h.push('<div class="panel" style="margin-top:16px"><h3>산점도 — 선택 전 구간 ' + esc(wholeLbl) + ' ' + (isLvl ? '수준 (%)' : '일간 변동 (bp)') + ' · n=' + whole.n.toLocaleString() + '</h3><div class="bd chartbox">' +
+  h.push('<div class="panel" style="margin-top:16px"><h3>산점도 — 선택 전 구간 ' + esc(wholeLbl) + ' ' + (isLvl ? '수준 (' + unit + ')' : '일간 변동 (' + unit + ')') + ' · n=' + whole.n.toLocaleString() + '</h3><div class="bd chartbox">' +
     svgScatter(wholePr.x, wholePr.y, {
       w: cw('co-out', 900), h: 340,
-      xLabel: 'A · ' + nmA + ' (' + unit + ')', yLabel: 'B · ' + nmB + ' (' + unit + ')',
+      xLabel: 'A · ' + nmA + ' (' + unitA + ')', yLabel: 'B · ' + nmB + ' (' + unitB + ')',
       fmt: function (v) { return isLvl ? v.toFixed(1) : v.toFixed(0); },
       fit: isFinite(whole.beta) ? { b: whole.beta, a: whole.my - whole.beta * whole.mx } : null
     }) + '</div>');
@@ -4019,7 +4457,7 @@ function runCorr() {
   /* --- 4) 근거 --- */
   h.push(evid([
     ['시리즈 A 컬럼', esc(ca)], ['시리즈 B 컬럼', esc(cb)],
-    ['계산 대상', isLvl ? '수준(레벨, %) — 추세로 과대평가될 수 있음' : '변동(일간 차분, bp) — 기본값'],
+    ['계산 대상', (isLvl ? '수준(레벨) — 추세로 과대평가될 수 있음' : '변동(일간 차분) — 기본값') + ' · 단위 A=' + unitA + ' B=' + unitB],
     ['상관계수', '피어슨 적률상관계수 (Pearson product-moment). 순위상관(Spearman)·시차상관은 쓰지 않았다.'],
     ['구간 분할', '비중첩(non-overlapping). 종료일에서 ' + WIN.nm + ' 씩 달력 기준으로 거꾸로 잘라 ' + segRows.length + '개 구간 생성. 롤링(1일씩 이동) 아님 — 같은 관측치가 두 구간에 들어가지 않는다.'],
     ['윈도우 길이', WIN.nm + (WIN.kind === 'a' ? ' (분할 없음, 구간 1개)' : ' (달력 기준)')],
@@ -4034,7 +4472,7 @@ function runCorr() {
     ['구간별 r', segRows.map(function (r) { return fmtD(r.b).substr(2) + '=' + (isNaN(r.st.r) ? '—' : r.st.r.toFixed(3)) + '(n' + r.st.n + ')'; }).join(' · ')],
     ['구간 요약', vals.length ? ('유효 ' + vals.length + '개 · 평균 ' + sAvg.toFixed(6) + ' · 최저 ' + sMin.toFixed(6) + (sMinR ? '(' + fmtD(sMinR.a) + '~' + fmtD(sMinR.b) + ')' : '') + ' · 최고 ' + sMax.toFixed(6) + (sMaxR ? '(' + fmtD(sMaxR.a) + '~' + fmtD(sMaxR.b) + ')' : '')) : '유효 구간 없음'],
     ['전 구간 통계 (분할 전, 참고)', 'n=' + whole.n.toLocaleString() + ', r=' + (isNaN(whole.r) ? '—' : whole.r.toFixed(6)) + ', R²=' + (isNaN(whole.r) ? '—' : (whole.r * whole.r).toFixed(6)) +
-      ', β(A on B)=' + (isNaN(whole.beta) ? '—' : whole.beta.toFixed(6)) + ', σA=' + (isNaN(whole.sdx) ? '—' : whole.sdx.toFixed(4)) + unit + ', σB=' + (isNaN(whole.sdy) ? '—' : whole.sdy.toFixed(4)) + unit],
+      ', β(A on B)=' + (isNaN(whole.beta) ? '—' : whole.beta.toFixed(6)) + ', σA=' + (isNaN(whole.sdx) ? '—' : whole.sdx.toFixed(4)) + unitA + ', σB=' + (isNaN(whole.sdy) ? '—' : whole.sdy.toFixed(4)) + unitB],
     ['2023-01-09 기준변경', regime === 'exclude' ? (isLvl ? '제외 — 경계를 넘는 구간은 신기준 구간만 사용' : '제외 — 경계 교차 차분 1건 제외') : '무시(연속 취급)']
   ]));
 
@@ -4043,8 +4481,8 @@ function runCorr() {
     { title: '구간별 상관계수 (막대차트의 모든 막대)',
       note: '비중첩 ' + WIN.nm + ' 구간 ' + segRows.length + '개. r·β·σ 는 표시 반올림 전 값이다.',
       head: ['구간번호', '구간시작(달력)', '구간종료(달력)', '실제첫관측일', '실제마지막관측일', '관측수n', '영업일수', '제외일수',
-             '기준변경절단', 'r', 'R^2', 'beta_AonB', 'mean_A(' + unit + ')', 'mean_B(' + unit + ')',
-             'sd_A(' + unit + ')', 'sd_B(' + unit + ')', '신뢰도등급'],
+             '기준변경절단', 'r', 'R^2', 'beta_AonB', 'mean_A(' + unitA + ')', 'mean_B(' + unitB + ')',
+             'sd_A(' + unitA + ')', 'sd_B(' + unitB + ')', '신뢰도등급'],
       build: function () {
         var R = [], j;
         for (j = 0; j < segRows.length; j++) {
@@ -4596,7 +5034,9 @@ guard('다운로드·상관관계', function () {
     return ['도구 : 상관관계 분석 (피어슨 · 비중첩 구간)',
     '시리즈 A : ' + serName($('co-ta').value, +$('co-ma').value),
     '시리즈 B : ' + serName($('co-tb').value, +$('co-mb').value),
-    '계산 대상 : ' + (md === 'level' ? '수준(레벨, %) — 추세로 과대평가될 수 있음' : '변동(일간 차분, bp)'),
+    '계산 대상 : ' + (md === 'level' ? '수준(레벨) — 추세로 과대평가될 수 있음' : '변동(일간 차분)')
+      + ' · 단위 A=' + unitOf(colOf($('co-ta').value, +$('co-ma').value), md === 'level').sfx
+      + ' B=' + unitOf(colOf($('co-tb').value, +$('co-mb').value), md === 'level').sfx,
     '시작일 : ' + ($('co-from').value || '미지정(양쪽 관측 시작부터)'),
     '종료일(기준일) : ' + $('co-asof').value + '  ·  윈도우 길이 : ' + wn,
     '구간 분할 : 종료일에서 ' + wn + ' 씩 달력 기준 역산, 겹치지 않게 연속 분할 (롤링 아님)',
@@ -4647,6 +5087,42 @@ guard('다운로드·국내시계열', function () {
         L.push(DL.row(r));
       }
       DL.saveText('금리시계열차트_' + DL.safe(rl || '전체') + '_' + DL.today() + '.csv', L.join(DL.CRLF) + DL.CRLF);
+    } catch (e) { alert('CSV 생성 중 오류: ' + (e && e.message ? e.message : e)); }
+  };
+});
+
+guard('다운로드·선물시계열', function () {
+  var btn = $('fut-dl');
+  if (!btn) return;
+  btn.onclick = function () {
+    try {
+      var i0 = barWindow('fut-range'), i1 = LAST;
+      var cols = futSel.slice();
+      if (!cols.length) { alert('선택된 시리즈가 없습니다.'); return; }
+      var nm = {}; FUT_TS.forEach(function (r) { nm[r[1]] = r[0]; });
+      var rl = barLabel('fut-range');
+      var L = [];
+      L.push(DL.cmt('금리 분석 대시보드 (kisbond.com) — 선물 시계열 차트 로데이터'));
+      L.push(DL.cmt('생성 시각 : ' + DL.nowStr()));
+      L.push(DL.cmt('원자료 : 국내 국채선물 KRX(KOFIA 경유) · 미국채선물 ZT/ZN/ZB'));
+      L.push(DL.cmt('데이터 기준일 : ' + fmtD(DATES[LAST]) + ' · x축 = 한국 영업일'));
+      L.push(DL.cmt('표시 구간 : ' + rl + ' — ' + fmtD(DATES[i0]) + ' ~ ' + fmtD(DATES[i1]) + ' (' + (i1 - i0 + 1).toLocaleString() + '영업일)'));
+      L.push(DL.cmt('선택 시리즈 : ' + cols.length + '개 — ' + cols.map(function (c) { return nm[c] || c; }).join(', ')));
+      L.push(DL.cmt('단위 : 포인트(pt) · 값은 롤오버 조정계열 — 국내 KOFIA 수정가(월물간 보정),'));
+      L.push(DL.cmt('       미국 조정가(등락률을 마지막 종가에서 역누적, 미국 날짜축에서 계산 후 한국축으로 이동)'));
+      L.push(DL.cmt('주의 : 조정계열은 현재 월물에 앵커되어 롤오버마다 과거 값 전체가 다시 계산된다 —'));
+      L.push(DL.cmt('       다른 시점에 받은 파일과 과거 구간 값이 다를 수 있다. 미조정 실제가격은 현황표를 보라.'));
+      L.push(DL.cmt('제외 : 미국채선물 30년 2015-02-27 등락률 +10.24%(데이터 오류)는 누적에서 뺐다'));
+      L.push(DL.cmt('결측 : 빈 칸(보간·전방채움 없음) · 미국채선물은 미국 휴일이 한국 영업일과 어긋나는 날 비어 있다'));
+      L.push(DL.cmt('정렬 : 일자 오름차순 · 인코딩 UTF-8 (BOM), 줄바꿈 CRLF'));
+      L.push('');
+      L.push(DL.row(['일자'].concat(cols.map(function (c) { return c; }))));
+      for (var i = i0; i <= i1; i++) {
+        var r = [fmtD(DATES[i])];
+        for (var k = 0; k < cols.length; k++) r.push(nnum(ptv(cols[k], i), 4));
+        L.push(DL.row(r));
+      }
+      DL.saveText('선물시계열차트_' + DL.safe(rl || '전체') + '_' + DL.today() + '.csv', L.join(DL.CRLF) + DL.CRLF);
     } catch (e) { alert('CSV 생성 중 오류: ' + (e && e.message ? e.message : e)); }
   };
 });
