@@ -3828,6 +3828,9 @@ function spApplyKind(first) {
   spAvailB = bindAvail($('sp-tb'), $('sp-mb'), $('sp-from'));
   spAvailL = bindAvail($('sp-tt'), $('sp-tml'), $('sp-from'));
   spAvailS = bindAvail($('sp-tt'), $('sp-tms'), $('sp-from'));
+  /* 텀 만기 select 는 첫 화면(크레딧)에서 숨어 있지만 여기서 미리 채운다.
+     비워 두면 자가진단이 '옵션 0개인 드롭다운'을 잡아 초기화 실패 배너를 띄운다. */
+  spSyncTermMats(true);
   [].forEach.call(document.getElementsByName('sp-kind'), function (r) {
     if (r.addEventListener) r.addEventListener('change', function () { spApplyKind(false); });
     else r.onclick = function () { spApplyKind(false); };
