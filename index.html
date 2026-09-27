@@ -758,12 +758,34 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
     <section class="card formpanel">
       <h2>스프레드 분석 · 입력</h2>
       <div class="frm">
-    <div class="fld w2"><label>시리즈 A</label><select id="sp-ta"></select></div>
-    <div class="fld"><label>만기 A</label><select id="sp-ma"></select></div>
-    <div class="fld"></div>
-    <div class="fld w2"><label>시리즈 B</label><select id="sp-tb"></select></div>
-    <div class="fld"><label>만기 B</label><select id="sp-mb"></select></div>
-    <div class="fld"></div>
+    <!-- 스프레드 유형 선택자 — 스트레스테스트의 시나리오 라디오(.radios)와 같은 관행.
+         유형을 고르면 아래 시리즈 A·B 드롭다운의 후보가 그 유형에 맞게 좁혀진다.
+         '텀 스프레드' 만은 입력 구조 자체가 다르다(같은 종류 안에서 만기 2개)므로
+         A·B 두 줄 대신 sp-term-wrap(종류 1개 + 장기·단기 만기)로 갈아끼운다. -->
+    <div class="fld w2"><label>스프레드 유형</label>
+      <div class="radios">
+        <label><input type="radio" name="sp-kind" value="credit" checked>크레딧 스프레드</label>
+        <label><input type="radio" name="sp-kind" value="term">텀 스프레드</label>
+        <label><input type="radio" name="sp-kind" value="swap">본드스왑 스프레드</label>
+        <label><input type="radio" name="sp-kind" value="policy">기준금리 대비 스프레드</label>
+        <label><input type="radio" name="sp-kind" value="all">전체</label>
+      </div>
+      <div class="availbox" id="sp-kind-hint"></div></div>
+
+    <div id="sp-ab-wrap" style="display:contents">
+      <div class="fld w2"><label>시리즈 A</label><select id="sp-ta"></select></div>
+      <div class="fld"><label>만기 A</label><select id="sp-ma"></select></div>
+      <div class="fld"></div>
+      <div class="fld w2"><label>시리즈 B</label><select id="sp-tb"></select></div>
+      <div class="fld"><label>만기 B</label><select id="sp-mb"></select></div>
+      <div class="fld"></div>
+    </div>
+    <div id="sp-term-wrap" style="display:none">
+      <div class="fld w2"><label>채권종류</label><select id="sp-tt"></select></div>
+      <div class="fld"><label>장기 만기 (A)</label><select id="sp-tml"></select></div>
+      <div class="fld"><label>단기 만기 (B)</label><select id="sp-tms"></select></div>
+    </div>
+
     <div class="fld w2"><label>기간</label>
       <div style="display:flex;gap:6px"><input type="date" id="sp-from"><input type="date" id="sp-to"></div>
       <div class="presets" id="sp-range-p"></div></div>
@@ -2066,15 +2088,23 @@ function typeMatches(t, q) {
  *    "corr"  레지스트리 전부 + corrOnly 시리즈(국채선물·미국채선물)까지.
  *            선물은 값이 금리(%)가 아니라 가격(pt)이라 bp 변동·커브 유형 판정을 쓰는
  *            도구에 넣으면 단위가 섞인다. 변동률의 상관만 보는 상관관계 도구에서는
- *            단위가 달라도 무해하므로 거기에서만 연다. */
+ *            단위가 달라도 무해하므로 거기에서만 연다.
+ *
+ *  sel.__pred 에 함수를 달아두면 그 조건을 통과한 채권종류만 남긴다(도구별 추가 필터).
+ *  data-reg 가 '레지스트리 노출 여부'라는 큰 문을 여닫는 스위치라면, __pred 는
+ *  그 안에서 다시 좁히는 체다 — 스프레드 분석의 '스프레드 유형'이 첫 사용처다.
+ *  검색창(attachTypeFilter)이 fillTypes 를 다시 부를 때도 select 에 붙어 있으므로
+ *  자동으로 유지된다. 해제하려면 sel.__pred = null. */
 function fillTypes(sel, def, q) {
   if (!sel) return 0;
+  var pred = sel.__pred || null;
+  var okP = function (t) { return !pred || !!pred(t); };
   var regMode = (sel.getAttribute && sel.getAttribute('data-reg')) || '';
   var allowReg = (regMode === '1' || regMode === 'mat' || regMode === 'corr');
   var regNeedsMat = (regMode === 'mat');
   var allowCorrOnly = (regMode === 'corr');
   while (sel.firstChild) sel.removeChild(sel.firstChild);
-  var list = TYPES.filter(function (t) { return typeMatches(t, q); });
+  var list = TYPES.filter(function (t) { return typeMatches(t, q) && okP(t); });
   var n = 0;
   function grp(label, arr) {
     if (!arr.length) return;
@@ -2090,15 +2120,15 @@ function fillTypes(sel, def, q) {
   }
   if (allowReg) REG_GROUPS.forEach(function (g) {
     grp(g, REG_TYPES.filter(function (t) {
-      return t.g === g && typeMatches(t, q) && !(regNeedsMat && t.noMat)
+      return t.g === g && typeMatches(t, q) && okP(t) && !(regNeedsMat && t.noMat)
         && !(t.corrOnly && !allowCorrOnly);
     }));
   });
   var rc = recentTypes().map(function (nm) { return typeByName(nm); })
-    .filter(function (t) { return t && !t.reg && typeMatches(t, q); });
+    .filter(function (t) { return t && !t.reg && typeMatches(t, q) && okP(t); });
   grp('↩ 최근 사용', rc);
   var favs = FAV_TYPES.map(function (nm) { return typeByName(nm); })
-    .filter(function (t) { return t && !t.reg && typeMatches(t, q); });
+    .filter(function (t) { return t && !t.reg && typeMatches(t, q) && okP(t); });
   grp('★ 자주 쓰는 종류', favs);
   GROUPS.forEach(function (g) {
     grp(g, list.filter(function (t) { return t.g === g; }));
@@ -3657,28 +3687,174 @@ function runCurve() {
 /* ================================================================
    도구 4 — 스프레드 분석
    ================================================================ */
-var spAvailA = null, spAvailB = null;
+/* ---- 스프레드 유형 (사용자 확정 5종) ------------------------------------
+   스트레스테스트의 시나리오 라디오와 같은 자리·같은 모양(.radios)이다.
+   유형은 '무엇을 계산할지'가 아니라 '어떤 후보를 보여줄지'만 정한다 —
+   계산 경로(S = A − B)는 다섯 유형 모두 완전히 동일하다. 텀 스프레드도
+   내부적으로는 A=장기·B=단기로 같은 경로를 탄다(화면 입력만 다르다).
+
+   후보 분류는 시리즈의 g(그룹) 필드로 한다. 그룹은 KOFIA 채권종류 분류를
+   그대로 옮긴 것이라 사람이 손으로 목록을 관리할 필요가 없고, 새 종류가
+   들어와도 그룹만 맞으면 자동으로 올바른 유형에 나타난다.
+
+   · 무위험(국고·통안) = 국채(국고채권·제1종·제2종국민주택) + 통안증권
+   · 크레딧물          = 그 외 KOFIA 그룹 전부
+       특수채·개별공사채를 크레딧에 넣은 근거 — 정부보증물(특수채 정부보증·
+       예금보험기금·한국장학재단)까지 포함해 전부 국고 대비 (+)스프레드로
+       고시되며, 실무에서 '공사채 스프레드'라 부르는 대상이 바로 이들이다.
+       지방채(서울도시철도·지역개발)도 같은 이유로 크레딧에 넣는다.
+   · 채권금리(본드스왑 A) = KOFIA 격자 전체(원화 채권). 미국채는 통화가 달라
+       원화 IRS 와 짝지을 수 없으므로 제외한다.
+   · 기준지표(기준금리 대비 B) = 레지스트리 '기준지표' 그룹
+       (한국은행 기준금리 · DFF · EFFR · SOFR)
+   · 선물은 어느 유형에도 나오지 않는다 — data-reg='1' 이 corrOnly 를 막는다. */
+var SP_RF_G = { '국채': 1, '통안증권': 1 };
+function spIsRiskFree(t) { return !t.reg && !!SP_RF_G[t.g]; }
+function spIsCredit(t) { return !t.reg && !SP_RF_G[t.g]; }
+function spIsKrwBond(t) { return !t.reg; }
+function spIsIRS(t) { return !!t.reg && t.g === '스왑금리'; }
+function spIsPolicy(t) { return !!t.reg && t.g === '기준지표'; }
+/* 텀 스프레드 후보 — 만기가 2개 이상이어야 두 만기의 차를 낼 수 있다 */
+function spHasCurve(t) { return !t.corrOnly && t.mats && t.mats.length >= 2; }
+/* 기준금리 대비의 A — 만기축이 있는 금리 시리즈 전부(국내 채권 + 미국채 + IRS) */
+function spIsYield(t) { return !t.corrOnly && !(t.reg && t.g === '기준지표'); }
+
+var SP_KIND = {
+  credit: {
+    name: '크레딧 스프레드', predA: spIsCredit, predB: spIsRiskFree,
+    defA: ['회사채AA-', 36], defB: ['국고채권', 36], sync: true,
+    hint: '시리즈 A = 크레딧물(특수채·공사채·금융채·회사채·커버드본드·지방채) · 시리즈 B = 국고·통안. 만기 B 는 만기 A 에 맞춰 <b>기본값만</b> 따라갑니다 — 이후 자유롭게 바꿀 수 있습니다.',
+    calc: '같은 만기끼리 비교하는 것이 기본입니다. 값이 양수면 크레딧물이 무위험물보다 높다는 뜻입니다.'
+  },
+  term: {
+    name: '텀 스프레드', predT: spHasCurve, defT: ['국고채권', 120, 36],
+    hint: '같은 채권종류 안에서 <b>장기 만기 − 단기 만기</b>. 정상(우상향) 커브에서는 양수, 역전 커브에서는 음수입니다.',
+    calc: '장기물을 A, 단기물을 B 로 넣어 기존 <span class="mono">S = A − B</span> 경로를 그대로 씁니다 — 부호 규약이 다른 유형과 어긋나지 않습니다.'
+  },
+  swap: {
+    name: '본드스왑 스프레드', predA: spIsKrwBond, predB: spIsIRS,
+    defA: ['국고채권', 36], defB: ['원화 IRS', 36], sync: true,
+    hint: '시리즈 A = 원화 채권금리 · 시리즈 B = 원화 IRS(노출 만기 1·2·3·5·10년). 만기를 맞추어야 의미가 있어 만기 B 가 만기 A 를 따라갑니다.',
+    calc: '여기 값은 <b>채권 − IRS</b> 입니다. 대시보드 \'선물·IRS\' 탭의 <b>스왑스프레드(IRS − 국고)</b>와는 <b>부호가 반대</b>이고 절대값이 같습니다.'
+  },
+  policy: {
+    name: '기준금리 대비 스프레드', predA: spIsYield, predB: spIsPolicy,
+    defA: ['국고채권', 36], defB: ['한국은행 기준금리', 0], sync: false,
+    hint: '시리즈 A = 채권·스왑 금리 · 시리즈 B = 기준지표(한국은행 기준금리 · 미국 DFF · EFFR · SOFR). 기준지표는 만기 개념이 없어 만기 B 가 잠깁니다.',
+    calc: '기준금리는 변경일에만 바뀌는 계단식이라, 기준금리가 고정된 구간에서 스프레드는 A 의 금리 움직임을 그대로 따라갑니다.'
+  },
+  all: { name: '전체', predA: null, predB: null, defA: null, defB: null, sync: false,
+    hint: '제약 없음 — 시리즈 A·B 를 자유롭게 고릅니다(유형 선택자 도입 전과 동일한 동작).', calc: '' }
+};
+function spKindVal() { var r = document.querySelector('input[name=sp-kind]:checked'); return r ? r.value : 'all'; }
+function spSetSel(sel, v) { for (var i = 0; i < sel.options.length; i++) if (+sel.options[i].value === +v) { sel.selectedIndex = i; return true; } return false; }
+function spTypeOk(name, pred) { var t = name && typeByName(name); return !!(t && (!pred || pred(t))); }
+
+var spAvailA = null, spAvailB = null, spAvailL = null, spAvailS = null;
+
+/** 만기 B 를 만기 A 에 맞춘다 (해당 만기가 B 에 없으면 건드리지 않는다) */
+function spSyncMatB() {
+  if (!SP_KIND[spKindVal()].sync) return;
+  var m = +$('sp-ma').value; if (!m) return;
+  var t = typeByName($('sp-tb').value); if (!t) return;
+  for (var i = 0; i < t.mats.length; i++) if (t.mats[i].months === m) { spSetSel($('sp-mb'), m); break; }
+  if (spAvailB) spAvailB();
+}
+/** 텀 스프레드 — 선택된 채권종류의 만기 목록으로 장기·단기 select 를 채운다 */
+function spSyncTermMats(useDef) {
+  var nm = $('sp-tt').value, t = typeByName(nm); if (!t) return;
+  var L = $('sp-tml'), S = $('sp-tms');
+  fillMats(L, nm, useDef ? 120 : (+L.value || 120));
+  fillMats(S, nm, useDef ? 36 : (+S.value || 36));
+  if (+L.value <= +S.value) {                     // 장기≤단기가 되면 자동 교정
+    var ms = t.mats.map(function (m) { return m.months; });
+    var top = ms[ms.length - 1];
+    spSetSel(L, top);
+    var lower = ms.filter(function (x) { return x < top; });
+    if (lower.length) spSetSel(S, lower.reduce(function (a, b) { return Math.abs(b - 36) < Math.abs(a - 36) ? b : a; }));
+  }
+  if (spAvailL) spAvailL(); if (spAvailS) spAvailS();
+}
+/** 유형 적용 — 후보 필터(__pred) 교체 + 폼 전환 + 무효해진 선택 리셋 */
+function spApplyKind(first) {
+  var k = spKindVal(), C = SP_KIND[k], isTerm = (k === 'term'), reset = [];
+  $('sp-ab-wrap').style.display = isTerm ? 'none' : 'contents';
+  $('sp-term-wrap').style.display = isTerm ? 'contents' : 'none';
+
+  if (isTerm) {
+    var T = $('sp-tt'); T.__pred = C.predT;
+    var v = spTypeOk(T.value, C.predT) ? T.value : null;
+    if (!v && spTypeOk($('sp-ta').value, C.predT)) v = $('sp-ta').value;   // A 에서 이어받기
+    if (!v) { v = C.defT[0]; if (!first) reset.push('채권종류'); }
+    if (T.__tfInput) T.__tfInput.value = '';
+    fillTypes(T, v);
+    spSyncTermMats(!!first || !!reset.length);
+  } else {
+    [['sp-ta', 'sp-ma', C.predA, C.defA, '시리즈 A'], ['sp-tb', 'sp-mb', C.predB, C.defB, '시리즈 B']]
+      .forEach(function (x) {
+        var S = $(x[0]), M = $(x[1]), d = x[3];
+        S.__pred = x[2] || null;
+        var v = spTypeOk(S.value, x[2]) ? S.value : null;
+        if (!v) { v = d ? d[0] : (S.value || '국고채권'); if (!first) reset.push(x[4]); }
+        if (S.__tfInput) S.__tfInput.value = '';
+        fillTypes(S, v);
+        syncMats(S, M, d ? d[1] : (+M.value || 36));
+      });
+    if (C.sync) spSyncMatB();
+  }
+  if (spAvailA) spAvailA(); if (spAvailB) spAvailB();
+  var hb = $('sp-kind-hint');
+  if (hb) hb.innerHTML = C.hint + (reset.length
+    ? '<br><span class="wtxt">⚠ 이전 선택이 이 유형에 맞지 않아 ' + reset.join(' · ') + ' 을(를) 기본값으로 되돌렸습니다.</span>' : '');
+}
+
 (function initSpread() {
   $('sp-ta').setAttribute('data-reg', '1'); $('sp-tb').setAttribute('data-reg', '1');
-  fillTypes($('sp-ta'), '회사채AA-'); fillTypes($('sp-tb'), '국고채권');
-  var sa = function () { syncMats($('sp-ta'), $('sp-ma'), 36); };
-  var sb = function () { syncMats($('sp-tb'), $('sp-mb'), 36); };
+  $('sp-tt').setAttribute('data-reg', 'mat');
+  fillTypes($('sp-ta'), '회사채AA-'); fillTypes($('sp-tb'), '국고채권'); fillTypes($('sp-tt'), '국고채권');
+  var sa = function () { syncMats($('sp-ta'), $('sp-ma'), 36); spSyncMatB(); };
+  var sb = function () { syncMats($('sp-tb'), $('sp-mb'), 36); spSyncMatB(); };
   $('sp-ta').onchange = function () { pushRecent($('sp-ta').value); sa(); if (spAvailA) spAvailA(); };
   $('sp-tb').onchange = function () { pushRecent($('sp-tb').value); sb(); if (spAvailB) spAvailB(); };
+  $('sp-ma').onchange = function () { spSyncMatB(); };
+  $('sp-tt').onchange = function () { pushRecent($('sp-tt').value); spSyncTermMats(false); };
   sa(); sb();
   attachTypeFilter($('sp-ta'), function () { sa(); if (spAvailA) spAvailA(); });
   attachTypeFilter($('sp-tb'), function () { sb(); if (spAvailB) spAvailB(); });
+  attachTypeFilter($('sp-tt'), function () { spSyncTermMats(false); });
   presets($('sp-range-p'), [['1Y', 'y', 1], ['3Y', 'y', 3], ['5Y', 'y', 5], ['10Y', 'y', 10], ['20Y', 'y', 20], ['전 기간', 'a', 0]], function (p) { setRange($('sp-from'), $('sp-to'), p[1], p[2]); });
   setRange($('sp-from'), $('sp-to'), 'y', 5);
   spAvailA = bindAvail($('sp-ta'), $('sp-ma'), $('sp-from'));
   spAvailB = bindAvail($('sp-tb'), $('sp-mb'), $('sp-from'));
+  spAvailL = bindAvail($('sp-tt'), $('sp-tml'), $('sp-from'));
+  spAvailS = bindAvail($('sp-tt'), $('sp-tms'), $('sp-from'));
+  [].forEach.call(document.getElementsByName('sp-kind'), function (r) {
+    if (r.addEventListener) r.addEventListener('change', function () { spApplyKind(false); });
+    else r.onclick = function () { spApplyKind(false); };
+  });
+  spApplyKind(true);
   $('sp-run').onclick = runSpread;
 })();
 
+/** 현재 폼이 가리키는 두 leg. 유형에 따라 읽는 입력이 다르다.
+ *  err 가 채워지면 계산하지 않는다. swapped=true 면 장기·단기를 뒤집어 잡았다. */
+function spLegs() {
+  var k = spKindVal();
+  if (k !== 'term') {
+    return { kind: k, ta: $('sp-ta').value, ma: +$('sp-ma').value, tb: $('sp-tb').value, mb: +$('sp-mb').value };
+  }
+  var t = $('sp-tt').value, l = +$('sp-tml').value, s = +$('sp-tms').value, sw = false;
+  if (l === s) return { kind: k, ta: t, ma: l, tb: t, mb: s, err: '장기·단기 만기가 같습니다 — 서로 다른 두 만기를 고르십시오.' };
+  if (l < s) { var x = l; l = s; s = x; sw = true; }
+  return { kind: k, ta: t, ma: l, tb: t, mb: s, swapped: sw };
+}
+
 function runSpread() {
   RAWDATA.sp = null;
-  var ta = $('sp-ta').value, ma = +$('sp-ma').value, tb = $('sp-tb').value, mb = +$('sp-mb').value;
+  var LG = spLegs(), kind = LG.kind, KI = SP_KIND[kind];
+  var ta = LG.ta, ma = LG.ma, tb = LG.tb, mb = LG.mb;
   var ca = colOf(ta, ma), cb = colOf(tb, mb), out = $('sp-out');
+  if (LG.err) { out.innerHTML = '<div class="alert e">' + LG.err + '</div>'; return; }
   if (!ca || !cb) { out.innerHTML = '<div class="alert e">선택한 조합의 컬럼이 없습니다.</div>'; return; }
   var i0 = idxGE(parseD($('sp-from').value)), i1 = idxLE(parseD($('sp-to').value));
   if (i0 < 0 || i1 < 0 || i1 <= i0) { out.innerHTML = '<div class="alert e">기간이 올바르지 않습니다.</div>'; return; }
@@ -3706,6 +3882,13 @@ function runSpread() {
   if (REGIME_IDX > i0 && REGIME_IDX <= i1)
     h.push('<div class="alert w">⚠ 기간이 2023-01-09 산출기준 변경일을 포함합니다. 스프레드는 두 시리즈의 <b>차</b>이므로 경계 점프가 상당 부분 상쇄되지만(699/701 조합이 같은 방향으로 점프), 완전한 상쇄는 아닙니다. 기획서 4-1-(e)에 따라 스프레드는 <b>regime=ignore</b>(연속 취급)를 기본으로 계산했습니다.</div>');
   if (miss) h.push('<div class="alert i">한쪽 결측으로 스프레드를 정의하지 않은 날 ' + miss.toLocaleString() + '일 (inner join, forward fill 금지). 차트에서 선이 끊깁니다.</div>');
+
+  /* 유형 배너 — '전체'는 유형 선택자 도입 전과 화면을 바이트 단위로 같게 두기 위해 붙이지 않는다 */
+  if (kind !== 'all') {
+    if (LG.swapped) h.push('<div class="alert w">⚠ 장기 만기가 단기 만기보다 짧게 잡혀 있어 <b>자동으로 뒤집어</b> 계산했습니다 (텀 스프레드는 언제나 장기 − 단기).</div>');
+    h.push('<div class="alert i">스프레드 유형 <b>' + esc(KI.name) + '</b> — 계산식 <span class="mono">' +
+      esc(serName(ta, ma)) + ' − ' + esc(serName(tb, mb)) + '</span>' + (KI.calc ? ' · ' + KI.calc : '') + '</div>');
+  }
 
   h.push(regNoteHTML([ca, cb]));
   h.push('<div class="defbox"><b>계산 정의</b> — <span class="mono">S<sub>t</sub> = ( y<sub>A</sub>(t) − y<sub>B</sub>(t) ) × 100 [bp]</span>, 양쪽 모두 값이 있는 날만(inner join)<br>' +
@@ -3781,14 +3964,14 @@ function runSpread() {
     ] };
   })();
 
-  h.push(evid([
+  h.push(evid((kind === 'all' ? [] : [['스프레드 유형', esc(KI.name) + ' · ' + esc(serName(ta, ma)) + ' − ' + esc(serName(tb, mb))]]).concat([
     ['leg A 컬럼', esc(ca)], ['leg B 컬럼', esc(cb)],
     ['요청 기간', fmtD(parseD($('sp-from').value)) + ' ~ ' + fmtD(parseD($('sp-to').value))],
     ['실제 기간', fmtD(DATES[i0]) + ' ~ ' + fmtD(DATES[i1]) + ' · 영업일 ' + (i1 - i0 + 1).toLocaleString() + '일'],
     ['관측치 수', 'n=' + n.toLocaleString() + '일 (한쪽 결측 ' + miss.toLocaleString() + '일 제외, 보간 없음)'],
     ['현재값 산출', cur.toFixed(4) + ' bp = (' + f3(pct(ca, curIdx)) + ' − ' + f3(pct(cb, curIdx)) + ') × 100, 기준일 ' + fmtD(DATES[curIdx])],
     ['통계', 'μ=' + mean.toFixed(3) + ', σ=' + sd.toFixed(3) + ', z=' + z.toFixed(3) + ', PR=' + pr.toFixed(2) + '% (선형보간 분위)']
-  ]));
+  ])));
   out.innerHTML = h.join('');
 }
 
@@ -4998,12 +5181,16 @@ guard('다운로드·커브', function () {
 });
 guard('다운로드·스프레드', function () {
   DL.bindPanel('sp-out', 'sp-dl', '스프레드 분석 · 결과', function () {
-    return '스프레드분석_' + DL.safe(serName($('sp-ta').value, +$('sp-ma').value)) +
-      '_' + DL.safe(serName($('sp-tb').value, +$('sp-mb').value)) + '_' + DL.today() + '.csv';
+    var L = spLegs();
+    return '스프레드분석_' + DL.safe(serName(L.ta, L.ma)) +
+      '_' + DL.safe(serName(L.tb, L.mb)) + '_' + DL.today() + '.csv';
   }, function () {
+    var L = spLegs(), K = SP_KIND[L.kind];
     return ['도구 : 스프레드 분석',
-    '시리즈 A : ' + serName($('sp-ta').value, +$('sp-ma').value),
-    '시리즈 B : ' + serName($('sp-tb').value, +$('sp-mb').value),
+    '스프레드 유형 : ' + K.name,
+    '계산식 : ' + serName(L.ta, L.ma) + ' - ' + serName(L.tb, L.mb) + '  (S = A - B, 단위 bp)',
+    '시리즈 A : ' + serName(L.ta, L.ma),
+    '시리즈 B : ' + serName(L.tb, L.mb),
     '기간 : ' + $('sp-from').value + ' ~ ' + $('sp-to').value];
   }, function () { return RAWDATA.sp; });
 });
@@ -5579,7 +5766,7 @@ window.__NEWS_SCROLLFX = newsScrollFx;
 })();
 (function selfCheck() {
   try {
-    var ids = ['st-type', 'st-short', 'st-long', 'st-sa', 'st-sb', 'st-sma', 'st-smb', 'vr-type', 'vr-mat', 'cv-type', 'cv-ta', 'cv-tb', 'sp-ta', 'sp-tb', 'sp-ma', 'sp-mb', 'cs-ta', 'cs-tb', 'co-ta', 'co-tb', 'co-ma', 'co-mb'];
+    var ids = ['st-type', 'st-short', 'st-long', 'st-sa', 'st-sb', 'st-sma', 'st-smb', 'vr-type', 'vr-mat', 'cv-type', 'cv-ta', 'cv-tb', 'sp-ta', 'sp-tb', 'sp-ma', 'sp-mb', 'sp-tt', 'sp-tml', 'sp-tms', 'cs-ta', 'cs-tb', 'co-ta', 'co-tb', 'co-ma', 'co-mb'];
     var minOpt = 1e9, tot = 0;
     ids.forEach(function (id) { var e = $(id); var n = e ? e.options.length : 0; tot += n; if (n < minOpt) minOpt = n; });
     var lv = $('tbl-level'), cg = $('tbl-chg');
