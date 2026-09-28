@@ -343,6 +343,59 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
 .mtop a{color:#67727f;text-decoration:none;border-bottom:1px dotted #c8d0da;cursor:pointer;}
 .msec .dyn{color:#17456b;font-weight:600;}
 .msec .pend{color:#8a939e;font-weight:400;}
+
+/* ===== 사용 매뉴얼 · '한눈에' (2026-09-28) =====
+   상세 매뉴얼의 요약문이 아니다. 글을 줄이고 시각 구조로 대체한 인포그래픽이다.
+   원칙 : ① 한 항목당 한 줄 이내 ② <details> 로 접지 않는다(펼쳐진 상태로 훑는 문서)
+          ③ 색은 기존 팔레트(#17456b 네이비 · #d0021b 상승 · #0057c7 하락 · #1f6b42 녹 · #8a5a20 갈)를 그대로 쓴다. */
+.mq .dyn{color:#17456b;font-weight:600;}
+.mq .pend{color:#8a939e;font-weight:400;}
+.mqlead{font-size:12.5px;color:#3c4753;line-height:1.8;margin:0 0 4px;}
+.mqblk{border:1px solid #e0e5ec;border-radius:8px;background:#fff;margin:0 0 14px;
+     page-break-inside:avoid;break-inside:avoid;}
+.mqblk > h3{font-size:13px;font-weight:700;color:#fff;background:#17456b;margin:0;
+     padding:8px 13px;border-radius:8px 8px 0 0;letter-spacing:-.2px;line-height:1.4;}
+.mqblk > h3 span{font-weight:400;color:#b9cde0;font-size:11.5px;margin-left:7px;letter-spacing:0;}
+.mqbd{padding:13px 14px 15px;}
+.mqbd > :first-child{margin-top:0;}
+.mqbd > :last-child{margin-bottom:0;}
+.mqnote{font-size:11px;color:#7d8794;line-height:1.65;margin:9px 0 0;}
+.mqsvg{overflow-x:auto;}
+/* 의사결정 행 — "알고 싶은 것 → 갈 곳" */
+.mqask{display:grid;grid-template-columns:repeat(auto-fit,minmax(295px,1fr));gap:8px;}
+.mqrow{display:flex;align-items:center;gap:9px;border:1px solid #e6eaef;border-radius:6px;
+     background:#fbfcfe;padding:9px 11px;min-width:0;}
+.mqrow .q{flex:1 1 auto;min-width:0;font-size:12px;color:#2a3542;line-height:1.5;word-break:keep-all;}
+.mqrow .ar{flex:0 0 auto;color:#a9bdd0;font-size:13px;}
+.mqrow .go{flex:0 0 auto;font-size:11px;font-weight:700;color:#fff;background:#17456b;
+     border-radius:3px;padding:3px 8px;line-height:1.5;white-space:nowrap;letter-spacing:-.2px;}
+.mqrow .go.d{background:#1f6b42;}
+.mqrow .go.g{background:#8a5a20;}
+/* 함정 카드 */
+.mqcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:9px;}
+.mqcard{border:1px solid #e9a9a9;border-left:4px solid #d0021b;border-radius:0 6px 6px 0;
+     background:#fdf6f6;padding:10px 12px;min-width:0;}
+.mqcard b{display:block;font-size:12px;color:#b3001b;margin-bottom:4px;line-height:1.45;letter-spacing:-.2px;}
+.mqcard span{font-size:11.5px;color:#3c4753;line-height:1.7;word-break:keep-all;}
+.mqcard .fix{display:block;margin-top:5px;font-size:11px;color:#1f6b42;font-weight:600;}
+/* 도구 × 시리즈 격자 */
+.mqmx{width:100%;border-collapse:collapse;font-size:11.5px;}
+.mqmx th,.mqmx td{border-bottom:1px solid #e6eaef;padding:6px 6px;text-align:center;white-space:nowrap;}
+.mqmx th{background:#f0f3f7;color:#3c4753;font-weight:600;border-bottom:1px solid #d4dae2;}
+.mqmx th.l,.mqmx td.l{text-align:left;white-space:normal;word-break:keep-all;}
+.mqmx td.y{color:#1f6b42;font-weight:700;font-size:13px;}
+.mqmx td.n{color:#c8ced6;font-weight:700;font-size:13px;}
+.mqmx tbody tr:hover{background:#f7fafd;}
+/* 부호 규약 배지 줄 */
+.mqsign{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:8px;margin:11px 0 0;}
+.mqsign div{border:1px solid #dbe2ea;border-radius:6px;background:#fbfcfe;padding:8px 10px;
+     font-size:11.5px;color:#2a3542;line-height:1.6;min-width:0;}
+.mqsign div b{color:#17456b;display:block;font-size:11px;margin-bottom:2px;}
+.mqsign div .mono{font-size:12px;color:#b3001b;font-weight:700;}
+/* 갱신 방식 범례 */
+.mqleg{display:flex;flex-wrap:wrap;gap:5px 13px;font-size:11px;color:#5a6673;margin:9px 0 0;line-height:1.7;}
+.mqleg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px;}
+
 @media (max-width:1200px){
   .app{display:block;}
   .nav{position:static;width:auto;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:8px 12px;}
@@ -357,6 +410,25 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
   .span1,.span2,.span3{grid-column:span 1;}
   .tool{grid-template-columns:1fr;}
   .formpanel .radios{flex-direction:row;flex-wrap:wrap;}
+}
+
+/* ===== 인쇄 ===== '한눈에' 매뉴얼은 출력해 붙여 놓는 용도를 상정한다.
+   좌측 내비·하위 탭 버튼처럼 종이에서 의미 없는 요소를 빼고, 시각 블록이 페이지 경계에서
+   쪼개지지 않게 한다(블록별 break-inside:avoid 는 위 .mqblk 에 이미 있다).
+   ※ 다른 탭의 인쇄 모양은 이전과 같다(아래 규칙은 전부 매뉴얼·공통 크롬에만 걸린다). */
+@media print{
+  html,body{background:#fff;}
+  .nav,.navfoot,.subtabs,.topbar .spacer{display:none !important;}
+  .app{display:block;}
+  .wrap,.main{max-width:none;padding:0;}
+  section{border:0;padding:0;margin:0 0 10px;}
+  .manual{max-width:none;}
+  .mqblk{border:1px solid #c8d0da;}
+  .mqblk > h3{background:#fff;color:#17456b;border-bottom:1px solid #c8d0da;}
+  .mqblk > h3 span{color:#67727f;}
+  .mqrow,.mqcard,.mqsign div{background:#fff;}
+  .disc,#foot{display:none;}
+  a{text-decoration:none;color:inherit;}
 }
 </style>
 
@@ -990,8 +1062,130 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
         특히 '도구별 선택 가능 시리즈' 표는 실제 select 의 optgroup 을 세어 만든다 —
         data-reg / corrOnly 규칙이 바뀌면 표가 자동으로 따라온다. -->
 <div class="view" id="view-man" style="display:none">
+
+<!-- 하위 탭 — 대시보드의 현물/선물 하위 탭(#dash-subtabs)과 **같은 방식**이다.
+     .subtabs 마크업 + data-* 속성 + showXxxSub(d) 전환 함수. 새 방식을 만들지 않는다.
+     기본 선택은 '한눈에'(quick). 사용자가 '복잡하다'고 한 쪽을 먼저 보여 준다. -->
+<div class="subtabs" id="man-subtabs">
+  <button type="button" data-m="quick" class="on">한눈에</button>
+  <button type="button" data-m="full">상세</button>
+</div>
+
+<!-- ===================== 사용 매뉴얼 · 한눈에 =====================
+     상세 매뉴얼을 요약한 글이 아니다. **그림으로 보는 안내서**다.
+     · 한 항목당 한 줄 이내. 문단이 이어지면 실패다.
+     · 시각 블록(지도·플로우·타임라인·다이어그램·격자·카드)을 세로로 쌓는다.
+     · <details> 로 접지 않는다 — 펼쳐진 상태로 훑고, 인쇄해 붙여 놓을 수 있어야 한다.
+     · 지도·타임라인·매트릭스는 renderManQuick() 이 **데이터에서 읽어** 그린다(하드코딩 금지).
+     · 상세 매뉴얼과 같은 사실을 말해야 한다. 한쪽만 고치면 거짓이 된다. -->
+<div id="man-quick">
+<section class="card manual mq">
+  <h2>사용 매뉴얼 — 한눈에</h2>
+  <p class="mqlead">기준일 <span class="dyn" id="mq-asof">—</span> ·
+    수록 <span class="dyn" id="mq-span">—</span> ·
+    시리즈 <span class="dyn" id="mq-nser">—</span>.
+    수식·정의·예외까지 필요하면 위 <span class="mkey">상세</span> 탭으로 가십시오.</p>
+
+  <!-- ① 전체 지도 -->
+  <div class="mqblk">
+    <h3>1 · 전체 지도 <span>좌측 메뉴에 무엇이 어디 있는가</span></h3>
+    <div class="mqbd">
+      <div class="mqsvg" id="mq-map"><p class="pend">그리는 중…</p></div>
+    </div>
+  </div>
+
+  <!-- ② 의사결정 흐름 -->
+  <div class="mqblk">
+    <h3>2 · 무엇을 알고 싶은가 → 어디로 <span>가장 자주 쓰는 표</span></h3>
+    <div class="mqbd">
+      <div class="mqask">
+        <div class="mqrow"><span class="q">지금 금리 수준이 얼마인가</span><span class="ar">→</span><span class="go d">대시보드 · 현물</span></div>
+        <div class="mqrow"><span class="q">어제 · 1주 · 1년 전 대비 얼마 움직였나</span><span class="ar">→</span><span class="go d">대시보드 · 변동 현황</span></div>
+        <div class="mqrow"><span class="q">선물 가격이 얼마인가</span><span class="ar">→</span><span class="go d">대시보드 · 선물·IRS</span></div>
+        <div class="mqrow"><span class="q">두 금리 차이가 어떻게 변했나 · 지금 넓은가 좁은가</span><span class="ar">→</span><span class="go">스프레드 분석</span></div>
+        <div class="mqrow"><span class="q">채권이 IRS 대비 싼가 비싼가 (본드스왑)</span><span class="ar">→</span><span class="go">스프레드 분석 · 본드스왑</span></div>
+        <div class="mqrow"><span class="q">기준금리 대비 몇 bp 붙어 있나</span><span class="ar">→</span><span class="go">스프레드 분석 · 기준금리 대비</span></div>
+        <div class="mqrow"><span class="q">커브 모양이 어떻게 달라졌나</span><span class="ar">→</span><span class="go">커브 분석</span></div>
+        <div class="mqrow"><span class="q">스프레드가 만기별로 어떻게 벌어졌나</span><span class="ar">→</span><span class="go">커브+스프레드 분석</span></div>
+        <div class="mqrow"><span class="q">최악 상황이 얼마나 나빴나 (과거 최악 구간)</span><span class="ar">→</span><span class="go">스트레스테스트</span></div>
+        <div class="mqrow"><span class="q">정책 전환 국면에는 어땠나</span><span class="ar">→</span><span class="go">스트레스테스트 · 피벗</span></div>
+        <div class="mqrow"><span class="q">h일 동안 최대 얼마까지 움직였나 (99%)</span><span class="ar">→</span><span class="go">VaR</span></div>
+        <div class="mqrow"><span class="q">둘이 같이 움직이나</span><span class="ar">→</span><span class="go">상관관계 분석</span></div>
+        <div class="mqrow"><span class="q">원본 시계열을 엑셀로 받고 싶다</span><span class="ar">→</span><span class="go g">데이터 다운로드</span></div>
+        <div class="mqrow"><span class="q"><b>선물</b> 원본을 받고 싶다 — 다운로드 탭에 없다</span><span class="ar">→</span><span class="go g">대시보드 · 선물 시계열 카드</span></div>
+      </div>
+      <p class="mqnote">도구는 조건을 정한 뒤 <b>실행 버튼</b>을 눌러야 계산합니다(자동 재계산 없음).
+        결과 맨 위 <b>계산 정의</b> 박스가 그 실행에 실제로 쓰인 수식입니다.</p>
+    </div>
+  </div>
+
+  <!-- ③ 데이터 지도 -->
+  <div class="mqblk">
+    <h3>3 · 데이터 지도 <span>무엇이 언제부터 있고 어떻게 갱신되는가</span></h3>
+    <div class="mqbd">
+      <div class="mqsvg" id="mq-tl"><p class="pend">그리는 중…</p></div>
+      <div class="mqleg" id="mq-leg"></div>
+      <p class="mqnote">막대의 시작·끝은 <b>현재 로드된 데이터에서 읽은 값</b>입니다(하드코딩이 아닙니다).
+        여러 시리즈를 함께 쓰면 <b>공통 구간으로 잘리므로</b> 결과의 실제 기간 표시를 확인하십시오.</p>
+    </div>
+  </div>
+
+  <!-- ④ 단위·부호 -->
+  <div class="mqblk">
+    <h3>4 · 단위와 부호 <span>여기서 가장 많이 틀린다</span></h3>
+    <div class="mqbd">
+      <div class="mqsvg" id="mq-unit"><p class="pend">그리는 중…</p></div>
+      <div class="mqsign">
+        <div><b>스프레드 분석</b><span class="mono">A − B</span></div>
+        <div><b>커브+스프레드 분석</b><span class="mono">B − A</span> — 위와 <b>반대</b></div>
+        <div><b>텀 스프레드</b><span class="mono">장기 − 단기</span></div>
+        <div><b>대시보드 스왑스프레드</b><span class="mono">IRS − 국고</span></div>
+        <div><b>스프레드 분석 · 본드스왑</b><span class="mono">채권 − IRS</span> — 위와 <b>부호 반대</b>(절대값 같음)</div>
+        <div><b>커브 분석 (a) 의 A·B</b>시간 순서가 아니라 <b>입력 칸 이름</b>입니다 — 바꿔 넣으면 부호가 뒤집힙니다</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑤ 도구 × 시리즈 -->
+  <div class="mqblk">
+    <h3>5 · 도구 × 고를 수 있는 시리즈 <span>지금 이 화면의 드롭다운을 세어 만듭니다</span></h3>
+    <div class="mqbd">
+      <div class="tblwrap" id="mq-mx"><p class="pend">초기화 중…</p></div>
+      <p class="mqnote"><b>선물(가격 pt)은 상관관계에만</b> 나옵니다 — 단위가 섞이기 때문입니다. <b>데이터 다운로드 탭에도 없습니다.</b><br>
+        <b>만기축이 필요한 도구</b>(스트레스테스트 · 커브 · 커브+스프레드)에는 만기 개념이 없는 <b>기준지표</b>가 나오지 않습니다.
+        <b>VaR 은 기준지표를 고를 수 있습니다.</b></p>
+    </div>
+  </div>
+
+  <!-- ⑥ 함정 -->
+  <div class="mqblk">
+    <h3>6 · 자주 걸리는 함정</h3>
+    <div class="mqbd">
+      <div class="mqcards">
+        <div class="mqcard"><b>표가 비어 보인다 · 기준일이 어제다</b><span>캐시입니다. 데이터 오류가 아닙니다.</span>
+          <span class="fix">→ Ctrl+Shift+R · 1~2분 뒤 재시도</span></div>
+        <div class="mqcard"><b>오늘자 미국 데이터가 없다</b><span>정상입니다. FRED 발표가 T+1 이라 보통 <b>1~2영업일 뒤</b>에 채워집니다.</span>
+          <span class="fix">→ 미국 금리 시계열 카드의 시차 표시 확인</span></div>
+        <div class="mqcard"><b>2023-01-09 앞뒤가 이어지지 않는다</b><span>KOFIA 평가사 기준 전환입니다. 경계에서 평균 약 <b>10.6bp</b> 점프가 있습니다.</span>
+          <span class="fix">→ 기준변경 처리 기본값 '제외' 유지</span></div>
+        <div class="mqcard"><b>어제 받은 선물 CSV 와 과거 값이 다르다</b><span>롤오버 조정 연결계열이라 <b>분기 롤오버마다 과거가 소급 재조정</b>됩니다. 오류가 아닙니다.</span>
+          <span class="fix">→ 수준은 미조정가 · 변동은 조정계열</span></div>
+        <div class="mqcard"><b>금리 × 선물 상관이 음수로 나온다</b><span>정상입니다. 금리↑ = 선물가격↓ 이기 때문입니다.</span>
+          <span class="fix">→ 부호만 보고 오류로 판단하지 마십시오</span></div>
+        <div class="mqcard"><b>데이터 다운로드 탭에 선물이 없다</b><span>의도된 것입니다. 선물은 가격(pt)이라 이 탭 후보에서 빠져 있습니다.</span>
+          <span class="fix">→ 대시보드 선물·IRS 탭 → 선물 시계열 카드 CSV</span></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="note">여기 적힌 것은 모두 <span class="mkey">상세</span> 탭과 같은 사실이며, 수치·구간은 화면이 열릴 때 데이터에서 읽습니다.
+    어긋나 보이면 각 도구 화면의 <b>계산 정의</b> 박스가 정답이고, 그 경우는 결함이므로 알려 주십시오.</p>
+</section>
+</div><!-- /#man-quick -->
+
+<div id="man-full" style="display:none">
 <section class="card manual">
-  <h2>사용 매뉴얼</h2>
+  <h2>사용 매뉴얼 — 상세</h2>
   <p class="mlead">이 대시보드는 <b>국내 채권 현물·국채선물·원화 IRS·미국 금리·미국채선물</b>의 일별 시계열을 한곳에 모아,
     수준·변동·커브·스프레드·상관·리스크 지표를 계산해 보여 줍니다.
     기준일 <span class="dyn" id="man-asof">—</span> · 수록 <span class="dyn" id="man-span">—</span>.
@@ -1522,6 +1716,7 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
   <p class="note">계산 정의·부호 규약은 각 도구 결과 화면의 <b>계산 정의</b> 박스에서 그대로 옮긴 것입니다.
     둘이 어긋나 보이면 도구 화면 쪽이 정답이며, 그 경우는 결함이므로 알려 주십시오.</p>
 </section>
+</div><!-- /#man-full -->
 </div>
 
 <p class="disc">본 자료는 시장 데이터 요약이며 투자 권유가 아닙니다. 프로토타입이므로 계산 정의 검토용으로만 사용하십시오.</p>
@@ -2833,6 +3028,8 @@ function showView(v) {
   /* 대시보드로 돌아올 때는 '현재 열려 있는 하위 탭'을 다시 그린다.
      숨어 있던 동안 컨테이너 폭이 0이었으므로 SVG 를 새로 만들어야 한다. */
   if (v === 'dash') guard('대시보드', function () { showDashSub(dashSub); });
+  /* 매뉴얼도 하위 탭이 있다 — 현재 열려 있는 쪽을 다시 보여 준다(기본 '한눈에'). */
+  if (v === 'man') guard('사용 매뉴얼', function () { if (typeof showManSub === 'function') showManSub(manSub); });
 }
 guard('내비게이션', function () {
   var nav = $('navbar'); if (!nav) return;
@@ -6353,6 +6550,110 @@ function manMatSpan(t) {
   return '전 만기 ' + fmtD(DATES[fi]) + ' ~ ' + fmtD(DATES[li]) +
     (late && late.fi > fi ? ' (가장 늦은 시작 ' + late.label + ' ' + fmtD(DATES[late.fi]) + ')' : '');
 }
+/* ---- 공용 ① 수록 데이터 일람의 원자료 ----------------------------------
+   상세 §2-1 표와 '한눈에' ③ 타임라인이 **같은 함수**를 쓴다. 한쪽만 고쳐 두 문서가
+   다른 말을 하는 사고를 막기 위한 것이다. 구간은 전부 데이터에서 읽는다.
+     kind : 'auto' 평일 19:30 자동 / 'fred' 자동이지만 T+1 발표 / 'week' 주간 수기 / 'man' 수동
+   tl 이 false 인 항목(뉴스·리포트)은 일별 시계열이 아니므로 타임라인에 막대가 없다. */
+var MAN_UPD = {
+  auto: { c: '#1f6b42', t: '평일 19:30 자동' },
+  fred: { c: '#0057c7', t: '평일 19:30 자동 (FRED T+1 발표)' },
+  week: { c: '#8a5a20', t: '주간 · 수기' },
+  man:  { c: '#b3001b', t: '수동 (원본 xlsx 수집 후 재적재)' }
+};
+function manUpdKind(s) {
+  if (/T\+1/.test(s)) return 'fred';
+  if (/자동/.test(s)) return 'auto';
+  if (/주간/.test(s)) return 'week';
+  return 'man';
+}
+function manDataSpans() {
+  var nser = 0; TYPES.forEach(function (t) { nser += t.mats.length; });
+  var out = [];
+  (function () {
+    var fi = 1e9, li = -1;
+    TYPES.forEach(function (t) { t.mats.forEach(function (m) { if (m.fi < fi) fi = m.fi; if (m.li > li) li = m.li; }); });
+    out.push({
+      name: '국내 채권 현물', tl: true, fi: fi, li: li, unit: '%',
+      src: 'KOFIA 채권정보센터 채권시가평가수익률<br><span class="hint">3개 평가사 평균 (나이스피앤아이 · 한국자산평가 · KIS자산평가)</span>',
+      span: manMatSpanIdx(fi, li), scale: TYPES.length + '종류 · ' + nser.toLocaleString() + '시리즈',
+      upd: '평일 19:30 <b>자동</b>', kind: 'auto'
+    });
+  })();
+  REG_TYPES.forEach(function (t) {
+    var src = MAN_SRC[t.name] || ['—', '—'];
+    var fi = 1e9, li = -1;
+    t.mats.forEach(function (m) { if (m.fi < fi) fi = m.fi; if (m.li > li) li = m.li; });
+    out.push({
+      name: t.name, tl: true, fi: fi, li: li, unit: t.price ? 'pt (가격)' : '%',
+      src: src[0], span: manMatSpan(t), scale: (t.noMat ? '만기 없음' : t.mats.length + '만기'),
+      upd: src[1], kind: manUpdKind(src[1]), t: t,
+      /* 만기마다 시작일이 다르므로 '전 만기가 갖춰진' 시점도 같이 들고 간다
+         ('한눈에' 타임라인이 옅은 구간 / 진한 구간으로 나눠 그린다) */
+      lateFi: (function () { var f = -1; t.mats.forEach(function (m) { if (m.fi > f) f = m.fi; }); return f; })()
+    });
+  });
+  out.push({
+    name: '주요 이슈 (뉴스)', tl: false, src: '연합인포맥스 기사 10선',
+    span: '<span class="hint">카드 제목의 뉴스 기준일 참조</span>', scale: '10선',
+    upd: '평일 19:30 <b>자동</b> (별도 커밋)', kind: 'auto', unit: '—'
+  });
+  out.push({
+    name: '증권사 리포트 정리', tl: false, src: '증권사 리포트 요약',
+    span: '<span class="hint">카드 제목의 날짜 참조</span>', scale: '—',
+    upd: '<b>수동</b>', kind: 'man', unit: '—'
+  });
+  return out;
+}
+function manMatSpanIdx(fi, li) { return fmtD(DATES[fi]) + ' ~ ' + fmtD(DATES[li]); }
+
+/* ---- 공용 ② 도구 × 선택 가능 시리즈 --------------------------------------
+   실제 select 의 optgroup 을 센다. 스프레드 후보를 '전체' 유형 기준으로 세려면 유형
+   라디오를 잠시 건드려야 하므로 **단 한 번만** 계산해 MAN_MATRIX 에 담아 두고,
+   상세 §5 표와 '한눈에' ⑤ 격자가 그 결과를 함께 쓴다(두 번 건드리면 남의 선택을 흔든다). */
+var MAN_TOOLS = [
+  ['스트레스테스트', 'st-type', '단기·장기 두 만기로 커브 유형을 판정 (스프레드 유형은 st-sa·st-sb)'],
+  ['VaR', 'vr-type', '시리즈 1개'],
+  ['커브 분석', 'cv-type', '만기축 필수'],
+  ['스프레드 분석', 'sp-ta', '유형에 따라 후보가 더 좁혀짐 (표는 \'전체\' 유형 기준)'],
+  ['커브+스프레드 분석', 'cs-ta', '만기축 필수'],
+  ['상관관계 분석', 'co-ta', '<b>선물을 고를 수 있는 유일한 도구</b>'],
+  ['데이터 다운로드', 'dl-type', '선물 없음']
+];
+var MAN_MATRIX = null;
+function manBuildMatrix() {
+  if (MAN_MATRIX) return MAN_MATRIX;
+  if (!$('sp-ta') || !$('dl-type')) return null;      // 폼이 아직 없으면 뒤로 미룬다
+  var cols = REG_GROUPS.slice();
+  var spPrev = null, spRadio = document.querySelector('input[name=sp-kind]:checked');
+  try {
+    if (spRadio && spRadio.value !== 'all') {
+      spPrev = spRadio.value;
+      var all = document.querySelector('input[name=sp-kind][value=all]');
+      if (all) { all.checked = true; spApplyKind(true); }
+    }
+  } catch (e) { }
+  function groupCount(selId, label) {
+    var sel = $(selId); if (!sel) return null;
+    var og = sel.getElementsByTagName('optgroup');
+    for (var i = 0; i < og.length; i++) if (og[i].label === label) return og[i].children.length;
+    return 0;
+  }
+  var rows = MAN_TOOLS.map(function (T) {
+    var kofia = 0;
+    GROUPS.forEach(function (g) { var n = groupCount(T[1], g); if (n) kofia += n; });
+    return { name: T[0], note: T[2], kofia: kofia, reg: cols.map(function (g) { return groupCount(T[1], g); }) };
+  });
+  try {
+    if (spPrev) {
+      var r = document.querySelector('input[name=sp-kind][value=' + spPrev + ']');
+      if (r) { r.checked = true; spApplyKind(true); }
+    }
+  } catch (e) { }
+  MAN_MATRIX = { cols: cols, rows: rows };
+  return MAN_MATRIX;
+}
+
 var manMatrixDone = 0;
 function renderManual() {
   if (!$('man-cover')) return;
@@ -6373,34 +6674,14 @@ function renderManual() {
   var irsTxt = irs ? irs.mats.map(function (m) { return m.label; }).join(' · ') : '—';
   txt('man-irsmats', irsTxt); txt('man-irsmats2', irsTxt);
 
-  /* --- 2-1 수록 데이터 일람 --- */
-  var rows = [];
-  (function () {
-    var fi = 1e9, li = -1;
-    TYPES.forEach(function (t) {
-      t.mats.forEach(function (m) { if (m.fi < fi) fi = m.fi; if (m.li > li) li = m.li; });
-    });
-    rows.push(['국내 채권 현물', 'KOFIA 채권정보센터 채권시가평가수익률<br><span class="hint">3개 평가사 평균 (나이스피앤아이 · 한국자산평가 · KIS자산평가)</span>',
-      fmtD(DATES[fi]) + ' ~ ' + fmtD(DATES[li]),
-      TYPES.length + '종류 · ' + nser.toLocaleString() + '시리즈', '평일 19:30 <b>자동</b>', '%']);
-  })();
-  REG_TYPES.forEach(function (t) {
-    var src = MAN_SRC[t.name] || ['—', '—'];
-    var unit = t.price ? 'pt (가격)' : '%';
-    rows.push([esc(t.name), src[0], manMatSpan(t),
-      (t.noMat ? '만기 없음' : t.mats.length + '만기'), src[1], unit]);
-  });
-  rows.push(['주요 이슈 (뉴스)', '연합인포맥스 기사 10선', '<span class="hint">카드 제목의 뉴스 기준일 참조</span>', '10선',
-    '평일 19:30 <b>자동</b> (별도 커밋)', '—']);
-  rows.push(['증권사 리포트 정리', '증권사 리포트 요약', '<span class="hint">카드 제목의 날짜 참조</span>', '—',
-    '<b>수동</b>', '—']);
+  /* --- 2-1 수록 데이터 일람 — 공용 manDataSpans() 를 그대로 표로 옮긴다 --- */
   var H = '<thead><tr><th class="l">데이터</th><th class="l">출처</th><th class="l">수록 구간 (만기별 시작일)</th>' +
     '<th class="l">규모</th><th class="l">갱신</th><th>단위</th></tr></thead>';
   /* table 요소에 직접 innerHTML 을 대입하지 않는다(일부 브라우저에서 무시된다) —
      감싸는 div(.tblwrap)에 <table> 전체를 문자열로 넣는다. */
-  $('man-cover').innerHTML = '<table>' + H + '<tbody>' + rows.map(function (r) {
-    return '<tr><td class="l nw"><b>' + r[0] + '</b></td><td class="l">' + r[1] + '</td><td class="l">' + r[2] +
-      '</td><td class="l">' + r[3] + '</td><td class="l">' + r[4] + '</td><td>' + r[5] + '</td></tr>';
+  $('man-cover').innerHTML = '<table>' + H + '<tbody>' + manDataSpans().map(function (r) {
+    return '<tr><td class="l nw"><b>' + esc(r.name) + '</b></td><td class="l">' + r.src + '</td><td class="l">' + r.span +
+      '</td><td class="l">' + r.scale + '</td><td class="l">' + r.upd + '</td><td>' + r.unit + '</td></tr>';
   }).join('') + '</tbody></table>';
 
   /* --- 2-4 미국 자체축 구간 (비동기 — 아직 없으면 그대로 둔다) --- */
@@ -6415,66 +6696,274 @@ function renderManual() {
      **최초 1회만** 만든다(두 번째 호출은 미국축 슬롯 갱신용이고, 그때는 사용자가
      이미 폼을 만졌을 수 있다 — 남의 선택을 되돌리지 않는다). */
   if (manMatrixDone) return;
+  var MX = manBuildMatrix(); if (!MX) return;
   manMatrixDone = 1;
-  (function () {
-    /* [표시명, 대표 select id, 비고] — 그 도구에서 시리즈를 고르는 첫 번째 select */
-    var TOOLS = [
-      ['스트레스테스트', 'st-type', '단기·장기 두 만기로 커브 유형을 판정 (스프레드 유형은 st-sa·st-sb)'],
-      ['VaR', 'vr-type', '시리즈 1개'],
-      ['커브 분석', 'cv-type', '만기축 필수'],
-      ['스프레드 분석', 'sp-ta', '유형에 따라 후보가 더 좁혀짐 (표는 \'전체\' 유형 기준)'],
-      ['커브+스프레드 분석', 'cs-ta', '만기축 필수'],
-      ['상관관계 분석', 'co-ta', '<b>선물을 고를 수 있는 유일한 도구</b>'],
-      ['데이터 다운로드', 'dl-type', '선물 없음']
-    ];
-    /* 검사할 레지스트리 그룹 — REG_GROUPS 순서를 그대로 쓴다(새 그룹이 생기면 열이 자동으로 늘어난다) */
-    var cols = REG_GROUPS.slice();
-    /* '전체' 유형 기준으로 스프레드 후보를 세기 위해, 현재 유형을 기억해 두고 잠시 전체로 돌린다 */
-    var spPrev = null, spRadio = document.querySelector('input[name=sp-kind]:checked');
-    try {
-      if (spRadio && spRadio.value !== 'all') {
-        spPrev = spRadio.value;
-        var all = document.querySelector('input[name=sp-kind][value=all]');
-        if (all) { all.checked = true; spApplyKind(true); }
-      }
-    } catch (e) { }
-    function groupCount(selId, label) {
-      var sel = $(selId); if (!sel) return null;
-      var og = sel.getElementsByTagName('optgroup');
-      for (var i = 0; i < og.length; i++) if (og[i].label === label) return og[i].children.length;
-      return 0;
-    }
-    var body = TOOLS.map(function (T) {
-      var tds = cols.map(function (g) {
-        var n = groupCount(T[1], g);
-        if (n === null) return '<td class="na">?</td>';
-        return n > 0 ? '<td><b style="color:#1f6b42">○</b> <span class="hint">' + n + '</span></td>'
-                     : '<td class="na">×</td>';
-      }).join('');
-      var kofia = 0;
-      GROUPS.forEach(function (g) { var n = groupCount(T[1], g); if (n) kofia += n; });
-      return '<tr><td class="l nw"><b>' + esc(T[0]) + '</b></td>' +
-        '<td>' + (kofia ? '<b style="color:#1f6b42">○</b>' : '<span class="na">×</span>') + '</td>' +
-        tds + '<td class="l">' + T[2] + '</td></tr>';
+  var cols = MX.cols;
+  var body = MX.rows.map(function (R) {
+    var tds = R.reg.map(function (n) {
+      if (n === null) return '<td class="na">?</td>';
+      return n > 0 ? '<td><b style="color:#1f6b42">○</b> <span class="hint">' + n + '</span></td>'
+                   : '<td class="na">×</td>';
     }).join('');
-    /* 스프레드 유형을 원래대로 되돌린다 */
-    try {
-      if (spPrev) {
-        var r = document.querySelector('input[name=sp-kind][value=' + spPrev + ']');
-        if (r) { r.checked = true; spApplyKind(true); }
-      }
-    } catch (e) { }
-    var hd = '<thead><tr><th class="l">도구</th><th>국내 채권 현물</th>' +
-      cols.map(function (g) { return '<th>' + esc(g) + '</th>'; }).join('') +
-      '<th class="l">비고</th></tr></thead>';
-    $('man-matrix').innerHTML = '<table>' + hd + '<tbody>' + body + '</tbody>' +
-      '<tfoot><tr><td class="l" colspan="' + (cols.length + 3) + '">' +
-      '<span class="hint">○ = 선택 가능 (괄호 안은 그 그룹의 옵션 수) · × = 선택 불가. ' +
-      '\'기준지표\'는 한국은행 기준금리 · DFF · EFFR · SOFR, \'해외금리\'는 미국채, \'스왑금리\'는 원화 IRS, ' +
-      '\'선물\'은 국채선물(수정가) · 미국채선물(조정가)입니다. 이 표는 화면을 열 때 실제 드롭다운을 세어 만듭니다.' +
-      '</span></td></tr></tfoot></table>';
-  })();
+    return '<tr><td class="l nw"><b>' + esc(R.name) + '</b></td>' +
+      '<td>' + (R.kofia ? '<b style="color:#1f6b42">○</b>' : '<span class="na">×</span>') + '</td>' +
+      tds + '<td class="l">' + R.note + '</td></tr>';
+  }).join('');
+  var hd = '<thead><tr><th class="l">도구</th><th>국내 채권 현물</th>' +
+    cols.map(function (g) { return '<th>' + esc(g) + '</th>'; }).join('') +
+    '<th class="l">비고</th></tr></thead>';
+  $('man-matrix').innerHTML = '<table>' + hd + '<tbody>' + body + '</tbody>' +
+    '<tfoot><tr><td class="l" colspan="' + (cols.length + 3) + '">' +
+    '<span class="hint">○ = 선택 가능 (괄호 안은 그 그룹의 옵션 수) · × = 선택 불가. ' +
+    '\'기준지표\'는 한국은행 기준금리 · DFF · EFFR · SOFR, \'해외금리\'는 미국채, \'스왑금리\'는 원화 IRS, ' +
+    '\'선물\'은 국채선물(수정가) · 미국채선물(조정가)입니다. 이 표는 화면을 열 때 실제 드롭다운을 세어 만듭니다.' +
+    '</span></td></tr></tfoot></table>';
 }
+/* ================================================================
+   사용 매뉴얼 · '한눈에' — 인포그래픽 렌더
+   ----------------------------------------------------------------
+   글이 아니라 그림이다. SVG 는 이 파일의 기존 차트 관행을 그대로 따른다 :
+     · width="100%" + viewBox 로 컨테이너에 맞춘다(폭에 의존하는 계산을 하지 않는다)
+     · 색은 PAL / 기존 팔레트에서만 가져온다
+     · 축 글자 font-size 10.5 · fill #7d8794
+   내용은 전부 상세 매뉴얼과 같은 사실이어야 한다. 구간·매트릭스는 데이터에서 읽는다.
+   ================================================================ */
+var MQ_W = 1000;                       /* viewBox 가로 — 모든 한눈에 SVG 공통 */
+function mqEsc(s) { return esc(s); }
+function mqSvg(h, body) {
+  return '<svg width="100%" viewBox="0 0 ' + MQ_W + ' ' + h + '" preserveAspectRatio="xMidYMid meet" ' +
+    'xmlns="http://www.w3.org/2000/svg">' + body + '</svg>';
+}
+function mqBox(x, y, w, h, fill, stroke, rx) {
+  return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + (rx == null ? 4 : rx) +
+    '" fill="' + fill + '" stroke="' + stroke + '"/>';
+}
+function mqTxt(x, y, s, o) {
+  o = o || {};
+  return '<text x="' + x + '" y="' + y + '" font-size="' + (o.fs || 12) + '"' +
+    (o.anchor ? ' text-anchor="' + o.anchor + '"' : '') +
+    (o.bold ? ' font-weight="700"' : '') +
+    ' fill="' + (o.fill || '#2a3542') + '">' + s + '</text>';
+}
+
+/* ---- ① 전체 지도 --------------------------------------------------------
+   좌측 메뉴 → (대시보드는) 하위 탭 → 카드. 구조는 화면과 1:1 로 맞춘다. */
+function mqDrawMap() {
+  var host = $('mq-map'); if (!host) return;
+  var GX = 8, GW = 112, SX = 136, SW = 96, CX = 248, CW = MQ_W - CX - 16;
+  var PITCH = 32, CH = 27, y = 10, o = [], nser = 0;
+  TYPES.forEach(function (t) { nser += t.mats.length; });
+  function chip(x, w, name, desc) {
+    o.push(mqBox(x, y, w, CH, '#fbfcfe', '#dbe2ea'));
+    o.push('<text x="' + (x + 10) + '" y="' + (y + 18) + '" font-size="12" fill="#5a6673">' +
+      '<tspan font-weight="700" fill="#17456b">' + name + '</tspan>' +
+      (desc ? '<tspan> · ' + desc + '</tspan>' : '') + '</text>');
+    y += PITCH;
+  }
+  /* 연결선은 ┤ 모양 브래킷으로 그린다 — 가로 선만 그으면 허공에서 끊긴 것처럼 보인다 */
+  function bracket(x0, x1, cys) {
+    var r = [];
+    var cy0 = Math.min.apply(null, cys), cy1 = Math.max.apply(null, cys), mid = (cy0 + cy1) / 2;
+    r.push('<line x1="' + x0 + '" y1="' + mid + '" x2="' + (x0 + 8) + '" y2="' + mid + '" stroke="#c3ccd8"/>');
+    r.push('<line x1="' + (x0 + 8) + '" y1="' + cy0 + '" x2="' + (x0 + 8) + '" y2="' + cy1 + '" stroke="#c3ccd8"/>');
+    cys.forEach(function (cy) {
+      r.push('<line x1="' + (x0 + 8) + '" y1="' + cy + '" x2="' + x1 + '" y2="' + cy + '" stroke="#c3ccd8"/>');
+    });
+    return r.join('');
+  }
+  function group(label, sublist, chips) {
+    var y0 = y, subCys = [];
+    if (sublist) {
+      sublist.forEach(function (S) {
+        var sy0 = y, chipCys = [];
+        S.chips.forEach(function (c) { chipCys.push(y + CH / 2); chip(CX, CW, c[0], c[1]); });
+        var sy1 = y - (PITCH - CH), scy = (sy0 + sy1) / 2;
+        subCys.push(scy);
+        o.push(bracket(SX + SW, CX, chipCys));
+        o.push(mqBox(SX, scy - 15, SW, 30, '#eef3f9', '#b9cde0'));
+        o.push(mqTxt(SX + SW / 2, scy + 4, S.name, { anchor: 'middle', bold: true, fill: '#17456b', fs: 12 }));
+      });
+    } else {
+      chips.forEach(function (c) { subCys.push(y + CH / 2); chip(SX, MQ_W - SX - 16, c[0], c[1]); });
+    }
+    var y1 = y - (PITCH - CH);
+    o.push(bracket(GX + GW, (sublist ? SX : SX), subCys));
+    o.push(mqBox(GX, y0, GW, y1 - y0, '#17456b', '#17456b'));
+    /* 세로 라벨 대신 중앙 정렬 여러 줄 — 회전 텍스트는 인쇄에서 잘리는 브라우저가 있다 */
+    var ls = label.split('|');
+    ls.forEach(function (t, i) {
+      o.push(mqTxt(GX + GW / 2, (y0 + y1) / 2 + 5 + (i - (ls.length - 1) / 2) * 16, t,
+        { anchor: 'middle', bold: true, fill: '#fff', fs: 12.5 }));
+    });
+    y += 14;
+  }
+  group('대시보드', [
+    {
+      name: '현물', chips: [
+        ['금리 현황', '8종 × 만기 11개 · 셀 아래는 전일 대비 bp'],
+        ['금리 시계열', '칩으로 시리즈 선택 · x축 한국 영업일'],
+        ['미국 금리 시계열', 'x축이 미국 영업일인 유일한 카드'],
+        ['변동 현황 (bp)', '1일 · 1주 · 1 · 3 · 6개월 · 1년'],
+        ['주요 이슈', '연합인포맥스 10선 (자동 수집)'],
+        ['증권사 리포트 정리', '수동 갱신 — 카드 제목의 날짜로 판단']
+      ]
+    },
+    {
+      name: '선물 · IRS', chips: [
+        ['선물 현황', '미조정 실제가 (pt) — HTS 와 같은 숫자'],
+        ['원화 IRS 현황', '+ 스왑스프레드 (IRS − 국고, bp)'],
+        ['선물 시계열', '롤오버 조정계열 (pt) · 선물 원본 CSV 는 여기뿐'],
+        ['변동 현황', '선물 pt · IRS bp']
+      ]
+    }
+  ]);
+  group('분석 도구|7종', null, [
+    ['스트레스테스트', '과거 최악 구간 상위 N건 · 피벗 · 스프레드 확대'],
+    ['VaR', 'h일 변동 분포의 분위수 (히스토리컬)'],
+    ['커브 분석', '만기축 위에 커브 2개 — 두 시점 또는 두 종류'],
+    ['스프레드 분석', '두 금리 차의 시계열 · 백분위 · z (유형 5종)'],
+    ['커브+스프레드 분석', '커브 2개 × 시점 2개 → 만기별 Δ스프레드'],
+    ['상관관계 분석', '비중첩 구간별 r — 선물을 고를 수 있는 유일한 도구'],
+    ['데이터 다운로드', '고른 시리즈 × 기간의 wide CSV (선물 없음)']
+  ]);
+  group('사용|매뉴얼', null, [
+    ['한눈에', '이 화면 — 그림으로 보는 안내서'],
+    ['상세', '정의 · 수식 · 부호 규약 · 알려진 이슈 (8개 절)']
+  ]);
+  host.innerHTML = mqSvg(y, o.join('')) +
+    '<p class="mqnote">좌측 메뉴 ' + (VIEWS.length) + '개 · 수록 시리즈 ' + nser.toLocaleString() +
+    '개(국내 현물) + 레지스트리 ' + REG_TYPES.length + '종. 대시보드만 하위 탭이 있습니다.</p>';
+}
+
+/* ---- ③ 데이터 타임라인 --------------------------------------------------
+   막대의 시작·끝을 데이터에서 읽는다. 하드코딩하면 낡는다.
+   옅은 구간 = 일부 만기만 있는 구간 / 진한 구간 = 전 만기가 갖춰진 구간. */
+function mqDrawTimeline() {
+  var host = $('mq-tl'); if (!host) return;
+  var rows = manDataSpans().filter(function (r) { return r.tl; });
+  var LX = 176, RX = MQ_W - 24, TOP = 30, PITCH = 30, BH = 14;
+  function yr(v) { v = '' + v; return +v.substr(0, 4) + (+v.substr(4, 2) - 1) / 12 + (+v.substr(6, 2) - 1) / 372; }
+  var d0 = yr(DATES[0]), d1 = yr(DATES[LAST]);
+  if (!(d1 > d0)) d1 = d0 + 1;
+  var X = function (v) { return LX + (yr(v) - d0) / (d1 - d0) * (RX - LX); };
+  var H = TOP + rows.length * PITCH + 10, o = [];
+  /* 연도 격자 */
+  var y0i = Math.ceil(d0 / 5) * 5;
+  for (var Y = y0i; Y <= d1; Y += 5) {
+    var x = X(Y * 10000 + 101);
+    o.push('<line x1="' + x.toFixed(1) + '" y1="' + (TOP - 12) + '" x2="' + x.toFixed(1) + '" y2="' +
+      (H - 10) + '" stroke="#eef1f5"/>');
+    o.push(mqTxt(x, TOP - 16, Y, { anchor: 'middle', fs: 10.5, fill: '#7d8794' }));
+  }
+  /* 2023-01-09 산출기준 변경 — 차트와 같은 세로 점선 관행 */
+  var bx = X(DATA.meta.regime_break || 20230109);
+  o.push('<line x1="' + bx.toFixed(1) + '" y1="' + (TOP - 12) + '" x2="' + bx.toFixed(1) + '" y2="' + (H - 10) +
+    '" stroke="#b3001b" stroke-width="1" stroke-dasharray="3 3"/>');
+  /* 라벨은 아래에 둔다 — 위에 두면 연도 눈금 글자와 겹친다 */
+  o.push(mqTxt(bx - 4, H - 1, '2023-01-09 산출기준 변경', { anchor: 'end', fs: 10, fill: '#b3001b' }));
+  rows.forEach(function (r, i) {
+    var yy = TOP + i * PITCH, cy = yy + BH / 2, col = (MAN_UPD[r.kind] || MAN_UPD.man).c;
+    o.push(mqTxt(LX - 8, cy + 4, mqEsc(r.name), { anchor: 'end', fs: 11.5, bold: true, fill: '#2a3542' }));
+    var xa = X(DATES[r.fi]), xb = X(DATES[r.li]), w = Math.max(2, xb - xa);
+    o.push('<rect x="' + xa.toFixed(1) + '" y="' + yy + '" width="' + w.toFixed(1) + '" height="' + BH +
+      '" rx="3" fill="' + col + '" fill-opacity="' + (r.lateFi != null && r.lateFi > r.fi ? '0.3' : '0.9') + '"/>');
+    if (r.lateFi != null && r.lateFi > r.fi) {
+      var xc = X(DATES[r.lateFi]);
+      o.push('<rect x="' + xc.toFixed(1) + '" y="' + yy + '" width="' + Math.max(2, xb - xc).toFixed(1) +
+        '" height="' + BH + '" rx="3" fill="' + col + '" fill-opacity="0.9"/>');
+    }
+    /* 시작일 — 막대가 넉넉하면 안에 흰 글씨, 좁으면 막대 왼쪽에 회색 글씨 */
+    var lab = fmtD(DATES[r.fi]);
+    if (w > 78) o.push(mqTxt(xa + 6, cy + 4, lab, { fs: 10, fill: '#fff', bold: true }));
+    else o.push(mqTxt(xa - 4, cy + 4, lab, { anchor: 'end', fs: 10, fill: '#5a6673' }));
+    o.push(mqTxt(xb + 4, cy + 4, r.unit === '%' ? '%' : (r.unit.indexOf('pt') === 0 ? 'pt' : ''), { fs: 10, fill: '#8a939e' }));
+  });
+  host.innerHTML = mqSvg(H, o.join(''));
+  var leg = $('mq-leg');
+  if (leg) {
+    var ks = ['auto', 'fred', 'week', 'man'];
+    leg.innerHTML = ks.map(function (k) {
+      return '<span><i style="background:' + MAN_UPD[k].c + '"></i>' + MAN_UPD[k].t + '</span>';
+    }).join('') +
+      '<span><i style="background:#17456b;opacity:.34"></i>옅은 구간 = 일부 만기만</span>' +
+      '<span><i style="background:#17456b"></i>진한 구간 = 전 만기 갖춤</span>';
+  }
+}
+
+/* ---- ④ 단위·부호 다이어그램 --------------------------------------------- */
+function mqDrawUnit() {
+  var host = $('mq-unit'); if (!host) return;
+  var o = [], H = 156;
+  o.push(mqBox(10, 14, 400, 54, '#eef3f9', '#b9cde0'));
+  o.push(mqTxt(210, 38, '채권 · IRS = 금리 (%)', { anchor: 'middle', bold: true, fs: 15, fill: '#17456b' }));
+  o.push(mqTxt(210, 58, '변동은 bp · 1bp = 0.01%p', { anchor: 'middle', fs: 11.5, fill: '#5a6673' }));
+  o.push(mqBox(MQ_W - 410, 14, 400, 54, '#fcf4ec', '#e2c9b0'));
+  o.push(mqTxt(MQ_W - 210, 38, '선물 = 가격 (pt)', { anchor: 'middle', bold: true, fs: 15, fill: '#8a5a20' }));
+  o.push(mqTxt(MQ_W - 210, 58, '수준은 미조정 실제가 · 변동·시계열은 조정계열', { anchor: 'middle', fs: 11.5, fill: '#5a6673' }));
+  /* 가운데 반대방향 화살표 */
+  o.push('<path d="M 425 34 H 560" stroke="#c3ccd8" stroke-width="1.4"/>');
+  o.push('<path d="M 560 34 l -7 -4 v 8 z" fill="#c3ccd8"/>');
+  o.push('<path d="M 560 52 H 425" stroke="#c3ccd8" stroke-width="1.4"/>');
+  o.push('<path d="M 425 52 l 7 -4 v 8 z" fill="#c3ccd8"/>');
+  o.push(mqTxt(492, 26, '금리 ↑', { anchor: 'middle', bold: true, fs: 14, fill: '#d0021b' }));
+  o.push(mqTxt(492, 68, '가격 ↓', { anchor: 'middle', bold: true, fs: 14, fill: '#0057c7' }));
+  /* 결론 띠 */
+  o.push(mqBox(10, 86, MQ_W - 20, 32, '#fdf6f6', '#e9a9a9'));
+  o.push(mqTxt(MQ_W / 2, 107, '방향이 반대이므로 — 금리와 선물가격의 상관계수가 음수로 나오는 것이 정상입니다', { anchor: 'middle', bold: true, fs: 13, fill: '#b3001b' }));
+  o.push(mqBox(10, 124, MQ_W - 20, 26, '#eefaf2', '#b6d6c2'));
+  o.push(mqTxt(MQ_W / 2, 141, '단위가 섞이지 않도록 대시보드가 현물 / 선물·IRS 로 갈려 있고, 선물은 bp·만기축을 쓰는 도구에서 빠져 있습니다', { anchor: 'middle', fs: 12, fill: '#1f6b42' }));
+  host.innerHTML = mqSvg(H, o.join(''));
+}
+
+/* ---- ⑤ 도구 × 시리즈 격자 (상세 §5 와 같은 MAN_MATRIX 를 쓴다) ---------- */
+function mqDrawMatrix() {
+  var host = $('mq-mx'); if (!host) return;
+  var MX = manBuildMatrix(); if (!MX) return;
+  var hd = '<thead><tr><th class="l">도구</th><th>국내 채권<br>현물</th>' +
+    MX.cols.map(function (g) { return '<th>' + esc(g) + '</th>'; }).join('') + '</tr></thead>';
+  var body = MX.rows.map(function (R) {
+    var c = function (n) { return n ? '<td class="y">●</td>' : '<td class="n">×</td>'; };
+    return '<tr><td class="l"><b>' + esc(R.name) + '</b></td>' + c(R.kofia) +
+      R.reg.map(c).join('') + '</tr>';
+  }).join('');
+  host.innerHTML = '<table class="mqmx">' + hd + '<tbody>' + body + '</tbody></table>';
+}
+
+function renderManQuick() {
+  if (!$('mq-map')) return;
+  var txt = function (id, s) { var e = $(id); if (e) e.innerHTML = s; };
+  txt('mq-asof', fmtD(DATES[LAST]));
+  txt('mq-span', fmtD(DATA.meta.from) + ' ~ ' + fmtD(DATA.meta.to) + ' · ' + N.toLocaleString() + '영업일');
+  var nser = 0; TYPES.forEach(function (t) { nser += t.mats.length; });
+  txt('mq-nser', nser.toLocaleString() + '개 (국내 현물) + 레지스트리 ' + REG_TYPES.length + '종');
+  guard('한눈에 지도', mqDrawMap);
+  guard('한눈에 타임라인', mqDrawTimeline);
+  guard('한눈에 단위', mqDrawUnit);
+  guard('한눈에 매트릭스', mqDrawMatrix);
+}
+
+/* ---- 매뉴얼 하위 탭 (한눈에 / 상세) ------------------------------------
+   대시보드의 현물/선물 하위 탭(showDashSub)과 같은 구조다. 기본은 'quick'. */
+var manSub = 'quick';
+function showManSub(m) {
+  manSub = m;
+  var bar = $('man-subtabs');
+  if (bar) [].forEach.call(bar.getElementsByTagName('button'), function (b) {
+    b.className = (b.getAttribute('data-m') === m) ? 'on' : '';
+  });
+  var q = $('man-quick'), f = $('man-full');
+  if (q) q.style.display = (m === 'quick') ? '' : 'none';
+  if (f) f.style.display = (m === 'full') ? '' : 'none';
+  if (m === 'quick') guard('한눈에', renderManQuick);
+  else guard('사용 매뉴얼', renderManual);
+}
+guard('매뉴얼 하위 탭', function () {
+  var bar = $('man-subtabs'); if (!bar) return;
+  [].forEach.call(bar.getElementsByTagName('button'), function (b) {
+    b.onclick = function () { showManSub(b.getAttribute('data-m')); };
+  });
+});
+
 /* 목차·"↑ 목차" 링크 — 대상이 접힌 <details> 안이면 펼친 뒤 스크롤한다.
    기본 앵커 이동만으로는 닫힌 details 안의 대상으로 갈 수 없다. */
 guard('매뉴얼 목차', function () {
@@ -6499,7 +6988,11 @@ guard('매뉴얼 목차', function () {
 });
 
 /* ---- [NEW] 시작 뷰 + 리사이즈 대응 + 자가진단 ---- */
+/* 매뉴얼은 두 하위 탭 모두 BOOT 에서 채운다. 매트릭스는 manBuildMatrix() 가 한 번만
+   계산하고(스프레드 유형 라디오를 잠깐 건드리므로) 두 탭이 그 결과를 함께 쓴다.
+   renderManual 을 먼저 불러 상세가 정본이 되도록 순서를 고정한다. */
 guard('사용 매뉴얼', renderManual);
+guard('한눈에', renderManQuick);
 showView('dash');
 
 /* 주요 이슈 카드 — 높이는 왼쪽 두 시계열 카드에 맞춰 고정되고 넘치는 내용은 내부 스크롤이다.
