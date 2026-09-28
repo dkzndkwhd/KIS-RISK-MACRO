@@ -6444,7 +6444,7 @@ function usChgRows() {
   if (!window.fetch || !window.JSON) { ufail('이 브라우저는 fetch / JSON 을 지원하지 않습니다.'); return; }
   if (location.protocol === 'file:') { ufail('로컬 파일(file://)에서는 data/us_rates.json 을 읽을 수 없습니다.'); return; }
   try {
-    fetch(URL_US, { cache: 'default' }).then(function (r) {
+    fetch(URL_US, { cache: 'no-cache' }).then(function (r) {
       if (!r.ok) throw new Error(r.status === 404 ? 'data/us_rates.json 이 리포지토리에 없습니다 (HTTP 404).' : 'HTTP ' + r.status);
       return r.text();
     }).then(function (t) {
@@ -7342,7 +7342,7 @@ try{ window.__DONE(); }catch(_e){}
   }
 
   say('data/rates.json 요청 중…');
-  fetch(DATA_URL, { cache: 'default' }).then(function (r) {
+  fetch(DATA_URL, { cache: 'no-cache' }).then(function (r) {
     if (!r.ok) throw new Error('HTTP ' + r.status + ' ' + (r.statusText || '') + ' — ' + DATA_URL);
     say('데이터 수신 중… (' + ms() + 'ms)');
     return r.text();
