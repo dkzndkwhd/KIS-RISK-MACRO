@@ -332,7 +332,10 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
 .msec li{margin-bottom:4px;}
 .msec table{font-size:11.5px;}
 .msec .tblwrap{margin:4px 0 12px;}
-.msec th,.msec td{vertical-align:top;}
+/* 전역 th,td 는 white-space:nowrap 이다(숫자 표 기준). 매뉴얼 표는 설명 문장이 들어가므로
+   줄바꿈을 허용해야 가로 스크롤 없이 읽힌다. 한글은 어절 단위로 끊는다. */
+.msec th,.msec td{vertical-align:top;white-space:normal;word-break:keep-all;overflow-wrap:break-word;line-height:1.65;}
+.msec td.nw,.msec th.nw{white-space:nowrap;}
 .msec td.l,.msec th.l{text-align:left;}
 .mkey{display:inline-block;font-size:11px;font-weight:600;color:#17456b;background:#eef3f9;
      border:1px solid #d3e0ea;border-radius:3px;padding:0 5px;line-height:1.6;}
@@ -6396,7 +6399,7 @@ function renderManual() {
   /* table 요소에 직접 innerHTML 을 대입하지 않는다(일부 브라우저에서 무시된다) —
      감싸는 div(.tblwrap)에 <table> 전체를 문자열로 넣는다. */
   $('man-cover').innerHTML = '<table>' + H + '<tbody>' + rows.map(function (r) {
-    return '<tr><td class="l"><b>' + r[0] + '</b></td><td class="l">' + r[1] + '</td><td class="l">' + r[2] +
+    return '<tr><td class="l nw"><b>' + r[0] + '</b></td><td class="l">' + r[1] + '</td><td class="l">' + r[2] +
       '</td><td class="l">' + r[3] + '</td><td class="l">' + r[4] + '</td><td>' + r[5] + '</td></tr>';
   }).join('') + '</tbody></table>';
 
@@ -6450,7 +6453,7 @@ function renderManual() {
       }).join('');
       var kofia = 0;
       GROUPS.forEach(function (g) { var n = groupCount(T[1], g); if (n) kofia += n; });
-      return '<tr><td class="l"><b>' + esc(T[0]) + '</b></td>' +
+      return '<tr><td class="l nw"><b>' + esc(T[0]) + '</b></td>' +
         '<td>' + (kofia ? '<b style="color:#1f6b42">○</b>' : '<span class="na">×</span>') + '</td>' +
         tds + '<td class="l">' + T[2] + '</td></tr>';
     }).join('');
