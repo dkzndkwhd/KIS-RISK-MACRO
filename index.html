@@ -6873,9 +6873,16 @@ function mqDrawTimeline() {
         '" height="' + BH + '" rx="3" fill="' + col + '" fill-opacity="0.9"/>');
     }
     /* 시작일 — 막대가 넉넉하면 안에 흰 글씨, 좁으면 막대 왼쪽에 회색 글씨 */
+    /* 시작이 옅은 구간이면 흰 글씨가 안 읽힌다 — 그때만 진한 글씨를 쓴다 */
+    var pale = (r.lateFi != null && r.lateFi > r.fi);
     var lab = fmtD(DATES[r.fi]);
-    if (w > 78) o.push(mqTxt(xa + 6, cy + 4, lab, { fs: 10, fill: '#fff', bold: true }));
+    if (w > 78) o.push(mqTxt(xa + 6, cy + 4, lab, { fs: 10, fill: pale ? '#2a3542' : '#fff', bold: true }));
     else o.push(mqTxt(xa - 4, cy + 4, lab, { anchor: 'end', fs: 10, fill: '#5a6673' }));
+    /* 전 만기가 갖춰지는 시점도 적는다 — 진한 구간이 넉넉할 때만 */
+    if (pale) {
+      var xc2 = X(DATES[r.lateFi]);
+      if (xb - xc2 > 78 && xc2 - xa > 70) o.push(mqTxt(xc2 + 6, cy + 4, fmtD(DATES[r.lateFi]), { fs: 10, fill: '#fff', bold: true }));
+    }
     o.push(mqTxt(xb + 4, cy + 4, r.unit === '%' ? '%' : (r.unit.indexOf('pt') === 0 ? 'pt' : ''), { fs: 10, fill: '#8a939e' }));
   });
   host.innerHTML = mqSvg(H, o.join(''));
