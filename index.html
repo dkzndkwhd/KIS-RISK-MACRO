@@ -207,6 +207,10 @@ body{font-size:13px;}
 .topbar .brate b{color:#17456b;font-size:14px;}
 .dashgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start;}
 .span1{grid-column:span 1;}.span2{grid-column:span 2;}.span3{grid-column:span 3;}
+/* 선물·IRS 시계열 두 카드를 3열 그리드 한 칸(=전체폭) 안에서 정확히 반반으로 나눈다.
+   span2 + span1 로 두면 폭이 1117 : 552 로 벌어지고, svgLine 의 viewBox 가로가
+   cw()(컨테이너 실폭)를 읽으므로 두 차트의 종횡비까지 달라진다. (2026-09-29) */
+.pairgrid{grid-column:span 3;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start;}
 .card{background:#fff;border:1px solid #e0e5ec;border-radius:8px;padding:14px 16px 16px;margin:0;min-width:0;}
 .card h2{font-size:14px;margin:0 0 11px;padding-left:9px;border-left:3px solid #17456b;line-height:1.2;}
 .feed .feedbody{max-height:760px;overflow-y:auto;padding-right:4px;}
@@ -408,6 +412,7 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
   .main{padding:12px 12px 30px;}
   .dashgrid{grid-template-columns:1fr;}
   .span1,.span2,.span3{grid-column:span 1;}
+  .pairgrid{grid-column:span 1;grid-template-columns:1fr;}
   .tool{grid-template-columns:1fr;}
   .formpanel .radios{flex-direction:row;flex-wrap:wrap;}
   /* '한눈에' 의사결정 행은 질문 + 배지 한 쌍이라 좁은 폭에서 2열로 쪼개면 배지가 눌린다.
@@ -659,7 +664,17 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
       스왑스프레드 = IRS − 국고채권, 동일 만기 단순차(bp).</p>
   </section>
 
-  <section class="card span2">
+  <div class="pairgrid">
+  <section class="card">
+    <h2>IRS 시계열 (%)</h2>
+    <div class="serpick" id="irs-pick"></div>
+    <div class="rangebar" id="irs-range" style="margin:10px 0 10px"></div>
+    <div class="chartbox" id="irs-chart"></div>
+    <div class="lgd" id="irs-legend"></div>
+    <p class="note">2007-10-29 부터 수록(약 19년). 결측 구간은 선을 끊습니다(보간하지 않음). <b>x축은 한국 영업일</b>입니다.<br><b>최종 관측일 <span id="irs-asof">—</span></b> · 1·3·5·10년은 기사기반 자동 수집, 2년은 주간 수기. 선물과 기준일이 다를 수 있습니다.</p>
+  </section>
+
+  <section class="card">
     <h2>선물 시계열 (pt · 롤오버 조정)</h2>
     <div class="serpick" id="fut-pick"></div>
     <div style="display:flex;align-items:center;gap:8px;margin:10px 0 10px">
@@ -670,17 +685,10 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
     <div class="lgd" id="fut-legend"></div>
     <p class="note">KOFIA <b>수정가</b>(월물간 보정)입니다.
       최신일 = 실제 가격이고 과거가 소급 조정되어 있어, <b>롤오버마다 과거 값 전체가 다시 계산</b>됩니다.
-      결측 구간은 선을 끊습니다(보간하지 않음). <b>x축은 한국 영업일</b>입니다.</p>
+      결측 구간은 선을 끊습니다(보간하지 않음). <b>x축은 한국 영업일</b>입니다.<br><b>최종 관측일 <span id="fut-asof">—</span></b> · 출처 KRX(약정가에서 산출). IRS 와 기준일이 다를 수 있습니다 — 선물은 발표 시차가 있어 국내 금리 기준일보다 뒤입니다.</p>
   </section>
 
-  <section class="card span1">
-    <h2>IRS 시계열 (%)</h2>
-    <div class="serpick" id="irs-pick"></div>
-    <div class="rangebar" id="irs-range" style="margin:10px 0 10px"></div>
-    <div class="chartbox" id="irs-chart"></div>
-    <div class="lgd" id="irs-legend"></div>
-    <p class="note">2007-10-29 부터 수록(약 19년). 결측 구간은 선을 끊습니다.</p>
-  </section>
+  </div>
 
   <section class="card span3">
     <h2>변동 현황</h2>
@@ -2598,6 +2606,16 @@ function drawTS() {
   $('ts-legend').innerHTML = ser.map(function (s) { return '<span><i style="background:' + s.color + '"></i>' + esc(s.name) + ' <b>' + f3(s.pts.length ? lastVal(s.pts) : NaN) + '%</b></span>'; }).join('');
 }
 function lastVal(pts) { for (var i = pts.length - 1; i >= 0; i--) if (pts[i]) return pts[i][1]; return NaN; }
+/* 선택된 시리즈 중 가장 최근 관측일. 선물(KRX 발표 시차)과 IRS 의 기준일이
+   서로 다를 수 있어 카드마다 실제 최종 관측일을 표시한다. (2026-09-29) */
+function setAsof(id, ser) {
+  var el = document.getElementById(id); if (!el) return;
+  var best = -1;
+  ser.forEach(function (s) {
+    for (var i = s.pts.length - 1; i >= 0; i--) if (s.pts[i]) { if (s.pts[i][0] > best) best = s.pts[i][0]; break; }
+  });
+  el.textContent = best >= 0 ? fmtD(DATES[best]) : '—';
+}
 
 /* ================================================================
    대시보드 · 선물 · IRS 탭 (2026-09-27)
@@ -2762,7 +2780,8 @@ function drawFutTS() {
     for (var i = i0; i <= i1; i++) { var v = ptv(c, i); pts.push(isNaN(v) ? null : [i, v]); }
     return { name: nm, pts: pts, color: PAL[FUT_TS.map(function (r) { return r[1]; }).indexOf(c) % PAL.length] };
   });
-  $('fut-chart').innerHTML = svgLine({ w: cw('fut-chart', 860), h: 340, series: ser, xTicks: dateTicks(i0, i1, 9), yFmt: function (v) { return v.toFixed(1); } });
+  $('fut-chart').innerHTML = svgLine({ w: cw('fut-chart', 860), h: 340, series: ser, xTicks: dateTicks(i0, i1, 7), yFmt: function (v) { return v.toFixed(1); } });
+  setAsof('fut-asof', ser);
   $('fut-legend').innerHTML = ser.map(function (s) {
     return '<span><i style="background:' + s.color + '"></i>' + esc(s.name) + ' <b>' + f2(lastVal(s.pts)) + 'pt</b></span>';
   }).join('') || '<span class="na">선택된 시리즈가 없습니다.</span>';
@@ -2775,7 +2794,8 @@ function drawIrsTS() {
     for (var i = i0; i <= i1; i++) { var v = pct(c, i); pts.push(isNaN(v) ? null : [i, v]); }
     return { name: nm, pts: pts, color: PAL[IRS_TS.map(function (r) { return r[1]; }).indexOf(c) % PAL.length] };
   });
-  $('irs-chart').innerHTML = svgLine({ w: cw('irs-chart', 380), h: 300, series: ser, xTicks: dateTicks(i0, i1, 4), yFmt: function (v) { return v.toFixed(2); } });
+  $('irs-chart').innerHTML = svgLine({ w: cw('irs-chart', 860), h: 340, series: ser, xTicks: dateTicks(i0, i1, 7), yFmt: function (v) { return v.toFixed(2); } });
+  setAsof('irs-asof', ser);
   $('irs-legend').innerHTML = ser.map(function (s) {
     return '<span><i style="background:' + s.color + '"></i>' + esc(s.name) + ' <b>' + f3(lastVal(s.pts)) + '%</b></span>';
   }).join('') || '<span class="na">선택된 시리즈가 없습니다.</span>';
