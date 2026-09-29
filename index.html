@@ -670,7 +670,10 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
   <section class="card">
     <h2>IRS 시계열 (%)</h2>
     <div class="serpick" id="irs-pick"></div>
-    <div class="rangebar" id="irs-range" style="margin:10px 0 10px"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin:10px 0 10px">
+      <div class="rangebar" id="irs-range" style="flex:1;margin:0"></div>
+      <button type="button" class="btn" id="irs-dl" style="margin-right:0;white-space:nowrap" title="선택한 시리즈의 표시 구간 전체를 일자별 로데이터로 내려받습니다">CSV 다운로드</button>
+    </div>
     <div class="chartbox" id="irs-chart"></div>
     <div class="lgd" id="irs-legend"></div>
     <p class="note">2007-10-29 부터 수록(약 19년). 결측 구간은 선을 끊습니다(보간하지 않음). <b>x축은 한국 영업일</b>입니다.<br><b>최종 관측일 <span id="irs-asof">—</span></b> · 1·3·5·10년은 기사기반 자동 수집, 2년은 주간 수기. 선물과 기준일이 다를 수 있습니다.</p>
@@ -6121,6 +6124,54 @@ guard('다운로드·선물시계열', function () {
         L.push(DL.row(r));
       }
       DL.saveText('선물시계열차트_' + DL.safe(rl || '전체') + '_' + DL.today() + '.csv', L.join(DL.CRLF) + DL.CRLF);
+    } catch (e) { alert('CSV 생성 중 오류: ' + (e && e.message ? e.message : e)); }
+  };
+});
+
+guard('다운로드·IRS시계열', function () {
+  var btn = $('irs-dl');
+  if (!btn) return;
+  btn.onclick = function () {
+    try {
+      var i0 = barWindow('irs-range'), i1 = LAST;
+      var cols = irsSel.slice();
+      if (!cols.length) { alert('선택된 시리즈가 없습니다.'); return; }
+      var nm = {}; IRS_TS.forEach(function (r) { nm[r[1]] = r[0]; });
+      var rl = barLabel('irs-range');
+      /* 시리즈별 최종 관측일 — 만기마다 갱신 경로가 달라 서로 다를 수 있다.
+         (1·3·5·10년은 기사기반 자동, 2년은 주간 수기) */
+      var lastOf = function (c) {
+        for (var i = i1; i >= i0; i--) if (!isNaN(pct(c, i))) return fmtD(DATES[i]);
+        return '없음';
+      };
+      var L = [];
+      L.push(DL.cmt('금리 분석 대시보드 (kisbond.com) — 원화 IRS 시계열 차트 로데이터'));
+      L.push(DL.cmt('생성 시각 : ' + DL.nowStr()));
+      L.push(DL.cmt('원자료 : 연합인포맥스 IRS 종가 기사(자동) + 사용자 수기 xlsx'));
+      L.push(DL.cmt('데이터 기준일 : ' + fmtD(DATES[LAST]) + ' · x축 = 한국 영업일'));
+      L.push(DL.cmt('표시 구간 : ' + rl + ' — ' + fmtD(DATES[i0]) + ' ~ ' + fmtD(DATES[i1]) + ' (' + (i1 - i0 + 1).toLocaleString() + '영업일)'));
+      L.push(DL.cmt('선택 시리즈 : ' + cols.length + '개 — ' + cols.map(function (c) { return nm[c] || c; }).join(', ')));
+      L.push(DL.cmt('시리즈별 최종 관측일 : ' + cols.map(function (c) { return (nm[c] || c) + ' ' + lastOf(c); }).join(' · ')));
+      L.push(DL.cmt('단위 : % (연율)'));
+      L.push(DL.cmt('갱신 경로가 만기마다 다르다 —'));
+      L.push(DL.cmt('  · 화면 노출 만기는 1·2·3·5·10년 5개다. 마스터에는 19개 만기(6월~30년)가 있으나'));
+      L.push(DL.cmt('    나머지는 주간 수기 갱신이라 밀린 상태로 남아 오해를 부르므로 싣지 않는다.'));
+      L.push(DL.cmt('  · 1·3·5·10년 : 연합인포맥스 IRS 종가 기사에서 평일 19:30 자동 수집.'));
+      L.push(DL.cmt('    기사가 그 만기를 인용하지 않은 날, 또는 기사 레벨과 전일+증감 역산이'));
+      L.push(DL.cmt('    어긋나 버린 날(품질검사)은 그날 값이 비어 있다.'));
+      L.push(DL.cmt('  · 2년 : 기사에 레벨이 실리지 않아 자동 산출하지 않는다. 사용자 주간 수기 갱신 영역이라'));
+      L.push(DL.cmt('    다른 만기보다 며칠 밀려 있을 수 있다.'));
+      L.push(DL.cmt('결측 : 빈 칸 = 미확보(추정값이 아니다). 보간·전방채움·0채움 없음'));
+      L.push(DL.cmt('저장 정밀도 : 0.1bp 단위 정수로 인코딩되어 있다(IRS 호가 단위는 0.25bp).'));
+      L.push(DL.cmt('정렬 : 일자 오름차순 · 인코딩 UTF-8 (BOM), 줄바꿈 CRLF'));
+      L.push('');
+      L.push(DL.row(['일자'].concat(cols.map(function (c) { return c; }))));
+      for (var i = i0; i <= i1; i++) {
+        var r = [fmtD(DATES[i])];
+        for (var k = 0; k < cols.length; k++) r.push(nnum(pct(cols[k], i), 4));
+        L.push(DL.row(r));
+      }
+      DL.saveText('IRS시계열차트_' + DL.safe(rl || '전체') + '_기준' + DATES[LAST] + '.csv', L.join(DL.CRLF) + DL.CRLF);
     } catch (e) { alert('CSV 생성 중 오류: ' + (e && e.message ? e.message : e)); }
   };
 });
