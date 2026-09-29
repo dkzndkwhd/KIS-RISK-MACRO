@@ -210,7 +210,9 @@ body{font-size:13px;}
 /* 선물·IRS 시계열 두 카드를 3열 그리드 한 칸(=전체폭) 안에서 정확히 반반으로 나눈다.
    span2 + span1 로 두면 폭이 1117 : 552 로 벌어지고, svgLine 의 viewBox 가로가
    cw()(컨테이너 실폭)를 읽으므로 두 차트의 종횡비까지 달라진다. (2026-09-29) */
-.pairgrid{grid-column:span 3;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start;}
+.pairgrid{grid-column:span 3;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:stretch;}
+/* stretch: note 줄 수 차이(선물 3줄 vs IRS 3줄이어도 줄바꿈 위치가 달라 17.6px 벌어졌다)를
+   흡수해 두 카드 높이를 같게 만든다. 정보를 줄이지 않고 맞추는 방법이다. (2026-09-29) */
 .card{background:#fff;border:1px solid #e0e5ec;border-radius:8px;padding:14px 16px 16px;margin:0;min-width:0;}
 .card h2{font-size:14px;margin:0 0 11px;padding-left:9px;border-left:3px solid #17456b;line-height:1.2;}
 .feed .feedbody{max-height:760px;overflow-y:auto;padding-right:4px;}
