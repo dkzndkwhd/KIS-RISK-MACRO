@@ -1397,11 +1397,11 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
         <thead><tr><th class="l">벌</th><th class="l">날짜축</th><th class="l">어디서 쓰나</th><th class="l">쓰는 이유</th></tr></thead>
         <tbody>
           <tr><td class="l">국내 비교용</td><td class="l"><b>한국 영업일축</b></td>
-            <td class="l">분석 도구 전부(상관·스프레드·커브·스트레스·VaR·다운로드) + 대시보드 <b>금리 현황</b>·<b>변동 현황</b>의 미국채 행</td>
+            <td class="l">분석 도구 전부(상관·스프레드·커브·스트레스·VaR·다운로드)</td>
             <td class="l">한국 시리즈와 <b>같은 날짜끼리</b> 맞춰야 계산이 되므로. 한국 공휴일에 해당하는 미국 관측일은 버려진다(전 기간 <b>327일</b> · 2025년 16일)</td></tr>
           <tr><td class="l">미국 단독 관찰용</td><td class="l"><b>미국 자체 영업일축</b></td>
-            <td class="l">대시보드 <b>미국 금리 시계열</b> 카드 하나</td>
-            <td class="l">버려지는 관측일이 없다. 미국 금리만 볼 때는 이쪽이 정확하다</td></tr>
+            <td class="l">대시보드 <b>미국 금리 시계열</b> 카드 + <b>금리 현황</b>·<b>변동 현황</b>의 미국채 행</td>
+            <td class="l">버려지는 관측일이 없다. 미국 금리만 볼 때는 이쪽이 정확하다. <b>금리 현황의 미국채 행은 2026-10-08 에 이쪽으로 옮겼습니다</b> — 한국축에서는 한국 공휴일에 걸린 미국 관측일이 버려져 표가 며칠 전 값을 가리켰습니다(예: 2026-10-05 대체공휴일. 미 국채는 10-05 까지 발표됐으나 한국축에는 행이 없어 10-02 가 표시됨). 값·변동 모두 미국축이고 변동은 <b>미국축의 직전 관측일 대비</b>이며, 행 라벨에 미국 기준일을 <b>항상</b> 적습니다. <b>신용스프레드 행은 국내 기준 그대로</b>입니다</td></tr>
         </tbody>
       </table></div>
       <p>같은 시리즈인데 두 화면의 관측일수가 다른 것은 이 때문입니다. 미국 자체축 데이터 구간은
@@ -1427,8 +1427,10 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
           <tr><td class="l"><b>금리 현황</b></td><td class="l">국고채권·통안증권·특수채AAA·은행채AAA·회사채AA0·AA-·A0·BBB0 <b>8종 + 미국채</b> 행 ×
             만기 11개(1·1.5·2·3·4·5·7·10·15·20·30년). 셀 위는 <b>금리(%)</b>, 아래 작은 수치는 <b>전영업일 대비 bp</b>.
             맨 아래 <b>신용스프레드</b> 행 = 회사채I(공모사채) 무보증 AA- − 국고채권, 동일 만기 단순차(bp).
-            미국채 행은 발표 시차 때문에 기준일에 값이 없을 수 있어, 만기별로 <b>기준일 이하 가장 최근 관측일</b>의 값을 쓰고
-            그 날짜를 행 라벨에 적습니다.</td></tr>
+            <b>미국채 행만 미국 자체 날짜축(data/us_rates.json)</b>을 읽습니다(§2-4) — 값·변동 모두 미국축이고, 변동은
+            <b>미국축의 직전 관측일 대비</b>입니다. 발표가 T+1 이라 국내 기준일과 날짜가 다른 것이 상시 상태이므로
+            미국 기준일을 행 라벨에 <b>항상</b> 적습니다. 미 국채에 없는 만기(1.5·4·15년)는 '·' 로 비웁니다.
+            <b>신용스프레드 행과 나머지 8종은 국내 기준(한국 영업일축)</b> 그대로입니다.</td></tr>
           <tr><td class="l"><b>금리 시계열</b></td><td class="l">칩으로 시리즈를 켜고 끕니다(기본 국고3년·국고10년·회사채AA-3년·통안1년).
             후보는 국고 1·3·5·10·30년, 통안 1·2년, 특수채AAA 3년, 은행채AAA 3년, 회사채 AA0·AA-·A0·BBB0 3년, 한국은행 기준금리.
             기간 버튼 1M·3M·6M·1Y·3Y·5Y·10Y·전체(기본 3Y). <b>x축은 한국 영업일</b>이고 미국 금리 칩은 여기 없습니다(§2-4).
@@ -2686,19 +2688,25 @@ var LEVEL_MATS = [12, 18, 24, 36, 48, 60, 84, 120, 180, 240, 360];
     body += '</tr>';
   });
 
-  /* 미국채 — 한국 영업일 축에 얹혀 있어 국내 최신일(LAST)에 값이 없는 날이 있다
-     (미국 휴일, 그리고 발표 시차로 며칠 뒤처지는 구간). 국내 행과 같은 규칙으로
-     LAST 만 보면 행 전체가 '—' 가 되므로, 만기별로 LAST 이하의 가장 최근 관측일을
-     찾아 그 값을 쓰고 기준일을 행 라벨에 적는다. 없는 만기(1년6월·4년·15년)는
-     국내 행과 동일하게 '·' 로 비운다. */
+  /* 미국채 — [2026-10-08] **미국 자체 날짜축(data/us_rates.json)** 으로 전환했다.
+     한국 영업일축(rates.json extra[])에 얹으면 한국 공휴일에 해당하는 미국 관측일이
+     축에 자리가 없어 통째로 버려진다. 2026-10-05(한국 대체공휴일)가 그 예로, 미 국채는
+     10-05 까지 발표됐는데 한국축에는 그 행이 없고 다음 행 10-06 에는 미국 값이 없어
+     표가 10-02 를 가리켰다. 최신성이 더 중요하므로 미국축을 읽는다.
+       · 값·변동 모두 미국축 기준. 변동은 **미국축의 직전 관측일** 대비다.
+       · 기준일 라벨은 **항상** 붙인다 — 국내 행과 날짜가 다른 것이 상시 상태다.
+       · 변동 현황표의 미국채 행(usChgRows)과 같은 축·같은 규칙이 되어 두 표가 일치한다.
+       · 없는 만기(1년6월·4년·15년)는 국내 행과 동일하게 '·' 로 비운다.
+     US 는 비동기로 도착하므로 여기서는 **한국축으로 폴백 행을 먼저 그려 두고**(us_rates.json
+     로딩 실패 시에도 행이 남는다), 로더가 usLevelRow() 로 미국축 값으로 덮어쓴다. */
   (function () {
     var t = typeByName('미국채'); if (!t) return;
     function lastIdx(col, upto) { for (var i = upto; i >= 0; i--) if (!isNaN(raw(col, i))) return i; return -1; }
     var asof = -1;
     t.mats.forEach(function (m) { var i = lastIdx(m.col, LAST); if (i > asof) asof = i; });
     if (asof < 0) return;                       // 데이터가 아예 없으면 행을 만들지 않는다
-    var sub = (asof < LAST) ? '<br><span style="font-size:10.5px;color:#67727f">' + fmtD(DATES[asof]) + ' 기준</span>' : '';
-    body += '<tr style="background:#fbfcff"><td class="l"><b>미국채</b>' + sub + '</td>';
+    var sub = '<br><span style="font-size:10.5px;color:#8a5a20">' + fmtD(DATES[asof]) + ' 기준</span>';
+    body += '<tr id="lv-us" style="background:#fcfbf8"><td class="l"><b>미국채</b>' + sub + '</td>';
     LEVEL_MATS.forEach(function (m) {
       var c = colOf('미국채', m);
       if (!c) { body += '<td class="na">·</td>'; return; }
@@ -6937,6 +6945,43 @@ function drawUSTS() {
   }).join('');
 }
 
+/* 금리 현황표의 만기(개월) → 미국축 컬럼 키.
+   LEVEL_MATS 중 1년6월(18)·4년(48)·15년(180)은 FRED H.15 에 없어 여기에 없다 → '·'.
+   현황표는 1년부터 시작하므로 1·3·6개월 컬럼은 쓰지 않는다. */
+var US_LEVEL_COL = {
+  12: '미국채_1년', 24: '미국채_2년', 36: '미국채_3년', 60: '미국채_5년',
+  84: '미국채_7년', 120: '미국채_10년', 240: '미국채_20년', 360: '미국채_30년'
+};
+/** 금리 현황표의 미국채 행을 **미국 자체 날짜축(us_rates.json)** 값으로 덮어쓴다.
+ *  [2026-10-08] 종전에는 한국 영업일축을 읽어, 한국 공휴일에 걸린 미국 관측일이
+ *  버려진 날(예 2026-10-05 대체공휴일)에는 표가 며칠 전 값을 가리켰다.
+ *  값·변동 모두 미국축이고 변동은 미국축의 직전 관측일 대비다 — 변동 현황표의
+ *  미국채 행(usChgRows)과 동일한 규칙이라 두 표의 1일 변동이 서로 맞는다.
+ *  행 자체는 현황표 렌더에서 한국축 폴백으로 이미 만들어져 있다(로딩 실패 대비).
+ *  신용스프레드 행과 분석 도구는 한국축 그대로다 — 여기서 건드리지 않는다. */
+function usLevelRow() {
+  var tr = document.getElementById('lv-us'); if (!tr || !US) return;
+  var asof = -1;
+  LEVEL_MATS.forEach(function (m) {
+    var c = US_LEVEL_COL[m]; if (!c || !US.COL[c]) return;
+    var i = uPrevObs(c, US.LAST); if (i > asof) asof = i;
+  });
+  if (asof < 0) return;                 // 미국축에서 아무 값도 못 찾으면 폴백을 그대로 둔다
+  var h = '<td class="l"><b>미국채</b><br><span style="font-size:10.5px;color:#8a5a20">' +
+          fmtD(US.DATES[asof]) + ' 기준</span></td>';
+  LEVEL_MATS.forEach(function (m) {
+    var c = US_LEVEL_COL[m];
+    if (!c || !US.COL[c]) { h += '<td class="na">·</td>'; return; }
+    var i = uPrevObs(c, US.LAST);
+    if (i < 0) { h += '<td class="na">—</td>'; return; }
+    var j = uPrevObs(c, i - 1);         // 직전 '미국 관측일' 대비 변동
+    var d = (j < 0) ? NaN : (uRaw(c, i) - uRaw(c, j)) / 10;
+    h += '<td title="' + fmtD(US.DATES[i]) + (j < 0 ? '' : ' (직전 ' + fmtD(US.DATES[j]) + ' 대비)') + '">' +
+         f3(uPct(c, i)) + '<br><span class="' + cls(d) + '" style="font-size:11px">' + f1(d) + '</span></td>';
+  });
+  tr.innerHTML = h;
+}
+
 /** 변동현황 표에 미국채 4행을 끼워 넣는다 (국내 행·로직은 손대지 않는다).
  *  기준일이 다르다 — 국내는 DATES[LAST], 미국은 US.DATES[US.LAST].
  *  미국 행의 변동은 전부 **미국 관측일 기준**으로 계산한다. 한국 축에 맞춰 계산하면
@@ -7040,6 +7085,7 @@ function usChgRows() {
       });
       guard('미국 시계열', drawUSTS);
       guard('변동현황 미국행', usChgRows);
+      guard('현황표 미국행', usLevelRow);     // [2026-10-08] 금리 현황표 미국채 행 → 미국 자체축
       /* 매뉴얼 §2-4 의 '미국 자체축 구간'은 이 시점에야 알 수 있다 (BOOT 시점에는 US 가 없다) */
       guard('매뉴얼(미국축)', function () { if (typeof renderManual === 'function') renderManual(); });
       if (window.console && console.log) {
@@ -7353,9 +7399,9 @@ function mqDrawMap() {
   group('대시보드', [
     {
       name: '현물', chips: [
-        ['금리 현황', '8종 × 만기 11개 · 셀 아래는 전일 대비 bp'],
+        ['금리 현황', '8종 × 만기 11개 · 셀 아래는 전일 대비 bp (미국채 행만 미국축)'],
         ['금리 시계열', '칩으로 시리즈 선택 · x축 한국 영업일'],
-        ['미국 금리 시계열', 'x축이 미국 영업일인 유일한 카드'],
+        ['미국 금리 시계열', 'x축이 미국 영업일 — 금리 현황·변동 현황의 미국채 행도 미국축(§2-4)'],
         ['변동 현황 (bp)', '1일 · 1주 · 1 · 3 · 6개월 · 1년'],
         ['주요 이슈', '연합인포맥스 10선 (자동 수집)'],
         ['증권사 리포트 정리', '수동 갱신 — 카드 제목의 날짜로 판단']
