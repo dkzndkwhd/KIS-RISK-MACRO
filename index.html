@@ -2019,7 +2019,10 @@ var GROUPS = [];
    필드
      key      고유 식별자 (코드에서 쓰지 않지만 중복 방지·추적용)
      label    표시명 = 드롭다운의 '채권종류' 자리에 들어가는 이름
-     group    optgroup 이름 ('기준지표', '해외금리' …). 등장 순서대로 최상단에 쌓인다
+     group    optgroup 이름 ('기준지표', '해외금리' …). **등장 순서는 더 이상 화면 순서가
+              아니다** — 레지스트리 그룹은 국내 KOFIA 그룹 아래에 쌓이고, 그들끼리의
+              순서는 아래 REG_GROUP_ORDER 가 단독으로 정한다(2026-10-08).
+              새 그룹을 만들면 그 배열에도 한 줄 넣어라. 안 넣으면 맨 뒤로 간다
      col      COL[] 의 컬럼명 (= 마스터 CSV 컬럼명)
      maturity 개월 수. 만기 개념이 없으면 null → 만기 드롭다운이 '해당없음'으로 잠긴다
               같은 label 로 maturity 가 다른 항목을 여러 줄 넣으면 만기 드롭다운이 생긴다
@@ -2259,6 +2262,22 @@ function unitOf(col, isLvl) {
   }
 })();
 
+/* ---- 드롭다운 그룹 순서 — **단일 출처** ---------------------------------
+   [2026-10-08] 종전에는 EXTRA_SERIES 등록 순서가 그대로 optgroup 순서였고,
+   레지스트리 그룹이 KOFIA 국내 채권보다 **위**에 쌓여 있었다. 시리즈를 새로
+   추가할 때마다 의도치 않게 상단에 끼어드는 구조라, 순서를 여기 한 곳에만 적는다.
+
+   사용자 요청(2026-10-08): 미국채·스왑금리·단기자금을 국내 채권 아래로 내리고,
+   그 세 그룹끼리는 **단기자금 → 스왑금리 → 해외금리(미국채)** 순으로.
+   선물은 성격이 같은 비(非)KOFIA 계열이라 그 뒤에, 만기축이 없는 정책·단기지표인
+   기준지표는 맨 끝에 둔다.
+
+   국내 KOFIA 그룹(GROUPS)의 상대 순서는 데이터(rates.json series[].g) 등장 순서
+   그대로이며 여기서 건드리지 않는다. 실제 배치는 fillTypes() 가 한다 —
+   국내 그룹 전부를 먼저 쌓고 그 뒤에 아래 순서로 레지스트리 그룹을 쌓는다.
+   여기에 없는 새 그룹은 목록 맨 뒤(기준지표 다음)에 등장 순서대로 붙는다. */
+var REG_GROUP_ORDER = ['단기자금', '스왑금리', '해외금리', '선물', '기준지표'];
+
 /* 레지스트리 → TYPES 와 같은 모양의 의사(擬似) 채권종류 */
 var REG_TYPES = [], REG_GROUPS = [], REG_NOTE = {};
 (function () {
@@ -2281,6 +2300,16 @@ var REG_TYPES = [], REG_GROUPS = [], REG_NOTE = {};
     if (e.note) REG_NOTE[e.col] = e.note;
   });
   REG_TYPES.forEach(function (t) { t.mats.sort(function (a, b) { return a.months - b.months; }); });
+  /* 등장 순서로 쌓인 REG_GROUPS 를 REG_GROUP_ORDER 로 재정렬한다.
+     목록에 없는 그룹은 뒤에, 그들끼리는 등장 순서를 유지한다(안정 정렬). */
+  REG_GROUPS = REG_GROUPS.map(function (g, i) { return { g: g, i: i }; })
+    .sort(function (a, b) {
+      var ra = REG_GROUP_ORDER.indexOf(a.g), rb = REG_GROUP_ORDER.indexOf(b.g);
+      if (ra < 0) ra = REG_GROUP_ORDER.length + a.i;
+      if (rb < 0) rb = REG_GROUP_ORDER.length + b.i;
+      return ra - rb || a.i - b.i;
+    })
+    .map(function (x) { return x.g; });
 })();
 function regTypeByName(n) { for (var i = 0; i < REG_TYPES.length; i++) if (REG_TYPES[i].name === n) return REG_TYPES[i]; return null; }
 /** 레지스트리 시리즈인가 */
@@ -3322,12 +3351,6 @@ function fillTypes(sel, def, q) {
     });
     sel.appendChild(og);
   }
-  if (allowReg) REG_GROUPS.forEach(function (g) {
-    grp(g, REG_TYPES.filter(function (t) {
-      return t.g === g && typeMatches(t, q) && okP(t) && !(regNeedsMat && t.noMat)
-        && !(t.corrOnly && !allowCorrOnly);
-    }));
-  });
   var rc = recentTypes().map(function (nm) { return typeByName(nm); })
     .filter(function (t) { return t && !t.reg && typeMatches(t, q) && okP(t); });
   grp('↩ 최근 사용', rc);
@@ -3336,6 +3359,16 @@ function fillTypes(sel, def, q) {
   grp('★ 자주 쓰는 종류', favs);
   GROUPS.forEach(function (g) {
     grp(g, list.filter(function (t) { return t.g === g; }));
+  });
+  /* [2026-10-08] 레지스트리 그룹(단기자금·스왑금리·해외금리·선물·기준지표)은
+     국내 KOFIA 그룹 **아래**에 쌓는다. 순서는 REG_GROUP_ORDER 가 단독으로 정한다.
+     종전에는 이 블록이 맨 위에 있어 미국채·스왑금리·단기자금이 최상단이었다.
+     노출 집합(data-reg / __pred / corrOnly / noMat 필터)은 그대로이며 순서만 바뀐다. */
+  if (allowReg) REG_GROUPS.forEach(function (g) {
+    grp(g, REG_TYPES.filter(function (t) {
+      return t.g === g && typeMatches(t, q) && okP(t) && !(regNeedsMat && t.noMat)
+        && !(t.corrOnly && !allowCorrOnly);
+    }));
   });
   if (!n) {
     var o = document.createElement('option'); o.value = ''; o.text = '(검색 결과 없음)';
