@@ -1595,15 +1595,15 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
       <div class="tblwrap"><table>
         <thead><tr><th class="l">유형</th><th class="l">A</th><th class="l">B</th><th class="l">부호·읽는 법</th></tr></thead>
         <tbody>
-          <tr><td class="l"><b>크레딧 스프레드</b></td><td class="l">크레딧물(특수채·공사채·금융채·회사채·커버드본드·지방채)</td><td class="l">무위험(국채·통안증권)</td>
+          <tr><td class="l"><b>크레딧 스프레드</b></td><td class="l">크레딧물(특수채·공사채·금융채·회사채·커버드본드·지방채 · <b>CP A1/A2+/A3+ · CD AAA 시가평가</b>)</td><td class="l">무위험(국채·통안증권)</td>
             <td class="l">같은 만기끼리가 기본. <b>양수 = 크레딧물이 무위험물보다 높다.</b> 만기 B 는 만기 A 에 기본값만 따라가고 이후 자유롭게 바꿀 수 있습니다</td></tr>
           <tr><td class="l"><b>텀 스프레드</b></td><td class="l">같은 종류의 <b>장기</b> 만기</td><td class="l">같은 종류의 <b>단기</b> 만기</td>
             <td class="l"><b>장기 − 단기.</b> 정상(우상향) 커브에서 양수, 역전 커브에서 음수. 입력 구조만 다르고 내부적으로는 A=장기·B=단기로 같은 경로를 탑니다</td></tr>
           <tr><td class="l"><b>본드스왑 스프레드</b></td><td class="l">원화 채권금리(KOFIA 격자 전체)</td><td class="l">원화 IRS</td>
             <td class="l"><b>채권 − IRS.</b> 대시보드 '선물·IRS' 탭의 <b>스왑스프레드(IRS − 국고)와 부호가 반대</b>이고 절대값이 같습니다.
               미국채는 통화가 달라 A 후보에서 제외됩니다</td></tr>
-          <tr><td class="l"><b>기준금리 대비</b></td><td class="l">만기축이 있는 금리 시리즈(국내 채권 + 미국채 + IRS)</td>
-            <td class="l">기준지표(한국은행 기준금리 · DFF · EFFR · SOFR)</td>
+          <tr><td class="l"><b>기준금리 대비</b></td><td class="l">만기축이 있는 금리 시리즈(국내 채권 + 미국채 + IRS + <b>CP·CD 시가평가</b>)</td>
+            <td class="l">기준지표(한국은행 기준금리 · <b>CD 유통수익률(고시)</b> · DFF · EFFR · SOFR)</td>
             <td class="l">기준지표는 만기 개념이 없어 <b>만기 B 가 잠깁니다</b>. 기준금리는 변경일에만 바뀌는 계단식이라,
               고정 구간에서 스프레드는 <b>A 의 금리 움직임을 그대로 따라갑니다</b></td></tr>
           <tr><td class="l"><b>전체</b></td><td class="l" colspan="2">제약 없음 — A·B 자유 선택(유형 선택자 도입 전과 동일)</td>
@@ -7267,7 +7267,8 @@ function renderManual() {
   $('man-matrix').innerHTML = '<table>' + hd + '<tbody>' + body + '</tbody>' +
     '<tfoot><tr><td class="l" colspan="' + (cols.length + 3) + '">' +
     '<span class="hint">○ = 선택 가능 (괄호 안은 그 그룹의 옵션 수) · × = 선택 불가. ' +
-    '\'기준지표\'는 한국은행 기준금리 · DFF · EFFR · SOFR, \'해외금리\'는 미국채, \'스왑금리\'는 원화 IRS, ' +
+    '\'기준지표\'는 한국은행 기준금리 · CD 유통수익률(고시) · DFF · EFFR · SOFR, \'해외금리\'는 미국채, ' +
+    '\'스왑금리\'는 원화 IRS, \'단기자금\'은 CP A1·A2+·A3+ 와 CD AAA 시가평가(각 6만기), ' +
     '\'선물\'은 국채선물(수정가)입니다. 이 표는 화면을 열 때 실제 드롭다운을 세어 만듭니다.' +
     '</span></td></tr></tfoot></table>';
 }
