@@ -232,7 +232,7 @@ body{font-size:13px;}
        => 행 높이는 왼쪽 두 시계열 카드만이 결정한다.
      · 1200px 이하에서는 아래 @media 의 1열 스택 규칙이 살아야 하므로 min-width:1201px 로 가둔다.
        (높이 강제·행 배치가 전부 이 블록 안에만 있다) */
-/* 대시보드 하위 탭 (현물 / 선물·IRS) — 2026-09-27
+/* 대시보드 하위 탭 (현물 / 선물·IRS / 단기자금시장) — 2026-09-27 신설, 2026-10-07 단기자금시장 추가
    좌측 내비의 '대시보드' 안에서만 쓰는 2단 탭. 좌측 내비(.nav nav button)와
    구분되도록 밑줄형으로 둔다. */
 .subtabs{display:flex;gap:2px;border-bottom:1px solid #dbe2ea;margin:0 0 14px;}
@@ -546,12 +546,13 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
 <!-- ===================== 대시보드 ===================== -->
 <div class="view" id="view-dash">
 
-<!-- 대시보드 하위 탭 — 현물(기존 카드 전부) / 선물·IRS(2026-09-27 신설)
+<!-- 대시보드 하위 탭 — 현물(기존 카드 전부) / 선물·IRS(2026-09-27 신설) / 단기자금시장(2026-10-07 신설)
      탭 이름에 IRS 를 함께 적은 것은, IRS 가 선물이 아니라 스왑 고정금리(%)이기 때문이다.
      '선물' 한 단어로 묶으면 단위와 성격을 오해한다. -->
 <div class="subtabs" id="dash-subtabs">
   <button type="button" data-d="spot" class="on">현물</button>
   <button type="button" data-d="fut">선물 · IRS</button>
+  <button type="button" data-d="money">단기자금시장</button>
 </div>
 
 <div id="dash-spot">
@@ -709,6 +710,68 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
 
 </div>
 </div><!-- /#dash-fut -->
+
+<!-- 단기자금시장 (2026-10-07 신설) — CP·CD 시가평가수익률 + CD 유통수익률.
+     현물 탭에서 아무것도 옮겨오지 않았다(기존 구성 불변). 신설만 했다.
+     구조는 선물·IRS 탭과 동일: 현황(span3) → 시계열 2카드(pairgrid) → 변동 현황(span3). -->
+<div id="dash-money" style="display:none">
+<div class="dashgrid futgrid">
+
+  <section class="card span3">
+    <h2>단기자금시장 현황 (%) <span id="mny-lv-warn" style="font-weight:400;font-size:11.5px;color:#a3410f"></span></h2>
+    <div class="chartbox" id="box-mny-level"></div>
+    <p class="note">셀 표기: <b>금리(%)</b> / 아래 작은 수치는 전영업일 대비 증감(bp).
+      <span class="up">상승(빨강)</span> · <span class="dn">하락(파랑)</span> · <span class="na">—</span>는 해당일 미고시.
+      <b>CP·CD 시가평가</b>는 채권평가 4사(나이스피앤아이·한국자산평가·KIS자산평가·에프앤자산평가) <b>평가금리의 4사평균</b>입니다.
+      <b>CD 유통</b>은 금투협이 고시하는 <b>CD 91일물 유통수익률</b>(금융거래지표법상 중요지표)로 출처가 다르며 만기축이 없습니다 —
+      91일에 해당하는 <b>3월</b> 칸에만 넣었습니다. 마지막 행은 <b>같은 91일 자리에서 두 출처의 차이</b>이고,
+      구조적으로 0 근처입니다(실측 평균 +0.1bp 수준).</p>
+  </section>
+
+  <div class="pairgrid">
+  <section class="card">
+    <h2>CP·CD 시가평가 시계열 (%)</h2>
+    <div class="serpick" id="mny-pick"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin:10px 0 10px">
+      <div class="rangebar" id="mny-range" style="flex:1;margin:0"></div>
+      <button type="button" class="btn" id="mny-dl" style="margin-right:0;white-space:nowrap" title="선택한 시리즈의 표시 구간 전체를 일자별 로데이터로 내려받습니다">CSV 다운로드</button>
+    </div>
+    <div class="chartbox" id="mny-chart"></div>
+    <div class="lgd" id="mny-legend"></div>
+    <p class="note">칩은 <b>등급 × 만기</b>입니다(기본 91일물=3월). 수록 시작일이 다릅니다 —
+      <b>CP 2012-04-02</b>(그 이전 2006-11-01~2012-03-30 구간은 KOFIA 가 평가사 개별값만 고시하고 평균행이 없어 싣지 않았습니다) ·
+      <b>CD 2020-01-02</b>. 결측 구간은 선을 끊습니다(보간하지 않음). <b>x축은 한국 영업일</b>입니다.<br>
+      <b>최종 관측일 <span id="mny-asof">—</span></b> · 출처 KOFIA 채권정보센터 시가평가.</p>
+  </section>
+
+  <section class="card">
+    <h2>CD 유통수익률 시계열 (%)</h2>
+    <div class="serpick" id="rop-pick"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin:10px 0 10px">
+      <div class="rangebar" id="rop-range" style="flex:1;margin:0"></div>
+      <button type="button" class="btn" id="rop-dl" style="margin-right:0;white-space:nowrap" title="선택한 시리즈의 표시 구간 전체를 일자별 로데이터로 내려받습니다">CSV 다운로드</button>
+    </div>
+    <div class="chartbox" id="rop-chart"></div>
+    <div class="lgd" id="rop-legend"></div>
+    <p class="note"><b>2009-02-04 부터 수록</b>(약 17년) — 이 탭에서 가장 긴 계열입니다.
+      2023-10-03 이전은 구 제도의 <b>「최종호가수익률 / 오후 / 시중은행」</b>, 2023-10-04 이후는 현행 <b>CD수익률</b>이며
+      <b>KOFIA 응답의 같은 항목이 그대로 이어지는 하나의 계열</b>입니다(경계 점프 +1bp). 특수은행 계열은 별개여서 섞지 않았습니다.<br>
+      <b>최종 관측일 <span id="rop-asof">—</span></b> · 출처 KOFIA 채권정보센터 CD수익률.</p>
+  </section>
+  </div>
+
+  <section class="card span3">
+    <h2>변동 현황</h2>
+    <div class="chartbox" id="box-mny-chg"></div>
+    <p class="note">모두 <b>bp</b>입니다. 대표 만기로 <b>91일물(3월)</b>을 썼습니다.
+      과거 기준일은 달력 기준으로 역산한 뒤 <b>그 이전 가장 가까운 영업일</b>로 대체합니다.
+      양쪽 중 하나라도 결측이면 계산하지 않고 <span class="na">—</span>로 둡니다.
+      수록 시작일이 서로 달라(CP 2012-04-02 · CD 시가평가 2020-01-02 · CD 유통 2009-02-04)
+      긴 기간 열에는 <span class="na">—</span>가 정상적으로 나옵니다.</p>
+  </section>
+
+</div>
+</div><!-- /#dash-money -->
 </div>
 
 <div class="view" id="view-stress" style="display:none">
@@ -1211,12 +1274,13 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
 <div id="man-full" style="display:none">
 <section class="card manual">
   <h2>사용 매뉴얼 — 상세</h2>
-  <p class="mlead">이 대시보드는 <b>국내 채권 현물·국채선물·원화 IRS·미국 금리</b>의 일별 시계열을 한곳에 모아,
+  <p class="mlead">이 대시보드는 <b>국내 채권 현물·국채선물·원화 IRS·단기자금(CP·CD)·미국 금리</b>의 일별 시계열을 한곳에 모아,
     수준·변동·커브·스프레드·상관·리스크 지표를 계산해 보여 줍니다.
     기준일 <span class="dyn" id="man-asof">—</span> · 수록 <span class="dyn" id="man-span">—</span>.
     <br>숫자를 읽기 전에 <a href="#man-s2" id="man-lnk-warn">§2 데이터 개요</a>와
     <a href="#man-s5" id="man-lnk-trap">§5 주의사항·함정</a>을 먼저 보십시오 —
-    단위(%·bp·pt)와 갱신 시차, 2023-01-09 기준 변경이 해석을 바꿉니다.</p>
+    단위(%·bp·pt)와 갱신 시차, 2023-01-09 기준 변경이 해석을 바꿉니다.
+    <br><b>CD 가 두 벌 실려 있습니다</b> — 평가사 평균인 <b>CD 시가평가</b>와 금투협 고시 <b>CD 유통수익률</b>은 91일 자리에서 수치가 거의 같지만 출처와 용도가 다릅니다(§5).</p>
 
   <nav class="mtoc" id="man-toc">
     <b>목차</b>
@@ -1230,7 +1294,7 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
           <li><a href="#man-s2d">미국 데이터가 두 벌인 이유</a></li>
         </ol>
       </li>
-      <li><a href="#man-s3">대시보드 — 현물 / 선물·IRS</a></li>
+      <li><a href="#man-s3">대시보드 — 현물 / 선물·IRS / 단기자금시장</a></li>
       <li><a href="#man-s4">분석 도구 7종</a>
         <ol>
           <li><a href="#man-s4a">스트레스테스트</a></li>
@@ -1298,6 +1362,10 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
           <tr><td class="l">원화 IRS</td><td class="l"><b>① 평일 19:30 기사기반 자동(1·3·5·10년 잠정)</b> → <b>② 수기 xlsx 확정값이 19만기 일괄 덮어쓰기</b></td>
             <td class="l">만기에 따라 다르다 — 1·3·5·10년은 국내 기준일과 같다(기사 미게재일은 다음 날 채워진다).
               <b>②가 밀리면 2년 열이 비어 있다</b>(2년은 기사에 없어 ②에서만 들어온다). 확정 전 값은 싣지 않는다</td></tr>
+          <tr><td class="l"><b>CP·CD 시가평가</b> (A1·A2+·A3+·AAA)</td><td class="l"><b>평일 19:30 자동</b> (KOFIA 채권시가평가 단계 직후, 요청 4건)</td>
+            <td class="l">아니오 — 국내 채권 현물과 같은 KOFIA 고시이고 같은 기준일이다. 실패해도 다른 단계는 진행되며(실패 격리) 그 날 값만 빈다</td></tr>
+          <tr><td class="l"><b>CD 유통수익률</b> (고시 91일)</td><td class="l"><b>평일 19:30 자동</b> (요청 1건)</td>
+            <td class="l">아니오 — 같은 기준일. 거래가 없는 날도 고시되므로 결측이 거의 없다(보조지표인 '대표수익률'은 결측 33%라 적재하지 않았다)</td></tr>
           <tr><td class="l">국채선물 3·10·30년</td><td class="l"><b>수동</b>(원본 xlsx 수기 수집 후 재적재)</td><td class="l">예 — 자동 수집이 없어 밀릴 수 있다</td></tr>
           <tr><td class="l">주요 이슈(뉴스)</td><td class="l">평일 19:30 자동(금리 갱신과 별도 커밋)</td><td class="l">카드 제목에 뉴스 자체 기준일이 표시되고, 금리 기준일과 다르면 경고가 붙는다</td></tr>
           <tr><td class="l">증권사 리포트 정리</td><td class="l"><b>수동</b></td><td class="l">예 — 카드 제목의 날짜로 판단</td></tr>
@@ -1344,10 +1412,12 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
 
   <!-- ===== 3 ===== -->
   <details class="msec" id="man-s3">
-    <summary>3. 대시보드 — 현물 / 선물·IRS</summary>
+    <summary>3. 대시보드 — 현물 / 선물·IRS / 단기자금시장</summary>
     <div class="mbd">
-      <p>대시보드는 상단의 <span class="mkey">현물</span> · <span class="mkey">선물 · IRS</span> 두 하위 탭으로 갈립니다.
-        <b>단위가 섞이지 않게</b> 나눈 것입니다 — 현물·IRS 는 금리(%), 선물은 가격(pt)입니다.
+      <p>대시보드는 상단의 <span class="mkey">현물</span> · <span class="mkey">선물 · IRS</span> ·
+        <span class="mkey">단기자금시장</span> 세 하위 탭으로 갈립니다.
+        <b>단위가 섞이지 않게</b> 나눈 것입니다 — 현물·IRS·단기자금은 금리(%), 선물은 가격(pt)입니다.
+        <b>단기자금시장은 2026-10-07 에 신설했고, 현물 탭에서 옮겨 온 카드는 없습니다</b>(현물 구성은 그대로입니다).
         탭을 옮기면 차트를 다시 그립니다(숨어 있는 동안 폭이 0이라 SVG 를 새로 만들어야 합니다).</p>
 
       <h4>3-1. 현물 탭</h4>
@@ -1397,6 +1467,39 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
           [CSV 다운로드] 버튼이 있습니다 — <b>선물은 '데이터 다운로드' 탭에 없으므로</b> 선물 원본이 필요하면 이 버튼을 쓰십시오(§5).</li>
         <li><b>변동 현황</b> — 선물은 조정계열 기준 <b>pt</b>, IRS 는 <b>bp</b>. 수록 시작일이 서로 달라
           (국채선물 30년 2024-02-19 · IRS 2007-10-29) 긴 기간 열에 <span class="na">—</span>가 나오는 것이 정상입니다.</li>
+      </ul>
+
+      <h4>3-3. 단기자금시장 탭</h4>
+      <p><b>CD 가 두 벌 들어 있다는 점이 핵심입니다.</b> 전부 금리(%)이고 단위가 섞이지 않습니다.</p>
+      <div class="tblwrap"><table>
+        <thead><tr><th class="l" style="min-width:150px">계열</th><th class="l">정체</th><th class="l">만기 · 수록</th></tr></thead>
+        <tbody>
+          <tr><td class="l"><b>CP 시가평가</b><br>A1 · A2+ · A3+</td>
+            <td class="l">채권평가 <b>4사</b>(나이스피앤아이 · 한국자산평가 · KIS자산평가 · 에프앤자산평가)가 산출한
+              <b>평가금리의 4사평균</b>. KOFIA 가 계산해 고시한 평균값을 그대로 싣습니다(개별값을 우리가 평균하지 않습니다).</td>
+            <td class="l">7일 · 15일 · 1월 · <b>3월(=91일물)</b> · 6월 · 1년<br><b>2012-04-02 ~</b>
+              <span class="hint">CP 고시는 2006-11-01 부터지만 2012-03-30 까지는 평가사 개별값만 있고 평균행이 없어 싣지 않았습니다</span></td></tr>
+          <tr><td class="l"><b>CD 시가평가</b><br>AAA</td>
+            <td class="l">위와 <b>같은 산출체계·같은 4사</b>. 그래서 채권·CP 시가평가와 스프레드를 재는 기준이 정합합니다.</td>
+            <td class="l">같은 6만기<br><b>2020-01-02 ~</b></td></tr>
+          <tr><td class="l"><b>CD 유통수익률</b><br>(고시)</td>
+            <td class="l">금투협이 고시하는 <b>CD 91일물 유통수익률</b>. <b>금융거래지표법상 중요지표</b>이고
+              변동금리채·CD연동대출·스왑이 참조하는 금리입니다. <b>만기축이 없습니다.</b></td>
+            <td class="l">91일 단일<br><b>2009-02-04 ~</b> (이 탭에서 가장 긴 계열)</td></tr>
+        </tbody>
+      </table></div>
+      <ul>
+        <li><b>단기자금시장 현황</b> — 4개 시가평가 계열 × 6만기. CD 유통은 만기축이 없어 <b>91일에 해당하는 3월 칸에만</b> 넣었고,
+          맨 아래 <b>출처 차이</b> 행이 <b>CD 유통 − CD 시가평가 91일</b>(bp)을 보여 줍니다 —
+          구조적으로 0 근처입니다(실측 평균 +0.1bp 수준, 최대 ±1bp).</li>
+        <li><b>CP·CD 시가평가 시계열</b> — 칩이 <b>등급 × 만기</b> 24개이고 기본은 네 계열의 91일물(3월)입니다.
+          수록 시작일이 달라(CP 2012-04-02 · CD 2020-01-02) 긴 기간을 잡으면 CD 쪽 선이 늦게 시작합니다.</li>
+        <li><b>CD 유통수익률 시계열</b> — 2009-02-04 부터입니다. <b>2023-10-04 에 제도가 바뀌었지만 계열은 끊기지 않았습니다</b> —
+          그 이후는 현행 「CD수익률」, 그 이전은 구 제도의 「최종호가수익률 / 오후 / 시중은행」이고
+          KOFIA 응답에서 같은 항목이 그대로 이어집니다(경계 점프 +1bp: 2023-09-27 3.83 → 2023-10-04 3.84).
+          구 제도의 <b>오전 계열·특수은행 계열은 2023-09-27 에 폐지</b>됐고 시중은행과 별개 계열이라(2009-02 기준 17~25bp 괴리) 섞지 않았습니다.</li>
+        <li><b>변동 현황</b> — 전부 <b>bp</b>, 대표 만기는 <b>91일물(3월)</b>입니다.
+          수록 시작일이 서로 달라 긴 기간 열에 <span class="na">—</span>가 나오는 것이 정상입니다.</li>
       </ul>
       <p class="mtop"><a href="#man-toc">↑ 목차</a></p>
     </div>
@@ -1586,9 +1689,16 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
           <b>만기 개념이 없는 기준지표</b>(한국은행 기준금리·DFF·EFFR·SOFR)가 나오지 않습니다. 미국채(11만기)는 나옵니다.</li>
         <li><b>원화 IRS 는 금리(%)</b>라 제한이 없어 7개 도구 전부에서 고를 수 있습니다.
           단 노출 만기는 <b><span class="dyn" id="man-irsmats2">—</span></b> 다섯 개뿐입니다.</li>
+        <li><b>CP·CD 시가평가(A1·A2+·A3+·AAA)도 금리(%)에 만기 6개</b>라 <b>7개 도구 전부</b>에서 고를 수 있습니다.
+          스프레드 분석에서는 <b>크레딧 스프레드의 시리즈 A</b> 후보이고(신용등급별로 고시되는 단기 크레딧물이므로),
+          만기가 2개 이상이라 <b>텀 스프레드</b>에도 나옵니다.</li>
+        <li><b>CD 유통수익률(고시)만 만기축이 없습니다.</b> 그래서 커브·커브+스프레드·스트레스테스트·텀 스프레드에서
+          빠지고, VaR·상관관계·데이터 다운로드에는 나옵니다. 스프레드 분석에서는
+          <b>'기준금리 대비' 유형의 시리즈 B</b> 후보입니다 — 한국은행 기준금리·DFF·EFFR·SOFR 과 같은 자리입니다.</li>
       </ul>
       <p><b>레지스트리 시리즈의 수록 구간</b>(§2-1 표와 같은 값이며 만기별로 시작일이 다릅니다):
-        미국채 1개월물은 다른 만기보다 늦게 시작하고, SOFR 은 2018-04-03 부터, 국채선물 30년은 2024-02-19 부터입니다.
+        미국채 1개월물은 다른 만기보다 늦게 시작하고, SOFR 은 2018-04-03 부터, 국채선물 30년은 2024-02-19 부터,
+        <b>CP 시가평가는 2012-04-02 · CD 시가평가는 2020-01-02 · CD 유통수익률은 2009-02-04</b> 부터입니다.
         여러 시리즈를 함께 쓰면 <b>공통 표본 구간으로 자동으로 잘리므로</b>
         결과의 실제 기간 표시를 반드시 확인하십시오.</p>
       <p>드롭다운 위의 <b>검색창</b>에 등급·종류명을 넣어 후보를 좁힐 수 있고,
@@ -1605,8 +1715,11 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
     <div class="mbd">
       <h4>단위와 부호</h4>
       <ul>
-        <li><b>선물은 가격(pt), 채권·IRS 는 금리(%)입니다.</b> 그래서 대시보드가 현물 탭과 선물·IRS 탭으로 갈려 있고,
-          선물은 만기축·bp 를 쓰는 도구에서 빠져 있습니다. 한 표에 섞어 놓지 않은 것은 의도입니다.</li>
+        <li><b>선물은 가격(pt), 채권·IRS·CP·CD 는 금리(%)입니다.</b> 그래서 대시보드가
+          현물 · 선물·IRS · 단기자금시장 세 탭으로 갈려 있고, 선물은 만기축·bp 를 쓰는 도구에서 빠져 있습니다.
+          한 표에 섞어 놓지 않은 것은 의도입니다.</li>
+        <li><b>CD 유통수익률(고시)은 단위는 같지만 만기축이 없어</b> 커브·텀스프레드처럼 만기축을 쓰는 도구에서 빠집니다 —
+          91일 단일 점이라 커브를 그릴 수 없기 때문입니다(선물이 빠지는 이유와는 다릅니다).</li>
         <li><b>금리와 선물가격은 방향이 반대입니다.</b> 금리↑ = 선물가격↓ 이므로
           <b>상관계수가 음수로 나오는 것이 정상</b>입니다. 부호만 보고 데이터 오류로 판단하지 마십시오.</li>
         <li><b>A − B 방향을 매번 확인하십시오.</b> 스프레드 분석은 <span class="mono">A − B</span>,
@@ -1623,6 +1736,39 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
         <li><b>선물 현황(수준)과 변동·시계열은 다른 컬럼을 씁니다.</b> 수준은 미조정 실제가격이라 롤오버일의 전일 대비에
           월물 교체분이 섞입니다. 변동을 볼 때는 조정계열 쪽(시계열·변동 현황)을 보십시오.</li>
         <li>국채선물 3년물을 <b>2010-12-20 이전</b>까지 쓸 때는 원본에서 <span class="mono">수정가(5%)</span> 계열을 씁니다.</li>
+      </ul>
+      <h4>CD 가 두 벌이다 — 가장 헷갈리는 지점</h4>
+      <ul>
+        <li><b>이름이 비슷하고 값도 거의 같지만 출처가 다른 두 계열입니다.</b>
+          <span class="mono">CD_AAA_3월</span>(CD <b>시가평가</b> AAA 91일, 평가 4사평균)과
+          <span class="mono">CD유통_91일</span>(금투협 <b>고시 유통수익률</b>)입니다.
+          실측(2026-09-01~10-02, 22영업일) <b>17일이 완전히 일치</b>하고 나머지도 ±1bp, 평균차 +0.14bp 입니다.
+          시가평가 6만기 중 91일(3월)과의 평균절대차가 <b>0.2bp</b>인 데 비해 다른 만기는 8~18bp 이므로,
+          두 값이 같아 보이는 것은 우연이 아니라 <b>평가사들이 CD 91일 평가금리를 고시 CD금리에 맞춰 산출</b>하기 때문입니다.</li>
+        <li><b>어느 쪽을 쓸지는 용도로 갈립니다.</b>
+          <b>변동금리 기준·스왑 비교·지표금리 추이</b>라면 <b>CD 유통수익률</b>입니다 — 공식 고시치이고 계약이 참조하는 수치입니다.
+          <b>크레딧 평가·스프레드 산출</b>이라면 <b>CD 시가평가</b>입니다 — 채권·CP 시가평가와 같은 4사·같은 만기축이라 기준이 정합합니다.
+          <b>7일~1년 단기 커브 전체</b>가 필요하면 시가평가만 가능합니다(유통수익률은 91일 한 점).</li>
+        <li><b>도구에서의 노출이 다릅니다.</b> CD 유통수익률은 만기축이 없어
+          <b>커브 · 커브+스프레드 · 스트레스테스트 · 텀 스프레드에는 나오지 않습니다</b>(단일 점으로 커브를 그릴 수 없습니다).
+          VaR · 상관관계 · 데이터 다운로드에는 나오고, 스프레드 분석에서는 <b>'기준금리 대비' 유형의 시리즈 B</b> 후보로 잡힙니다
+          — 거기 두면 실무에서 쓰는 <b>CD 대비 스프레드</b>가 됩니다.</li>
+        <li><b>CD 유통수익률의 2023-10-04 제도 변경은 단절이 아닙니다.</b> KOFIA 응답에서 같은 항목이 그대로 이어지고
+          경계 점프는 +1bp 였습니다. 다만 같은 화면의 구 제도 <b>오전 계열·특수은행 계열</b>은 2023-09-27 에 폐지됐고
+          시중은행과 별개 계열이므로(2009-02 기준 17~25bp 괴리) <b>그쪽을 이어 붙이면 안 됩니다</b>.
+          우리는 시중은행·오후 계열만 실었습니다.</li>
+      </ul>
+      <h4>CP·CD 시가평가</h4>
+      <ul>
+        <li><b>평가금리입니다 — 실거래 금리가 아닙니다.</b> 체결·호가에서 나온 값이 아니라 평가 4사가 산출한 평가금리의 평균입니다.
+          KOFIA 가 계산해 고시한 평균값을 그대로 싣고, 개별 평가사 값을 우리가 평균해 만들지 않습니다.</li>
+        <li><b>CP 의 2006-11-01~2012-03-30 구간은 비어 있습니다.</b> KOFIA 가 그 기간에는 평가사 개별값만 고시하고
+          평균행을 주지 않습니다. 개별값을 우리가 평균해 합성값을 섞지 않기로 했습니다 — 데이터가 없는 것이 아니라
+          <b>서버 고시 평균값이 없는 것</b>입니다. 그래서 수록 시작은 <b>2012-04-02</b>입니다.</li>
+        <li><b>만기가 전부 1년 이하입니다.</b> 국고 3·10·30년 같은 장기물과 한 커브에 올리면 만기축 왼쪽 끝에 몰려 보입니다 —
+          커브 분석의 <b>x축 log</b> 옵션을 쓰십시오. 만기 라벨 <b>3월이 통상 말하는 91일물</b>입니다.</li>
+        <li>컬럼명에 <span class="mono">+</span> 가 들어갑니다(<span class="mono">CP_A2+_3월</span>).
+          마스터 헤더·rates.json 에 이미 <span class="mono">AA+</span> 선례가 100개 넘게 있어 CSV·JSON·JS 전 경로에서 문제되지 않습니다.</li>
       </ul>
       <h4>통계 해석</h4>
       <ul>
@@ -1923,6 +2069,33 @@ var KTBF_NOTE =
    원문은 백업 _백업_배포index_미국채선물제거전_20260928.html 에 그대로 있다. */
 var USF_NOTE = '';
 
+/* CP·CD 시가평가 공통 주석 */
+var CPCD_NOTE =
+  '<b>CP·CD 시가평가수익률은 채권평가 4사(나이스피앤아이·한국자산평가·KIS자산평가·에프앤자산평가)가 ' +
+  '산출한 평가금리의 4사평균</b>입니다 — 체결·호가에서 나온 실거래 금리가 아니라 평가금리입니다. ' +
+  'KOFIA 가 계산해 고시한 평균값을 그대로 싣고, 개별 평가사 값을 우리가 평균해 만들지 않습니다. ' +
+  '만기는 <b>7일·15일·1월·3월·6월·1년</b> 여섯 개이고 <b>3월이 통상 말하는 91일물</b>입니다. ' +
+  '<b>수록 시작일이 다릅니다 — CP 2012-04-02 · CD 2020-01-02.</b> ' +
+  'CP 는 2006-11-01 부터 고시되지만 2012-03-30 까지는 KOFIA 가 평가사 개별값만 주고 평균행이 없어 싣지 않았습니다. ' +
+  '긴 기간을 포함해 계산하면 표본이 자동으로 잘리니 기간 표시를 확인하십시오. ' +
+  '만기가 1년 이하로 전부 단기구간이라, 국고 3·10년 같은 장기물과 같은 커브에 올리면 ' +
+  '만기축 왼쪽 끝에 몰려 보입니다(커브 분석의 x축 log 옵션이 도움이 됩니다). ' +
+  '<b>CD 시가평가는 금투협 고시 \'CD 유통수익률\'과 다른 계열</b>입니다 — ' +
+  '91일 자리에서 두 값은 거의 같지만(실측 22영업일 중 17일 완전일치, 나머지 ±1bp) 출처가 다릅니다. ' +
+  '크레딧 평가·스프레드 산출에는 이쪽(시가평가)이, 변동금리 기준·스왑 비교에는 유통수익률이 맞습니다.';
+
+/* CD 유통수익률 주석 */
+var CDROP_NOTE =
+  '<b>금투협이 고시하는 CD 91일물 유통수익률</b>이고 <b>금융거래지표법상 중요지표</b>입니다 — ' +
+  '변동금리채·CD연동대출·스왑이 참조하는 바로 그 금리입니다. <b>만기 개념이 없어</b> 만기 드롭다운이 잠기고, ' +
+  '커브·텀스프레드처럼 만기축을 쓰는 도구에는 나오지 않습니다(단일 점이라 커브를 그릴 수 없습니다). ' +
+  '<b>2009-02-04 부터 수록</b>되어 있습니다(KOFIA 조회 하한). ' +
+  '<b>2023-10-04 에 제도가 바뀌었습니다</b> — 그 이후는 현행 「CD수익률」, 그 이전은 구 제도의 ' +
+  '「최종호가수익률 / 오후 / 시중은행」이며, KOFIA 응답에서 <b>같은 항목이 그대로 이어지는 하나의 계열</b>입니다. ' +
+  '경계 점프는 +1bp 에 불과했습니다(2023-09-27 3.83 → 2023-10-04 3.84, 그 사이는 추석 연휴·제도 전환). ' +
+  '구 제도의 오전 계열과 특수은행 계열은 2023-09-27 에 폐지됐고 시중은행과는 별개 계열이라(2009-02 기준 17~25bp 괴리) 섞지 않았습니다. ' +
+  '<b>CD 시가평가(평가 4사평균)와 혼동하지 마십시오</b> — 91일 자리에서 수치는 거의 같지만 출처와 용도가 갈립니다.';
+
 var EXTRA_SERIES = [
   {
     key: 'BOK_BASE', label: '한국은행 기준금리', group: '기준지표',
@@ -1998,6 +2171,54 @@ var EXTRA_SERIES = [
      대표 컬럼은 롤오버 조정계열이다 — KOFIA 의 '수정가'. 현황표에 쓰는 미조정
      실제가격(약정가)은 레지스트리에 올리지 않고 대시보드 선물 탭이 COL 에서
      직접 읽는다. -------------------------------------------------------------- */
+  /* ---- CP·CD 시가평가 (단기자금, 단위 %) — 2026-10-07 신설 -----------------
+     금리 단위이므로 국내 채권 시리즈와 완전히 같은 취급을 받는다(corrOnly 를 붙이지
+     않는다) → 스트레스테스트·VaR·커브·스프레드·커브+스프레드·상관관계·다운로드 전부에서
+     고를 수 있다. 만기가 6개라 data-reg='mat' 인 만기축 도구에도 그대로 들어간다.
+     7일·15일의 maturity 는 개월을 분수로 준다(7/30, 15/30) — matLabel 이 1개월 미만을
+     일 단위 라벨로 되돌린다. 등급 사이 순서는 A1 → A2+ → A3+ → AAA(CD) 다.
+     컬럼명에 '+' 가 들어가지만 마스터 헤더·rates.json 에 이미 'AA+' 선례가 있고
+     COL[] 은 대괄호 접근이라 문제되지 않는다(_scripts/money_series.py 참조). ------ */
+  , { key: 'CP_A1_7D', label: 'CP A1', group: '단기자금', col: 'CP_A1_7일', maturity: 7 / 30, full: 'CP 시가평가수익률 A1 7일 (평가 4사평균)', note: CPCD_NOTE }
+  , { key: 'CP_A1_15D', label: 'CP A1', group: '단기자금', col: 'CP_A1_15일', maturity: 15 / 30, full: 'CP 시가평가수익률 A1 15일 (평가 4사평균)', note: CPCD_NOTE }
+  , { key: 'CP_A1_1M', label: 'CP A1', group: '단기자금', col: 'CP_A1_1월', maturity: 1, full: 'CP 시가평가수익률 A1 1월 (평가 4사평균)', note: CPCD_NOTE }
+  , { key: 'CP_A1_3M', label: 'CP A1', group: '단기자금', col: 'CP_A1_3월', maturity: 3, full: 'CP 시가평가수익률 A1 3월(=91일물) (평가 4사평균)', note: CPCD_NOTE }
+  , { key: 'CP_A1_6M', label: 'CP A1', group: '단기자금', col: 'CP_A1_6월', maturity: 6, full: 'CP 시가평가수익률 A1 6월 (평가 4사평균)', note: CPCD_NOTE }
+  , { key: 'CP_A1_1Y', label: 'CP A1', group: '단기자금', col: 'CP_A1_1년', maturity: 12, full: 'CP 시가평가수익률 A1 1년 (평가 4사평균)', note: CPCD_NOTE }
+  , { key: 'CP_A2P_7D', label: 'CP A2+', group: '단기자금', col: 'CP_A2+_7일', maturity: 7 / 30, full: 'CP 시가평가수익률 A2+ 7일 (평가 4사평균)', note: CPCD_NOTE }
+  , { key: 'CP_A2P_15D', label: 'CP A2+', group: '단기자금', col: 'CP_A2+_15일', maturity: 15 / 30, full: 'CP 시가평가수익률 A2+ 15일 (평가 4사평균)', note: CPCD_NOTE }
+  , { key: 'CP_A2P_1M', label: 'CP A2+', group: '단기자금', col: 'CP_A2+_1월', maturity: 1, full: 'CP 시가평가수익률 A2+ 1월 (평가 4사평균)', note: CPCD_NOTE }
+  , { key: 'CP_A2P_3M', label: 'CP A2+', group: '단기자금', col: 'CP_A2+_3월', maturity: 3, full: 'CP 시가평가수익률 A2+ 3월(=91일물) (평가 4사평균)', note: CPCD_NOTE }
+  , { key: 'CP_A2P_6M', label: 'CP A2+', group: '단기자금', col: 'CP_A2+_6월', maturity: 6, full: 'CP 시가평가수익률 A2+ 6월 (평가 4사평균)', note: CPCD_NOTE }
+  , { key: 'CP_A2P_1Y', label: 'CP A2+', group: '단기자금', col: 'CP_A2+_1년', maturity: 12, full: 'CP 시가평가수익률 A2+ 1년 (평가 4사평균)', note: CPCD_NOTE }
+  , { key: 'CP_A3P_7D', label: 'CP A3+', group: '단기자금', col: 'CP_A3+_7일', maturity: 7 / 30, full: 'CP 시가평가수익률 A3+ 7일 (평가 4사평균)', note: CPCD_NOTE }
+  , { key: 'CP_A3P_15D', label: 'CP A3+', group: '단기자금', col: 'CP_A3+_15일', maturity: 15 / 30, full: 'CP 시가평가수익률 A3+ 15일 (평가 4사평균)', note: CPCD_NOTE }
+  , { key: 'CP_A3P_1M', label: 'CP A3+', group: '단기자금', col: 'CP_A3+_1월', maturity: 1, full: 'CP 시가평가수익률 A3+ 1월 (평가 4사평균)', note: CPCD_NOTE }
+  , { key: 'CP_A3P_3M', label: 'CP A3+', group: '단기자금', col: 'CP_A3+_3월', maturity: 3, full: 'CP 시가평가수익률 A3+ 3월(=91일물) (평가 4사평균)', note: CPCD_NOTE }
+  , { key: 'CP_A3P_6M', label: 'CP A3+', group: '단기자금', col: 'CP_A3+_6월', maturity: 6, full: 'CP 시가평가수익률 A3+ 6월 (평가 4사평균)', note: CPCD_NOTE }
+  , { key: 'CP_A3P_1Y', label: 'CP A3+', group: '단기자금', col: 'CP_A3+_1년', maturity: 12, full: 'CP 시가평가수익률 A3+ 1년 (평가 4사평균)', note: CPCD_NOTE }
+  , { key: 'CD_AAA_7D', label: 'CD AAA(시가평가)', group: '단기자금', col: 'CD_AAA_7일', maturity: 7 / 30, full: 'CD 시가평가수익률 AAA 7일 (평가 4사평균)', note: CPCD_NOTE }
+  , { key: 'CD_AAA_15D', label: 'CD AAA(시가평가)', group: '단기자금', col: 'CD_AAA_15일', maturity: 15 / 30, full: 'CD 시가평가수익률 AAA 15일 (평가 4사평균)', note: CPCD_NOTE }
+  , { key: 'CD_AAA_1M', label: 'CD AAA(시가평가)', group: '단기자금', col: 'CD_AAA_1월', maturity: 1, full: 'CD 시가평가수익률 AAA 1월 (평가 4사평균)', note: CPCD_NOTE }
+  , { key: 'CD_AAA_3M', label: 'CD AAA(시가평가)', group: '단기자금', col: 'CD_AAA_3월', maturity: 3, full: 'CD 시가평가수익률 AAA 3월(=91일물) (평가 4사평균)', note: CPCD_NOTE }
+  , { key: 'CD_AAA_6M', label: 'CD AAA(시가평가)', group: '단기자금', col: 'CD_AAA_6월', maturity: 6, full: 'CD 시가평가수익률 AAA 6월 (평가 4사평균)', note: CPCD_NOTE }
+  , { key: 'CD_AAA_1Y', label: 'CD AAA(시가평가)', group: '단기자금', col: 'CD_AAA_1년', maturity: 12, full: 'CD 시가평가수익률 AAA 1년 (평가 4사평균)', note: CPCD_NOTE }
+
+  /* ---- CD 유통수익률 (금투협 고시, 단위 %) — 2026-10-07 신설 ----------------
+     maturity: null → 만기축이 없다. 그래서 noMat 이 되어 data-reg='mat' 인
+     만기축 도구(커브·커브+스프레드·스트레스테스트·텀스프레드)에서 **자동으로 빠진다**
+     — 91일 단일 점이라 커브를 그릴 수 없기 때문이다. VaR·상관관계·데이터 다운로드
+     (data-reg='1'/'corr')에는 그대로 나온다.
+     group 을 '기준지표' 로 둔 것은 이 금리가 금융거래지표법상 중요지표이고 변동금리의
+     기준으로 쓰이기 때문이다. 덕분에 스프레드 도구의 '기준금리 대비' 유형에서
+     시리즈 B 후보로 잡혀, 흔히 쓰는 'CD 대비 스프레드'를 바로 낼 수 있다. ------- */
+  , {
+    key: 'CD_ROP', label: 'CD 유통수익률(고시)', group: '기준지표',
+    col: 'CD유통_91일', maturity: null,
+    full: 'CD 유통수익률 91일물 — 금투협 고시 (금융거래지표법상 중요지표)',
+    note: CDROP_NOTE
+  }
+
   , { key: 'KTBF_3Y', label: '국채선물(수정가)', group: '선물', col: '국채선물3년_수정가', maturity: 36, price: true, corrOnly: true, full: '국채선물 3년 — 월물간 보정 연결가격 (KRX)', note: KTBF_NOTE }
   , { key: 'KTBF_10Y', label: '국채선물(수정가)', group: '선물', col: '국채선물10년_수정가', maturity: 120, price: true, corrOnly: true, full: '국채선물 10년 — 월물간 보정 연결가격 (KRX)', note: KTBF_NOTE }
   , { key: 'KTBF_30Y', label: '국채선물(수정가)', group: '선물', col: '국채선물30년_수정가', maturity: 360, price: true, corrOnly: true, full: '국채선물 30년 — 월물간 보정 연결가격 (KRX)', note: KTBF_NOTE }
@@ -2504,6 +2725,9 @@ var LEVEL_MATS = [12, 18, 24, 36, 48, 60, 84, 120, 180, 240, 360];
 })();
 function matLabel(m) {
   if (!m) return '해당없음';   // 만기 축이 없는 레지스트리 시리즈 (months = 0)
+  /* [2026-10-07] 1개월 미만 — CP·CD 단기자금 계열의 7일·15일. 개월을 분수(7/30, 15/30)로
+     넣으므로 여기서 일 단위로 되돌린다. 라벨·정렬·커브 x축이 전부 이 값을 쓴다. */
+  if (m < 1) return Math.round(m * 30) + '일';
   return m % 12 === 0 ? (m / 12) + '년' : (m < 12 ? m + '월' : Math.floor(m / 12) + '년' + (m % 12) + '월');
 }
 
@@ -2860,6 +3084,157 @@ guard('선물·IRS 변동 현황', function () {
   setTable('box-fut-chg', 'tbl-fut-chg', '', th, body);
 });
 
+/* ================================================================
+   단기자금시장 탭 (2026-10-07 신설)
+   ----------------------------------------------------------------
+   CP·CD 시가평가 = 평가 4사평균 평가금리, 등급 × 6만기.
+   CD 유통        = 금투협 고시 CD 91일 유통수익률. 만기축 없음, 출처 다름.
+   두 CD 는 수치가 거의 같지만(91일 자리 평균차 +0.1bp 수준) 출처가 달라
+   별개 컬럼·별개 카드로 둔다. 현황표 마지막 행이 그 차이를 직접 보여 준다.
+   ================================================================ */
+var MNY_MATS = ['7일', '15일', '1월', '3월', '6월', '1년'];     // money_series.MONEY_MATS 와 동일
+var MNY_GRADES = [
+  ['CP A1', 'CP_A1'], ['CP A2+', 'CP_A2+'], ['CP A3+', 'CP_A3+'], ['CD AAA', 'CD_AAA']
+].filter(function (r) { return !!COL[r[1] + '_3월']; });
+var MNY_ROP = 'CD유통_91일';
+var MNY_REP = '3월';                                            // 대표 만기(=91일물)
+
+/* --- 단기자금시장 현황 --- */
+guard('단기자금시장 현황', function () {
+  if (!MNY_GRADES.length && !COL[MNY_ROP]) return;
+  var th = '<tr><th class="l" style="width:190px">구분</th>';
+  MNY_MATS.forEach(function (m) { th += '<th>' + m + (m === MNY_REP ? '<br><span style="font-weight:400;font-size:10px;color:#7d8794">91일</span>' : '') + '</th>'; });
+  th += '</tr>';
+  /* 기준일 — 이 탭 안에서 가장 최근 관측일(계열마다 하루씩 다를 수 있다) */
+  var asof = -1;
+  MNY_GRADES.forEach(function (g) { var i = lastObs(g[1] + '_' + MNY_REP, LAST); if (i > asof) asof = i; });
+  var ri = COL[MNY_ROP] ? lastObs(MNY_ROP, LAST) : -1;
+  if (ri > asof) asof = ri;
+  if (asof < 0) { setTable('box-mny-level', 'tbl-mny-level', '', th, '<tr><td class="l na" colspan="' + (MNY_MATS.length + 1) + '">CP·CD 데이터가 없습니다.</td></tr>'); return; }
+  var body = '', stale = [];
+  MNY_GRADES.forEach(function (g, gi) {
+    var li = lastObs(g[1] + '_' + MNY_REP, LAST);
+    if (li < 0) return;
+    if (li < asof) stale.push(g[0] + ' ' + fmtD(DATES[li]));
+    var prev = -1;
+    for (var k = li - 1; k >= 0; k--) { if (!isNaN(COL[g[1] + '_' + MNY_REP][k])) { prev = k; break; } }
+    var sub = (li < asof) ? '<br><span style="font-size:10.5px;color:#a3410f">' + fmtD(DATES[li]) + ' 기준</span>' : '';
+    body += '<tr' + (gi % 2 ? ' style="background:#f7fafd"' : '') + '><td class="l"><b>' + esc(g[0]) + '</b>' +
+      '<span style="font-size:10.5px;color:#67727f"> 시가평가 4사평균</span>' + sub + '</td>';
+    MNY_MATS.forEach(function (m) {
+      var c = g[1] + '_' + m, v = pct(c, li), d = (prev < 0) ? NaN : bpDiff(c, li, prev);
+      if (isNaN(v)) { body += '<td class="na">—</td>'; return; }
+      body += '<td>' + v.toFixed(2) + '<br><span class="' + cls(d) + '" style="font-size:11px">' + f1(d) + '</span></td>';
+    });
+    body += '</tr>';
+  });
+  /* CD 유통 — 만기축이 없으므로 91일(=3월) 칸만 채운다 */
+  if (ri >= 0) {
+    var rp = -1;
+    for (var k2 = ri - 1; k2 >= 0; k2--) { if (!isNaN(COL[MNY_ROP][k2])) { rp = k2; break; } }
+    if (ri < asof) stale.push('CD 유통 ' + fmtD(DATES[ri]));
+    body += '<tr style="background:#fff7ef"><td class="l"><b>CD 유통 (고시)</b>' +
+      '<span style="font-size:10.5px;color:#67727f"> 금투협 91일물 · 만기축 없음</span>' +
+      ((ri < asof) ? '<br><span style="font-size:10.5px;color:#a3410f">' + fmtD(DATES[ri]) + ' 기준</span>' : '') + '</td>';
+    MNY_MATS.forEach(function (m) {
+      if (m !== MNY_REP) { body += '<td class="na">·</td>'; return; }
+      var v = pct(MNY_ROP, ri), d = (rp < 0) ? NaN : bpDiff(MNY_ROP, ri, rp);
+      body += '<td><b>' + v.toFixed(2) + '</b><br><span class="' + cls(d) + '" style="font-size:11px">' + f1(d) + '</span></td>';
+    });
+    body += '</tr>';
+    /* 두 출처의 차이 — CD 유통 − CD 시가평가 3월 (bp) */
+    if (COL['CD_AAA_' + MNY_REP]) {
+      body += '<tr style="background:#f3f6fa"><td class="l"><b>출처 차이</b>' +
+        '<span style="font-size:10.5px;color:#67727f"> CD 유통 − CD 시가평가 91일 (bp)</span></td>';
+      MNY_MATS.forEach(function (m) {
+        if (m !== MNY_REP) { body += '<td class="na">·</td>'; return; }
+        var s = (raw(MNY_ROP, ri) - raw('CD_AAA_' + MNY_REP, ri)) / 10;
+        if (isNaN(s)) { body += '<td class="na">—</td>'; return; }
+        body += '<td><b>' + s.toFixed(1) + '</b></td>';
+      });
+      body += '</tr>';
+    }
+  }
+  setTable('box-mny-level', 'tbl-mny-level', '', th, body);
+  if (stale.length) $('mny-lv-warn').textContent = '⚠ 기준일 상이: ' + stale.join(' · ');
+});
+
+/* --- 시계열 --- */
+var MNY_TS = [];
+MNY_GRADES.forEach(function (g) {
+  MNY_MATS.forEach(function (m) {
+    if (COL[g[1] + '_' + m]) MNY_TS.push([g[0] + ' ' + m, g[1] + '_' + m]);
+  });
+});
+var mnySel = MNY_TS.filter(function (r) { return /_3월$/.test(r[1]); }).map(function (r) { return r[1]; });
+var ROP_TS = [['CD 유통 91일', MNY_ROP]].filter(function (r) { return !!COL[r[1]]; });
+var ropSel = ROP_TS.map(function (r) { return r[1]; });
+
+function drawMnyTS() {
+  var i0 = barWindow('mny-range'), i1 = LAST;
+  var all = MNY_TS.map(function (r) { return r[1]; });
+  var ser = mnySel.map(function (c) {
+    var pts = [], nm = c;
+    MNY_TS.forEach(function (r) { if (r[1] === c) nm = r[0]; });
+    for (var i = i0; i <= i1; i++) { var v = pct(c, i); pts.push(isNaN(v) ? null : [i, v]); }
+    return { name: nm, pts: pts, color: PAL[all.indexOf(c) % PAL.length] };
+  });
+  $('mny-chart').innerHTML = svgLine({ w: cw('mny-chart', 860), h: 340, series: ser, xTicks: dateTicks(i0, i1, 7), yFmt: function (v) { return v.toFixed(2); } });
+  setAsof('mny-asof', ser);
+  $('mny-legend').innerHTML = ser.map(function (s) {
+    return '<span><i style="background:' + s.color + '"></i>' + esc(s.name) + ' <b>' + f2(lastVal(s.pts)) + '%</b></span>';
+  }).join('') || '<span class="na">선택된 시리즈가 없습니다.</span>';
+}
+function drawRopTS() {
+  var i0 = barWindow('rop-range'), i1 = LAST;
+  var ser = ropSel.map(function (c) {
+    var pts = [], nm = c;
+    ROP_TS.forEach(function (r) { if (r[1] === c) nm = r[0]; });
+    for (var i = i0; i <= i1; i++) { var v = pct(c, i); pts.push(isNaN(v) ? null : [i, v]); }
+    return { name: nm, pts: pts, color: PAL[0] };
+  });
+  $('rop-chart').innerHTML = svgLine({ w: cw('rop-chart', 860), h: 340, series: ser, xTicks: dateTicks(i0, i1, 7), yFmt: function (v) { return v.toFixed(2); } });
+  setAsof('rop-asof', ser);
+  $('rop-legend').innerHTML = ser.map(function (s) {
+    return '<span><i style="background:' + s.color + '"></i>' + esc(s.name) + ' <b>' + f2(lastVal(s.pts)) + '%</b></span>';
+  }).join('') || '<span class="na">선택된 시리즈가 없습니다.</span>';
+}
+guard('단기자금시장 시계열 컨트롤', function () {
+  buildPickBar('mny-pick', 'mny-range', MNY_TS, mnySel, RANGES, '3Y', drawMnyTS);
+  buildPickBar('rop-pick', 'rop-range', ROP_TS, ropSel, RANGES, '3Y', drawRopTS);
+});
+
+/* --- 단기자금시장 변동 현황 (대표 만기 91일물, 단위 bp) --- */
+guard('단기자금시장 변동 현황', function () {
+  var rows = MNY_GRADES.map(function (g) { return [g[0] + ' ' + MNY_REP, g[1] + '_' + MNY_REP, '시가평가'] })
+    .concat(COL[MNY_ROP] ? [['CD 유통 91일', MNY_ROP, '고시 유통']] : []);
+  if (!rows.length) return;
+  var refs = CHG_HORIZ.map(function (hz) {
+    if (hz[1] === 'd' && hz[2] === 1) return PREV;
+    return idxLE(shiftCal(DATES[LAST], hz[1], hz[2]));
+  });
+  var th = '<tr><th class="l" style="width:190px">구분</th><th>현재</th>';
+  CHG_HORIZ.forEach(function (hz, i) {
+    th += '<th>' + hz[0] + '<br><span style="font-weight:400;font-size:10px;color:#7d8794">' + (refs[i] >= 0 ? fmtD(DATES[refs[i]]) : '—') + '</span></th>';
+  });
+  th += '</tr>';
+  var body = '';
+  rows.forEach(function (r, k) {
+    var c = r[1], i = lastObs(c, LAST);
+    if (i < 0) return;
+    var sub = (i < LAST) ? ' <span style="font-size:10px;color:#a3410f">(' + fmtD(DATES[i]) + ')</span>' : '';
+    body += '<tr' + (r[2] === '고시 유통' ? ' style="background:#fff7ef"' : (k % 2 ? ' style="background:#f7fafd"' : '')) +
+      '><td class="l">' + esc(r[0]) + ' <span style="font-size:10.5px;color:#67727f">' + r[2] + ' · bp</span>' + sub + '</td>' +
+      '<td><b>' + f2(pct(c, i)) + '</b></td>';
+    refs.forEach(function (ri) {
+      if (ri < 0 || ri > i) { body += '<td class="na">—</td>'; return; }
+      body += bpCell(bpDiff(c, i, ri));
+    });
+    body += '</tr>';
+  });
+  setTable('box-mny-chg', 'tbl-mny-chg', '', th, body);
+});
+
 /* --- 하위 탭 전환 ---
    숨어 있는 컨테이너는 폭이 0이라 cw() 가 0을 돌려주고 SVG 가 찌그러진다.
    그래서 차트는 '탭이 처음 보이는 순간'과 그 뒤 매번 다시 그린다. */
@@ -2870,10 +3245,12 @@ function showDashSub(d) {
   if (bar) [].forEach.call(bar.getElementsByTagName('button'), function (b) {
     b.className = (b.getAttribute('data-d') === d) ? 'on' : '';
   });
-  var sp = $('dash-spot'), ft = $('dash-fut');
+  var sp = $('dash-spot'), ft = $('dash-fut'), mn = $('dash-money');
   if (sp) sp.style.display = (d === 'spot') ? '' : 'none';
   if (ft) ft.style.display = (d === 'fut') ? '' : 'none';
+  if (mn) mn.style.display = (d === 'money') ? '' : 'none';
   if (d === 'spot') guard('시계열', drawTS);
+  else if (d === 'money') { guard('CP·CD 시계열', drawMnyTS); guard('CD 유통 시계열', drawRopTS); }
   else { guard('선물 시계열', drawFutTS); guard('IRS 시계열', drawIrsTS); }
 }
 guard('대시보드 하위 탭', function () {
@@ -4528,10 +4905,19 @@ function runCurve() {
        원화 IRS 와 짝지을 수 없으므로 제외한다.
    · 기준지표(기준금리 대비 B) = 레지스트리 '기준지표' 그룹
        (한국은행 기준금리 · DFF · EFFR · SOFR)
-   · 선물은 어느 유형에도 나오지 않는다 — data-reg='1' 이 corrOnly 를 막는다. */
+   · 선물은 어느 유형에도 나오지 않는다 — data-reg='1' 이 corrOnly 를 막는다.
+   · CP·CD 시가평가(레지스트리 '단기자금' 그룹)는 **크레딧물**이다 — 신용등급별로
+       고시되고 국고 대비 (+)스프레드로 거래되는 무담보 단기 크레딧이므로,
+       SP_CREDIT_REG_G 로 크레딧 후보에 넣는다. 만기가 6개라 텀 스프레드
+       (spHasCurve)에도 자동으로 들어간다.
+   · CD 유통수익률은 '기준지표' 그룹이라 **기준금리 대비 유형의 B 후보**로 잡힌다 —
+       금융거래지표법상 중요지표이고 변동금리의 기준으로 쓰이므로 그 자리가 맞다.
+       만기축이 없어 커브·텀 스프레드에는 나오지 않는다. */
 var SP_RF_G = { '국채': 1, '통안증권': 1 };
+/* 레지스트리 시리즈 중 크레딧물로 볼 그룹 — [2026-10-07] CP·CD 시가평가 */
+var SP_CREDIT_REG_G = { '단기자금': 1 };
 function spIsRiskFree(t) { return !t.reg && !!SP_RF_G[t.g]; }
-function spIsCredit(t) { return !t.reg && !SP_RF_G[t.g]; }
+function spIsCredit(t) { return t.reg ? !!SP_CREDIT_REG_G[t.g] : !SP_RF_G[t.g]; }
 function spIsKrwBond(t) { return !t.reg; }
 function spIsIRS(t) { return !!t.reg && t.g === '스왑금리'; }
 function spIsPolicy(t) { return !!t.reg && t.g === '기준지표'; }
@@ -4544,7 +4930,7 @@ var SP_KIND = {
   credit: {
     name: '크레딧 스프레드', predA: spIsCredit, predB: spIsRiskFree,
     defA: ['회사채AA-', 36], defB: ['국고채권', 36], sync: true,
-    hint: '시리즈 A = 크레딧물(특수채·공사채·금융채·회사채·커버드본드·지방채) · 시리즈 B = 국고·통안. 만기 B 는 만기 A 에 맞춰 <b>기본값만</b> 따라갑니다 — 이후 자유롭게 바꿀 수 있습니다.',
+    hint: '시리즈 A = 크레딧물(특수채·공사채·금융채·회사채·커버드본드·지방채 · <b>CP A1/A2+/A3+ · CD AAA 시가평가</b>) · 시리즈 B = 국고·통안. 만기 B 는 만기 A 에 맞춰 <b>기본값만</b> 따라갑니다 — 이후 자유롭게 바꿀 수 있습니다. CP·CD 는 만기가 7일~1년이라 국고의 3월·6월·1년과 맞춰 보십시오.',
     calc: '같은 만기끼리 비교하는 것이 기본입니다. 값이 양수면 크레딧물이 무위험물보다 높다는 뜻입니다.'
   },
   term: {
@@ -4561,7 +4947,7 @@ var SP_KIND = {
   policy: {
     name: '기준금리 대비 스프레드', predA: spIsYield, predB: spIsPolicy,
     defA: ['국고채권', 36], defB: ['한국은행 기준금리', 0], sync: false,
-    hint: '시리즈 A = 채권·스왑 금리 · 시리즈 B = 기준지표(한국은행 기준금리 · 미국 DFF · EFFR · SOFR). 기준지표는 만기 개념이 없어 만기 B 가 잠깁니다.',
+    hint: '시리즈 A = 채권·스왑·단기자금 금리 · 시리즈 B = 기준지표(한국은행 기준금리 · <b>CD 유통수익률(고시)</b> · 미국 DFF · EFFR · SOFR). 기준지표는 만기 개념이 없어 만기 B 가 잠깁니다. B 를 CD 유통수익률로 두면 실무에서 쓰는 <b>CD 대비 스프레드</b>가 됩니다.',
     calc: '기준금리는 변경일에만 바뀌는 계단식이라, 기준금리가 고정된 구간에서 스프레드는 A 의 금리 움직임을 그대로 따라갑니다.'
   },
   all: { name: '전체', predA: null, predB: null, defA: null, defB: null, sync: false,
@@ -6136,6 +6522,83 @@ guard('다운로드·선물시계열', function () {
   };
 });
 
+guard('다운로드·CPCD시계열', function () {
+  var btn = $('mny-dl');
+  if (!btn) return;
+  btn.onclick = function () {
+    try {
+      var i0 = barWindow('mny-range'), i1 = LAST;
+      var cols = mnySel.slice();
+      if (!cols.length) { alert('선택된 시리즈가 없습니다.'); return; }
+      var nm = {}; MNY_TS.forEach(function (r) { nm[r[1]] = r[0]; });
+      var rl = barLabel('mny-range');
+      var L = [];
+      L.push(DL.cmt('금리 분석 대시보드 (kisbond.com) — CP·CD 시가평가 시계열 차트 로데이터'));
+      L.push(DL.cmt('생성 시각 : ' + DL.nowStr()));
+      L.push(DL.cmt('원자료 : KOFIA 채권정보센터 시가평가 (CP시가평가수익률 · CD시가평가수익률)'));
+      L.push(DL.cmt('데이터 기준일 : ' + fmtD(DATES[LAST]) + ' · x축 = 한국 영업일'));
+      L.push(DL.cmt('표시 구간 : ' + rl + ' — ' + fmtD(DATES[i0]) + ' ~ ' + fmtD(DATES[i1]) + ' (' + (i1 - i0 + 1).toLocaleString() + '영업일)'));
+      L.push(DL.cmt('선택 시리즈 : ' + cols.length + '개 — ' + cols.map(function (c) { return nm[c] || c; }).join(', ')));
+      L.push(DL.cmt('단위 : % (연율) · 값은 평가 4사(나이스피앤아이·한국자산평가·KIS자산평가·에프앤자산평가)'));
+      L.push(DL.cmt('       평균을 KOFIA 가 계산해 고시한 값 그대로다. 우리가 평균을 다시 계산하지 않는다.'));
+      L.push(DL.cmt('만기 : 7일·15일·1월·3월·6월·1년. 3월이 통상 말하는 91일물이다.'));
+      L.push(DL.cmt('수록 시작 : CP 2012-04-02 · CD 2020-01-02'));
+      L.push(DL.cmt('  · CP 의 2006-11-01~2012-03-30 구간은 KOFIA 가 평가사 개별값만 고시하고'));
+      L.push(DL.cmt('    평균행이 없어 싣지 않았다(개별값을 우리가 평균해 합성하지 않는다).'));
+      L.push(DL.cmt('주의 : CD 시가평가는 평가사 평가금리이고, 금투협 고시 CD 유통수익률과 다른 계열이다.'));
+      L.push(DL.cmt('       91일 자리에서 두 값은 거의 같지만(평균차 +0.1bp 수준) 출처가 다르다.'));
+      L.push(DL.cmt('결측 : 빈 칸(보간·전방채움 없음)'));
+      L.push(DL.cmt('정렬 : 일자 오름차순 · 인코딩 UTF-8 (BOM), 줄바꿈 CRLF'));
+      L.push('');
+      L.push(DL.row(['일자'].concat(cols)));
+      for (var i = i0; i <= i1; i++) {
+        var r = [fmtD(DATES[i])];
+        for (var k = 0; k < cols.length; k++) r.push(nnum(pct(cols[k], i), 3));
+        L.push(DL.row(r));
+      }
+      DL.saveText('CPCD시가평가시계열_' + DL.safe(rl || '전체') + '_' + DL.today() + '.csv', L.join(DL.CRLF) + DL.CRLF);
+    } catch (e) { alert('CSV 생성 중 오류: ' + (e && e.message ? e.message : e)); }
+  };
+});
+
+guard('다운로드·CD유통시계열', function () {
+  var btn = $('rop-dl');
+  if (!btn) return;
+  btn.onclick = function () {
+    try {
+      var i0 = barWindow('rop-range'), i1 = LAST;
+      var cols = ropSel.slice();
+      if (!cols.length) { alert('선택된 시리즈가 없습니다.'); return; }
+      var rl = barLabel('rop-range');
+      var L = [];
+      L.push(DL.cmt('금리 분석 대시보드 (kisbond.com) — CD 유통수익률 시계열 차트 로데이터'));
+      L.push(DL.cmt('생성 시각 : ' + DL.nowStr()));
+      L.push(DL.cmt('원자료 : KOFIA 채권정보센터 CD수익률 (일자별·기간별 / 과거자료)'));
+      L.push(DL.cmt('데이터 기준일 : ' + fmtD(DATES[LAST]) + ' · x축 = 한국 영업일'));
+      L.push(DL.cmt('표시 구간 : ' + rl + ' — ' + fmtD(DATES[i0]) + ' ~ ' + fmtD(DATES[i1]) + ' (' + (i1 - i0 + 1).toLocaleString() + '영업일)'));
+      L.push(DL.cmt('단위 : % (연율) · 금투협이 고시하는 CD 91일물 유통수익률 — 금융거래지표법상 중요지표다.'));
+      L.push(DL.cmt('만기축 없음. 변동금리·스왑의 기준금리로 쓰이는 공시 금리다.'));
+      L.push(DL.cmt('수록 시작 : 2009-02-04 (KOFIA 조회 하한)'));
+      L.push(DL.cmt('제도 경계 : 2023-10-04 부터 현행 「CD수익률」, 그 이전은 구 제도의'));
+      L.push(DL.cmt('  「최종호가수익률 / 오후 / 시중은행」이다. KOFIA 응답에서 같은 항목이 그대로'));
+      L.push(DL.cmt('  이어지는 하나의 계열이고 경계 점프는 +1bp 였다(2023-09-27 3.83 → 2023-10-04 3.84).'));
+      L.push(DL.cmt('  구 제도의 오전 계열·특수은행 계열은 2023-09-27 에 종료됐고 별개 계열이라 섞지 않았다'));
+      L.push(DL.cmt('  (시중 대 특수 괴리는 2009-02 기준 17~25bp).'));
+      L.push(DL.cmt('주의 : CD 시가평가(평가 4사평균)와는 출처가 다른 계열이다 — 91일 자리에서 값은 거의 같다.'));
+      L.push(DL.cmt('결측 : 빈 칸(보간·전방채움 없음)'));
+      L.push(DL.cmt('정렬 : 일자 오름차순 · 인코딩 UTF-8 (BOM), 줄바꿈 CRLF'));
+      L.push('');
+      L.push(DL.row(['일자'].concat(cols)));
+      for (var i = i0; i <= i1; i++) {
+        var r = [fmtD(DATES[i])];
+        for (var k = 0; k < cols.length; k++) r.push(nnum(pct(cols[k], i), 3));
+        L.push(DL.row(r));
+      }
+      DL.saveText('CD유통수익률시계열_' + DL.safe(rl || '전체') + '_' + DL.today() + '.csv', L.join(DL.CRLF) + DL.CRLF);
+    } catch (e) { alert('CSV 생성 중 오류: ' + (e && e.message ? e.message : e)); }
+  };
+});
+
 guard('다운로드·IRS시계열', function () {
   var btn = $('irs-dl');
   if (!btn) return;
@@ -6605,6 +7068,12 @@ var MAN_SRC = {
   '미국 SOFR(담보부익일물)': ['FRED · SOFR', '평일 19:30 자동 (T+1 발표)'],
   '미국채': ['FRED · H.15 DGS1MO~DGS30', '평일 19:30 자동 (T+1 발표)'],
   '원화 IRS': ['연합인포맥스 IRS 종가 <b>기사</b>(1·3·5·10년 잠정) → <b>원본 xlsx 수기 확정값</b>(19만기 일괄)', '평일 19:30 기사기반 잠정 → 수기 확정값 일괄 덮어쓰기'],
+  /* [2026-10-07] 단기자금시장 — CP·CD 시가평가 4계열 + CD 유통 1계열 */
+  'CP A1': ['KOFIA 시가평가 · CP시가평가수익률 A1<br><span class="hint">평가 4사평균 (나이스피앤아이 · 한국자산평가 · KIS자산평가 · 에프앤자산평가)</span>', '평일 19:30 자동'],
+  'CP A2+': ['KOFIA 시가평가 · CP시가평가수익률 A2+<br><span class="hint">평가 4사평균</span>', '평일 19:30 자동'],
+  'CP A3+': ['KOFIA 시가평가 · CP시가평가수익률 A3+<br><span class="hint">평가 4사평균</span>', '평일 19:30 자동'],
+  'CD AAA(시가평가)': ['KOFIA 시가평가 · CD시가평가수익률 AAA<br><span class="hint">평가 4사평균. 금투협 고시 CD 유통수익률과 <b>다른 계열</b></span>', '평일 19:30 자동'],
+  'CD 유통수익률(고시)': ['KOFIA · 금투협 고시 CD수익률 91일물<br><span class="hint">금융거래지표법상 중요지표. 2023-10-03 이전은 구 제도 「최종호가 · 오후 · 시중은행」으로 연속</span>', '평일 19:30 자동'],
   '국채선물(수정가)': ['KRX · KOFIA 월물간 보정 수정가 (원본 xlsx 수기)', '수동 · 전체 재적재'],
   /* 2026-09-28 미국채선물 화면 노출 제거 — 레지스트리에서 빠져 이 항목은 더 이상
      참조되지 않는다(REG_TYPES 에 없으므로 §2-1 표·타임라인에 나오지 않는다).
@@ -6898,6 +7367,14 @@ function mqDrawMap() {
         ['선물 시계열', '롤오버 조정계열 (pt) · 선물 원본 CSV 는 여기뿐'],
         ['변동 현황', '선물 pt · IRS bp']
       ]
+    },
+    {
+      name: '단기자금시장', chips: [
+        ['단기자금시장 현황', 'CP A1·A2+·A3+ · CD AAA × 6만기 + CD 유통 91일'],
+        ['CP·CD 시가평가 시계열', '평가 4사평균 (%) · 기본 91일물'],
+        ['CD 유통수익률 시계열', '금투협 고시 91일 — 2009-02-04 부터'],
+        ['변동 현황', '대표 만기 91일물 · bp']
+      ]
     }
   ]);
   group('분석 도구|7종', null, [
@@ -6915,7 +7392,7 @@ function mqDrawMap() {
   ]);
   host.innerHTML = mqSvg(y, o.join('')) +
     '<p class="mqnote">좌측 메뉴 ' + (VIEWS.length) + '개 · 수록 시리즈 ' + nser.toLocaleString() +
-    '개(국내 현물) + 레지스트리 ' + REG_TYPES.length + '종. 대시보드만 하위 탭이 있습니다.</p>';
+    '개(국내 현물) + 레지스트리 ' + REG_TYPES.length + '종. 대시보드는 하위 탭 3개, 매뉴얼은 2개입니다.</p>';
 }
 
 /* ---- ③ 데이터 타임라인 --------------------------------------------------
@@ -7003,7 +7480,7 @@ function mqDrawUnit() {
   o.push(mqBox(10, 86, MQ_W - 20, 32, '#fdf6f6', '#e9a9a9'));
   o.push(mqTxt(MQ_W / 2, 107, '방향이 반대이므로 — 금리와 선물가격의 상관계수가 음수로 나오는 것이 정상입니다', { anchor: 'middle', bold: true, fs: 13, fill: '#b3001b' }));
   o.push(mqBox(10, 124, MQ_W - 20, 26, '#eefaf2', '#b6d6c2'));
-  o.push(mqTxt(MQ_W / 2, 141, '단위가 섞이지 않도록 대시보드가 현물 / 선물·IRS 로 갈려 있고, 선물은 bp·만기축을 쓰는 도구에서 빠져 있습니다', { anchor: 'middle', fs: 12, fill: '#1f6b42' }));
+  o.push(mqTxt(MQ_W / 2, 141, '단위가 섞이지 않도록 대시보드가 현물 / 선물·IRS / 단기자금시장 으로 갈려 있고, 선물은 bp·만기축을 쓰는 도구에서 빠져 있습니다', { anchor: 'middle', fs: 12, fill: '#1f6b42' }));
   host.innerHTML = mqSvg(H, o.join(''));
 }
 
