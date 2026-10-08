@@ -2217,6 +2217,25 @@ var US_NOTE =
   'data/us_rates.json 의 미국 자체 날짜축이라 한국 공휴일에 버려지는 관측일(전 기간 327일)이 없습니다. ' +
   '여기(한국축)는 한국 시리즈와 <b>같은 날짜끼리</b> 비교해야 하는 도구 전용입니다.';
 
+/* 일본국채 공통 주석 — 미국과 같은 '두 벌' 구조이고, 숫자만 다르다. */
+var JP_NOTE =
+  '<b>일본국채는 한국 영업일 축에 일자 기준으로 맞춰 실려 있습니다.</b> ' +
+  '일본 공휴일과 한국 공휴일이 거의 겹치지 않아(일본 연말연시 12/31~1/3 · 골든위크 4/29~5/5 ' +
+  '대 한국 설·추석) 값이 비는 날이 정상적으로 생깁니다. ' +
+  '<b>한국축에 얹으면서 일본 관측일 320일이 버려집니다</b>(겹치는 구간 기준. 미국이 같은 이유로 ' +
+  '잃는 327일과 같은 성질의 비용입니다). ' +
+  '일본 금리도 한국 종가 이후가 아니라 <b>같은 날 아시아 시간대</b>에 형성되지만, ' +
+  '발표가 <b>T+1</b>(일본 재무성 익영업일 오전 고시)이라 국내 기준일보다 1~2영업일 뒤처지는 것이 정상입니다. ' +
+  '<b>수록은 2000년부터</b>입니다 — 1974~1999 구간은 10·15·25·30·40년물이 없거나 짧고, ' +
+  '1989년 이전에는 토요일에도 장이 섰습니다. 만기별 시작일이 달라 <b>25년물은 2004-03-22, ' +
+  '40년물은 2007-11-06</b> 부터입니다. ' +
+  '원본의 소수 자리가 3·2·1·0자리로 섞여 있어 화면은 세 자리로 통일 출력합니다 — 끝자리 0 은 ' +
+  '유효숫자가 아니라 패딩입니다. ' +
+  '<b>일본 금리만 보려면 해외금리 탭의 \'일본 금리 시계열\' 카드를 쓰십시오</b> — 그쪽은 ' +
+  'data/jp_rates.json 의 일본 자체 날짜축이라 버려지는 관측일이 없고 ' +
+  '<b>여기와 값이 다를 수 있습니다</b>(특히 \'직전 영업일 대비\' 변동). ' +
+  '여기(한국축)는 한국 시리즈와 <b>같은 날짜끼리</b> 비교해야 하는 도구 전용입니다.';
+
 /* IRS 공통 주석 */
 var IRS_NOTE =
   '<b>원화 IRS 는 2007-10-29 부터 수록</b>되어 있습니다(4,679영업일, 약 19년). ' +
@@ -2320,6 +2339,27 @@ var EXTRA_SERIES = [
   , { key: 'UST_10Y', label: '미국채', group: '해외금리', col: '미국채_10년', maturity: 120, full: 'US Treasury Constant Maturity 10Y', note: US_NOTE }
   , { key: 'UST_20Y', label: '미국채', group: '해외금리', col: '미국채_20년', maturity: 240, full: 'US Treasury Constant Maturity 20Y', note: US_NOTE }
   , { key: 'UST_30Y', label: '미국채', group: '해외금리', col: '미국채_30년', maturity: 360, full: 'US Treasury Constant Maturity 30Y', note: US_NOTE }
+
+  /* ---- 일본국채 (MOF, 2000~ / 평일 저녁 자동 수집) ----------------------
+     **전 만기 15개를 전부 노출한다**(해외금리 탭 현황표는 격자 11개만 쓰지만,
+     분석 도구는 만기축이 있어 고유 만기를 넣어도 표가 넓어지지 않는다).
+     여기 값은 **한국 영업일축**이라 해외금리 탭의 일본 카드와 **값이 다를 수 있다**.
+     자세한 사연은 JP_NOTE 에. ------------------------------------------- */
+  , { key: 'JGB_1Y', label: '일본국채', group: '해외금리', col: '일본국채_1년', maturity: 12, full: 'Japan JGB Interest Rate 1Y (MOF)', note: JP_NOTE }
+  , { key: 'JGB_2Y', label: '일본국채', group: '해외금리', col: '일본국채_2년', maturity: 24, full: 'Japan JGB Interest Rate 2Y (MOF)', note: JP_NOTE }
+  , { key: 'JGB_3Y', label: '일본국채', group: '해외금리', col: '일본국채_3년', maturity: 36, full: 'Japan JGB Interest Rate 3Y (MOF)', note: JP_NOTE }
+  , { key: 'JGB_4Y', label: '일본국채', group: '해외금리', col: '일본국채_4년', maturity: 48, full: 'Japan JGB Interest Rate 4Y (MOF)', note: JP_NOTE }
+  , { key: 'JGB_5Y', label: '일본국채', group: '해외금리', col: '일본국채_5년', maturity: 60, full: 'Japan JGB Interest Rate 5Y (MOF)', note: JP_NOTE }
+  , { key: 'JGB_6Y', label: '일본국채', group: '해외금리', col: '일본국채_6년', maturity: 72, full: 'Japan JGB Interest Rate 6Y (MOF)', note: JP_NOTE }
+  , { key: 'JGB_7Y', label: '일본국채', group: '해외금리', col: '일본국채_7년', maturity: 84, full: 'Japan JGB Interest Rate 7Y (MOF)', note: JP_NOTE }
+  , { key: 'JGB_8Y', label: '일본국채', group: '해외금리', col: '일본국채_8년', maturity: 96, full: 'Japan JGB Interest Rate 8Y (MOF)', note: JP_NOTE }
+  , { key: 'JGB_9Y', label: '일본국채', group: '해외금리', col: '일본국채_9년', maturity: 108, full: 'Japan JGB Interest Rate 9Y (MOF)', note: JP_NOTE }
+  , { key: 'JGB_10Y', label: '일본국채', group: '해외금리', col: '일본국채_10년', maturity: 120, full: 'Japan JGB Interest Rate 10Y (MOF)', note: JP_NOTE }
+  , { key: 'JGB_15Y', label: '일본국채', group: '해외금리', col: '일본국채_15년', maturity: 180, full: 'Japan JGB Interest Rate 15Y (MOF)', note: JP_NOTE }
+  , { key: 'JGB_20Y', label: '일본국채', group: '해외금리', col: '일본국채_20년', maturity: 240, full: 'Japan JGB Interest Rate 20Y (MOF)', note: JP_NOTE }
+  , { key: 'JGB_25Y', label: '일본국채', group: '해외금리', col: '일본국채_25년', maturity: 300, full: 'Japan JGB Interest Rate 25Y (MOF) — 2004-03-22 부터', note: JP_NOTE + ' <b>25년물은 2004-03-22 부터만 존재</b>합니다. 그 이전 구간을 포함해 계산하면 표본이 자동으로 잘리니 기간 표시를 확인하십시오.' }
+  , { key: 'JGB_30Y', label: '일본국채', group: '해외금리', col: '일본국채_30년', maturity: 360, full: 'Japan JGB Interest Rate 30Y (MOF)', note: JP_NOTE }
+  , { key: 'JGB_40Y', label: '일본국채', group: '해외금리', col: '일본국채_40년', maturity: 480, full: 'Japan JGB Interest Rate 40Y (MOF) — 2007-11-06 부터', note: JP_NOTE + ' <b>40년물은 2007-11-06 부터만 존재</b>합니다. 그 이전 구간을 포함해 계산하면 표본이 자동으로 잘리니 기간 표시를 확인하십시오.' }
 
   /* ---- IRS (원화 이자율스왑, 단위 %) --------------------------------------
      금리 단위이므로 국내 채권 시리즈와 완전히 같은 취급을 받는다 — 커브·스프레드·
