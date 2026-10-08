@@ -2843,7 +2843,7 @@ var LAST = N - 1, PREV = N - 2;
   var wd = ['일', '월', '화', '수', '목', '금', '토'][toJS(DATES[LAST]).getDay()];
   $('asof').textContent = fmtD(DATES[LAST]) + ' (' + wd + ')';
   try { if (window.__NEWS_RATES_ASOF) window.__NEWS_RATES_ASOF(DATA.meta.to); } catch (e) { }
-  try { usLagNote(); } catch (e) { }   // 국내 기준일이 정해진 시점 — 미국 카드 시차 줄을 갱신한다
+  try { fxLagNotes(); } catch (e) { }   // 국내 기준일이 정해진 시점 — 해외 카드 시차 줄을 갱신한다
   try { document.title = '금리 분석 대시보드 — ' + fmtD(DATES[LAST]) + ' 기준'; } catch (e) { }
   $('asofcnt').textContent = '수록 ' + (SERIES.length + 1) + '개 시리즈 · ' + N.toLocaleString() + '영업일 (' + fmtD(DATES[0]) + ' ~ ' + fmtD(DATES[LAST]) + ')';
   var br = pct(DATA.base.c, LAST);
@@ -3429,7 +3429,7 @@ function showDashSub(d) {
   /* 숨어 있던 컨테이너는 폭이 0이라 cw() 가 0을 돌려주고 SVG 가 찌그러진다.
      그래서 그 탭이 '보이게 된 순간' 차트를 다시 그린다. */
   if (d === 'kr') { guard('시계열', drawTS); guard('CP·CD 시계열', drawMnyTS); guard('CD 유통 시계열', drawRopTS); }
-  else if (d === 'ovs') { guard('미국 시계열', drawUSTS); guard('해외금리 탭', renderOvs); }
+  else if (d === 'ovs') { fxDrawAll(); guard('해외금리 탭', renderOvs); }
   else { guard('선물 시계열', drawFutTS); guard('IRS 시계열', drawIrsTS); }
 }
 guard('대시보드 하위 탭', function () {
@@ -6830,38 +6830,48 @@ guard('다운로드·IRS시계열', function () {
   };
 });
 
-guard('다운로드·미국시계열', function () {
-  var btn = $('us-dl');
-  if (!btn) return;
-  btn.onclick = function () {
-    try {
-      if (!US) { alert('미국 금리 데이터가 아직 로드되지 않았습니다.'); return; }
-      var i0 = usWindow(), i1 = US.LAST;
-      var cols = usSel.slice();
-      if (!cols.length) { alert('선택된 시리즈가 없습니다.'); return; }
-      var rb = $('us-range');
-      var on = rb ? [].filter.call(rb.children, function (x) { return x.className === 'on'; })[0] : null;
-      var rl = on ? on.dataset.k : '';
-      var L = [];
-      L.push(DL.cmt('금리 분석 대시보드 (kisbond.com) — 미국 금리 시계열 차트 로데이터'));
-      L.push(DL.cmt('생성 시각 : ' + DL.nowStr()));
-      L.push(DL.cmt('원자료 : FRED (미 국채 H.15 · EFFR · SOFR), 평일 저녁 자동 수집'));
-      L.push(DL.cmt('데이터 기준일 : ' + fmtD(US.DATES[US.LAST]) + ' · x축 = 미국 영업일 (한국 영업일축 아님)'));
-      L.push(DL.cmt('표시 구간 : ' + rl + ' — ' + fmtD(US.DATES[i0]) + ' ~ ' + fmtD(US.DATES[i1]) + ' (' + (i1 - i0 + 1).toLocaleString() + '영업일)'));
-      L.push(DL.cmt('선택 시리즈 : ' + cols.length + '개 — ' + cols.map(function (c) { return (US.LBL[c] || c); }).join(', ')));
-      L.push(DL.cmt('단위 : % (연율) · 결측은 빈 칸(보간·전방채움 없음)'));
-      L.push(DL.cmt('정렬 : 일자 오름차순 · 인코딩 UTF-8 (BOM), 줄바꿈 CRLF'));
-      L.push('');
-      L.push(DL.row(['일자'].concat(cols.map(function (c) { return (US.LBL[c] || c) + '(' + c + ')'; }))));
-      for (var i = i0; i <= i1; i++) {
-        var r = [fmtD(US.DATES[i])];
-        for (var k = 0; k < cols.length; k++) r.push(nnum(uPct(cols[k], i), 4));
-        L.push(DL.row(r));
-      }
-      DL.saveText('미국금리시계열차트_' + DL.safe(rl || '전체') + '_' + DL.today() + '.csv', L.join(DL.CRLF) + DL.CRLF);
-    } catch (e) { alert('CSV 생성 중 오류: ' + (e && e.message ? e.message : e)); }
-  };
-});
+/* 해외 시계열 카드의 CSV 다운로드 — 나라마다 한 벌씩 붙인다.
+   머리말 문구는 FX[cc].csv 가 단일 출처다(나라마다 원자료·축 설명이 다르다).
+
+   **호출은 여기서 하지 않는다.** 이 블록은 파일 위치가 FX / FX_ORDER 선언보다
+   앞이라, 여기서 FX_ORDER.forEach 를 돌리면 var 호이스팅 때문에 undefined 다.
+   함수 선언은 BOOT 스코프 맨 위로 끌어올려지므로, 실제 호출은 FX 섹션에서 한다. */
+function fxBindCSV(cc) {
+  guard('다운로드·' + FX[cc].short + '시계열', function () {
+    var C = FX[cc];
+    var btn = $(C.dom.dl);
+    if (!btn) return;
+    btn.onclick = function () {
+      try {
+        var A = C.axis;
+        if (!A) { alert(C.short + ' 금리 데이터가 아직 로드되지 않았습니다.'); return; }
+        var i0 = fxWindow(C), i1 = A.LAST;
+        var cols = C.sel.slice();
+        if (!cols.length) { alert('선택된 시리즈가 없습니다.'); return; }
+        var rb = $(C.dom.range);
+        var on = rb ? [].filter.call(rb.children, function (x) { return x.className === 'on'; })[0] : null;
+        var rl = on ? on.dataset.k : '';
+        var L = [];
+        L.push(DL.cmt('금리 분석 대시보드 (kisbond.com) — ' + C.csv.title));
+        L.push(DL.cmt('생성 시각 : ' + DL.nowStr()));
+        L.push(DL.cmt('원자료 : ' + C.csv.src));
+        L.push(DL.cmt('데이터 기준일 : ' + fmtD(A.DATES[A.LAST]) + ' · ' + C.csv.axisNote));
+        L.push(DL.cmt('표시 구간 : ' + rl + ' — ' + fmtD(A.DATES[i0]) + ' ~ ' + fmtD(A.DATES[i1]) + ' (' + (i1 - i0 + 1).toLocaleString() + '영업일)'));
+        L.push(DL.cmt('선택 시리즈 : ' + cols.length + '개 — ' + cols.map(function (c) { return (A.LBL[c] || c); }).join(', ')));
+        L.push(DL.cmt('단위 : % (연율) · 결측은 빈 칸(보간·전방채움 없음)'));
+        L.push(DL.cmt('정렬 : 일자 오름차순 · 인코딩 UTF-8 (BOM), 줄바꿈 CRLF'));
+        L.push('');
+        L.push(DL.row(['일자'].concat(cols.map(function (c) { return (A.LBL[c] || c) + '(' + c + ')'; }))));
+        for (var i = i0; i <= i1; i++) {
+          var r = [fmtD(A.DATES[i])];
+          for (var k = 0; k < cols.length; k++) r.push(nnum(axVal(A, cols[k], i), 4));
+          L.push(DL.row(r));
+        }
+        DL.saveText(C.csv.file + DL.safe(rl || '전체') + '_' + DL.today() + '.csv', L.join(DL.CRLF) + DL.CRLF);
+      } catch (e) { alert('CSV 생성 중 오류: ' + (e && e.message ? e.message : e)); }
+    };
+  });
+}
 
 /* ---------------- 시계열 원본 다운로드 탭 ---------------- */
 guard('다운로드 탭', function () {
@@ -7052,72 +7062,129 @@ guard('다운로드 탭', function () {
    인코딩은 rates.json 과 동일해 decodeSeries() 를 그대로 재사용한다.
    로딩 실패는 이 카드와 변동현황 미국 행에만 국한되며 나머지는 정상 동작한다.
    ================================================================ */
-var US = null;
-var US_CHIPS = [
-  ['미국채_1월', '미국채 1개월'], ['미국채_3월', '미국채 3개월'], ['미국채_6월', '미국채 6개월'],
-  ['미국채_1년', '미국채 1년'], ['미국채_2년', '미국채 2년'], ['미국채_3년', '미국채 3년'],
-  ['미국채_5년', '미국채 5년'],
-  /* 7년물은 한때 2021-09-17 부터만 담겨 있었다(수집 누락. DGS7 자체는 1969년~).
-     2026-09-22 에 FRED 에서 전 구간을 다시 받아 2000-01-03 부터 채웠으므로
-     다른 만기와 동일하게 다룬다. */
-  ['미국채_7년', '미국채 7년'],
-  ['미국채_10년', '미국채 10년'], ['미국채_20년', '미국채 20년'], ['미국채_30년', '미국채 30년'],
-  ['미국기준금리_DFF', '기준금리(DFF)'], ['미국단기금리_EFFR', 'EFFR'], ['미국단기금리_SOFR', 'SOFR']
-];
-var usSel = ['미국채_2년', '미국채_10년', '미국채_30년', '미국단기금리_SOFR'];
-var usRange = '3Y';
-/* 변동현황에 추가할 미국 행 */
-var US_CHG_ROWS = [['미국채_2년', '미국채 2년'], ['미국채_5년', '미국채 5년'],
-                   ['미국채_10년', '미국채 10년'], ['미국채_30년', '미국채 30년']];
+/* ================================================================
+   해외 금리 — 국가 레지스트리 FX  (2026-10-08 일반화)
+   ----------------------------------------------------------------
+   종전에는 미국 전용 심볼이 파일 곳곳에 흩어져 있었다 —
+   US · US_CHIPS · usSel · usRange · US_LEVEL_COL · US_CHG_ROWS ·
+   uPct/uRaw/uIdxLE/uPrevObs/uDateTicks · usWindow · drawUSTS · usLoad · usLagNote.
+   나라를 하나 붙이려면 그 전부를 복사해야 했고, 복사본이 미국과 조용히
+   어긋나는 것이 시간문제였다. 그래서 **국가를 데이터로 받는 구조**로 모았다.
 
-function uPct(c, i) { var a = US && US.COL[c]; if (!a) return NaN; var v = a[i]; return isNaN(v) ? NaN : v / 1000; }
-function uRaw(c, i) { var a = US && US.COL[c]; return a ? a[i] : NaN; }
-/** yyyymmdd 이하인 마지막 미국 영업일 인덱스 */
-function uIdxLE(ymd) {
-  var D = US.DATES, lo = 0, hi = US.N - 1, r = -1;
-  while (lo <= hi) { var m = (lo + hi) >> 1; if (D[m] <= ymd) { r = m; lo = m + 1; } else hi = m - 1; }
-  return r;
-}
-/** from 이하에서 그 컬럼에 값이 있는 가장 최근 인덱스 (미국 휴일 공백을 건너뛴다) */
-function uPrevObs(c, from) {
-  var a = US && US.COL[c]; if (!a) return -1;
-  for (var i = from; i >= 0; i--) if (!isNaN(a[i])) return i;
-  return -1;
-}
-/** 미국 날짜축용 tick (dateTicks 의 US판 — 전역 DATES 대신 US.DATES 를 본다) */
-function uDateTicks(i0, i1, cnt) {
+   나라를 추가하는 절차 (그 외에 손댈 곳이 없다)
+     1. FX 에 항목 하나      2. FX_ORDER 에 코드 하나
+     3. HTML 에 시계열 카드 한 장 (dom 에 적은 id 들)
+
+   **나라마다 카드가 한 장인 이유**
+     x축이 나라마다 다르다. 한 차트에 두 나라를 겹치려면 축을 합쳐야 하고,
+     그 순간 공휴일이 어긋난 날이 통째로 버려진다
+     (실측: 미국축에 일본을 얹으면 일본 205일, 일본축에 미국을 얹으면 미국 375일).
+     그래서 카드를 나눠 각자 자기 축으로 그린다.
+
+   **setAsof() 를 쓰지 않는 이유**
+     setAsof() 는 **국내 축(DATES)** 으로 기준일을 찍는 함수다(선물·IRS 카드용).
+     해외 카드에 쓰면 남의 달력으로 날짜를 읽어 틀린 날짜가 나온다. 해외 카드의
+     기준일은 그 나라 축(axis.DATES)에서 직접 읽는다. 일반화 대상이 아니다.
+
+   항목 뜻
+     url       자체축 JSON 경로 — 나라마다 **별도 파일**이다
+     axis      로더가 채운다 {N, DATES, COL, LBL, META, LAST, meta}. 도착 전엔 null
+     chips     시계열 칩 [컬럼, 표시명]. **선 색 순서의 단일 출처**이기도 하다
+     sel/range 칩 선택·기간 프리셋 (사용자 조작으로 바뀌는 가변 상태)
+     levelCol  현황표 만기(개월) → 그 나라 컬럼명. 없는 만기는 키가 없다 → '·'
+     chgRows   변동표에 올릴 [컬럼, 표시명]
+     dom       그 나라 카드의 DOM id 모음
+     csv       CSV 다운로드 머리말 문구
+   ================================================================ */
+var FX = {
+  US: {
+    code: 'US', name: '미국채', short: '미국',
+    url: 'data/us_rates.json', src: 'FRED',
+    axis: null,
+    chips: [
+      ['미국채_1월', '미국채 1개월'], ['미국채_3월', '미국채 3개월'], ['미국채_6월', '미국채 6개월'],
+      ['미국채_1년', '미국채 1년'], ['미국채_2년', '미국채 2년'], ['미국채_3년', '미국채 3년'],
+      ['미국채_5년', '미국채 5년'],
+      /* 7년물은 한때 2021-09-17 부터만 담겨 있었다(수집 누락. DGS7 자체는 1969년~).
+         2026-09-22 에 FRED 에서 전 구간을 다시 받아 2000-01-03 부터 채웠으므로
+         다른 만기와 동일하게 다룬다. */
+      ['미국채_7년', '미국채 7년'],
+      ['미국채_10년', '미국채 10년'], ['미국채_20년', '미국채 20년'], ['미국채_30년', '미국채 30년'],
+      ['미국기준금리_DFF', '기준금리(DFF)'], ['미국단기금리_EFFR', 'EFFR'], ['미국단기금리_SOFR', 'SOFR']
+    ],
+    sel: ['미국채_2년', '미국채_10년', '미국채_30년', '미국단기금리_SOFR'],
+    range: '3Y',
+    /* 현황표 만기(개월) → 미국축 컬럼.
+       LEVEL_MATS 중 1년6월(18)·4년(48)·15년(180)은 FRED H.15 에 없어 여기에 없다 → '·'.
+       현황표는 1년부터 시작하므로 1·3·6개월 컬럼은 쓰지 않는다(시계열 카드 칩으로는 노출). */
+    levelCol: {
+      12: '미국채_1년', 24: '미국채_2년', 36: '미국채_3년', 60: '미국채_5년',
+      84: '미국채_7년', 120: '미국채_10년', 240: '미국채_20년', 360: '미국채_30년'
+    },
+    chgRows: [['미국채_2년', '미국채 2년'], ['미국채_5년', '미국채 5년'],
+              ['미국채_10년', '미국채 10년'], ['미국채_30년', '미국채 30년']],
+    dom: {
+      sec: 'us-sec', chart: 'us-chart', legend: 'us-legend', pick: 'us-pick',
+      range: 'us-range', asof: 'us-asof', dl: 'us-dl', lag: 'us-lag', man: 'man-us'
+    },
+    csv: {
+      title: '미국 금리 시계열 차트 로데이터',
+      src: 'FRED (미 국채 H.15 · EFFR · SOFR), 평일 저녁 자동 수집',
+      axisNote: 'x축 = 미국 영업일 (한국 영업일축 아님)',
+      file: '미국금리시계열차트_'
+    }
+  }
+};
+/* 표·기준일 줄·카드가 모두 이 순서를 따른다. 순서의 단일 출처다. */
+var FX_ORDER = ['US'];
+
+/** 그 나라 축 (도착 전이면 null) */
+function fxAxis(cc) { var C = FX[cc]; return (C && C.axis && C.axis.N) ? C.axis : null; }
+
+/** 날짜축용 tick — dateTicks 의 '임의 축' 판 (전역 DATES 대신 A.DATES 를 본다) */
+function fxDateTicks(A, i0, i1, cnt) {
   cnt = cnt || 8; var out = [], step = Math.max(1, Math.floor((i1 - i0) / cnt));
-  var spanDays = dayDiff(US.DATES[i1], US.DATES[i0]);
+  var spanDays = dayDiff(A.DATES[i1], A.DATES[i0]);
   for (var i = i0; i <= i1; i += step) {
-    var d = '' + US.DATES[i];
+    var d = '' + A.DATES[i];
     out.push({ x: i, label: spanDays > 730 ? d.substr(0, 4) + '.' + d.substr(4, 2) : d.substr(2, 2) + '.' + d.substr(4, 2) + '.' + d.substr(6, 2) });
   }
   return out;
 }
-function usWindow() {
-  var rb = $('us-range'); if (!rb) return 0;
+/** 기간 프리셋이 가리키는 시작 인덱스 (그 나라 축 기준) */
+function fxWindow(C) {
+  var A = C.axis; if (!A) return 0;
+  var rb = $(C.dom.range); if (!rb) return 0;
   var b = [].filter.call(rb.children, function (x) { return x.className === 'on'; })[0];
   if (!b || b.dataset.u === 'a') return 0;
-  var i = uIdxLE(shiftCal(US.DATES[US.LAST], b.dataset.u, +b.dataset.n));
+  var i = axIdxLE(A, shiftCal(A.DATES[A.LAST], b.dataset.u, +b.dataset.n));
   return i < 0 ? 0 : i;
 }
-function drawUSTS() {
-  if (!US) return;
-  var i0 = usWindow(), i1 = US.LAST;
-  var order = US_CHIPS.map(function (r) { return r[0]; });
-  var ser = usSel.map(function (c) {
+/** 그 나라 시계열 카드 한 장을 그린다 */
+function fxDrawTS(cc) {
+  var C = FX[cc]; if (!C) return;
+  var A = C.axis; if (!A) return;
+  var i0 = fxWindow(C), i1 = A.LAST;
+  var order = C.chips.map(function (r) { return r[0]; });
+  var ser = C.sel.map(function (c) {
     var pts = [];
-    for (var i = i0; i <= i1; i++) { var v = uPct(c, i); pts.push(isNaN(v) ? null : [i, v]); }
+    for (var i = i0; i <= i1; i++) { var v = axVal(A, c, i); pts.push(isNaN(v) ? null : [i, v]); }
     var li = order.indexOf(c);
-    return { name: US.LBL[c] || c, pts: pts, color: PAL[(li < 0 ? 0 : li) % PAL.length] };
+    return { name: A.LBL[c] || c, pts: pts, color: PAL[(li < 0 ? 0 : li) % PAL.length] };
   });
-  $('us-chart').innerHTML = svgLine({
-    w: cw('us-chart', 1080), h: 340, series: ser,
-    xTicks: uDateTicks(i0, i1, 9), yFmt: function (v) { return v.toFixed(2); }
+  $(C.dom.chart).innerHTML = svgLine({
+    w: cw(C.dom.chart, 1080), h: 340, series: ser,
+    xTicks: fxDateTicks(A, i0, i1, 9), yFmt: function (v) { return v.toFixed(2); }
   });
-  $('us-legend').innerHTML = ser.map(function (s) {
+  $(C.dom.legend).innerHTML = ser.map(function (s) {
     return '<span><i style="background:' + s.color + '"></i>' + esc(s.name) + ' <b>' + f3(lastVal(s.pts)) + '%</b></span>';
   }).join('');
+}
+/** 모든 나라 카드를 다시 그린다 (탭 전환·리사이즈에서 부른다) */
+function fxDrawAll() {
+  FX_ORDER.forEach(function (cc) {
+    guard(FX[cc].short + ' 시계열', function () { fxDrawTS(cc); });
+  });
 }
 
 /* ================================================================
@@ -7132,28 +7199,21 @@ function drawUSTS() {
    한국축에 미국을 얹으면 미국 330일 유실). 그래서 국가마다 자체축 파일을 따로 둔다.
 
    axis()  그 나라의 축 객체 { N, DATES, COL, LAST } 를 돌려준다. 아직 안 왔으면 null.
-           (US 는 비동기 로더가 채우므로 변수를 직접 박지 않고 함수로 감싼다)
+           (축은 비동기 로더가 채우므로 값을 직접 박지 않고 함수로 감싼다 — fxAxis(cc))
    col     현황표 만기(개월) → 그 나라 컬럼명. 없는 만기는 키가 없다 → '·'
    chg     변동표에 올릴 [컬럼, 표시명] 목록
    ================================================================ */
-/* 현황표 만기(개월) → 미국축 컬럼.
-   LEVEL_MATS 중 1년6월(18)·4년(48)·15년(180)은 FRED H.15 에 없어 여기에 없다 → '·'.
-   현황표는 1년부터 시작하므로 1·3·6개월 컬럼은 쓰지 않는다(시계열 카드 칩으로는 노출). */
-var US_LEVEL_COL = {
-  12: '미국채_1년', 24: '미국채_2년', 36: '미국채_3년', 60: '미국채_5년',
-  84: '미국채_7년', 120: '미국채_10년', 240: '미국채_20년', 360: '미국채_30년'
-};
-var OVS_ROWS = [
-  {
-    code: 'US', name: '미국채', short: '미국',
-    axis: function () { return (typeof US !== 'undefined' && US && US.N) ? US : null; },
-    col: US_LEVEL_COL,
-    chg: US_CHG_ROWS
-  }
-  /* 일본은 다음 세션에 추가한다 — 수록 2000년~, 컬럼 '일본국채_N년', 자체축 data/jp_rates.json.
-     현황표 격자는 11개 그대로 두고 일본 고유 만기(6·8·9·25·40년)는 시계열 칩으로만 노출한다
-     (격자를 넓히면 미국 행 빈칸만 늘어난다). 상세는 _scripts/_일본국채_적재결정_20261008.md */
-];
+/* 표의 행 = FX 레지스트리. 종전의 US_LEVEL_COL·US_CHG_ROWS 는 FX.US.levelCol /
+   FX.US.chgRows 로 옮겨갔다. 여기서 따로 정의하지 않는다 — 두 벌이 되면 어긋난다. */
+var OVS_ROWS = FX_ORDER.map(function (cc) {
+  var C = FX[cc];
+  return {
+    code: C.code, name: C.name, short: C.short,
+    axis: function () { return fxAxis(cc); },   // 비동기 도착이므로 값이 아니라 함수다
+    col: C.levelCol,
+    chg: C.chgRows
+  };
+});
 
 /** 그 축에서 from 이하로 값이 있는 가장 최근 인덱스 (휴일 공백을 건너뛴다) */
 function axPrevObs(A, c, from) {
@@ -7274,25 +7334,30 @@ function ovsAsofBar() {
 
 function renderOvs() { guard('해외 현황', ovsLevel); guard('해외 변동', ovsChg); guard('해외 기준일', ovsAsofBar); }
 
-(function usLoad() {
-  var URL_US = 'data/us_rates.json';
-  function ufail(msg) {
-    var s = $('us-chart');
-    if (s) s.innerHTML = '<div class="alert e"><b>미국 금리 데이터를 불러오지 못했습니다.</b><br>' + esc(msg) +
+/* ----------------------------------------------------------------
+   국가 자체축 로더 — 나라마다 한 번씩 돈다.
+   **실패는 그 나라에만 국한된다**: 한 나라가 404 여도 다른 나라 카드·국내 탭은
+   그대로 동작한다(각자 자기 fetch·자기 try 안에 있다).
+   ---------------------------------------------------------------- */
+function fxLoad(cc) {
+  var C = FX[cc];
+  function ffail(msg) {
+    var s = $(C.dom.chart);
+    if (s) s.innerHTML = '<div class="alert e"><b>' + esc(C.short) + ' 금리 데이터를 불러오지 못했습니다.</b><br>' + esc(msg) +
       '<br>국내 금리·차트 등 나머지 기능은 정상 동작합니다.</div>';
-    var a = $('us-asof'); if (a) a.textContent = '';
-    if (window.console && console.warn) console.warn('[US] ' + msg);
+    var a = $(C.dom.asof); if (a) a.textContent = '';
+    if (window.console && console.warn) console.warn('[' + cc + '] ' + msg);
   }
-  if (!window.fetch || !window.JSON) { ufail('이 브라우저는 fetch / JSON 을 지원하지 않습니다.'); return; }
-  if (location.protocol === 'file:') { ufail('로컬 파일(file://)에서는 data/us_rates.json 을 읽을 수 없습니다.'); return; }
+  if (!window.fetch || !window.JSON) { ffail('이 브라우저는 fetch / JSON 을 지원하지 않습니다.'); return; }
+  if (location.protocol === 'file:') { ffail('로컬 파일(file://)에서는 ' + C.url + ' 을 읽을 수 없습니다.'); return; }
   try {
-    fetch(URL_US, { cache: 'no-cache' }).then(function (r) {
-      if (!r.ok) throw new Error(r.status === 404 ? 'data/us_rates.json 이 리포지토리에 없습니다 (HTTP 404).' : 'HTTP ' + r.status);
+    fetch(C.url, { cache: 'no-cache' }).then(function (r) {
+      if (!r.ok) throw new Error(r.status === 404 ? C.url + ' 이 리포지토리에 없습니다 (HTTP 404).' : 'HTTP ' + r.status);
       return r.text();
     }).then(function (t) {
       var J;
       try { J = JSON.parse(t); }
-      catch (e) { throw new Error('data/us_rates.json 을 해석하지 못했습니다 — ' + e.message); }
+      catch (e) { throw new Error(C.url + ' 을 해석하지 못했습니다 — ' + e.message); }
       if (!J || !J.meta || !J.series || !J.dates) throw new Error('형식이 올바르지 않습니다 (meta/series/dates 없음).');
       var n = J.meta.nrows, dt = new Int32Array(n), i;
       for (i = 0; i < n; i++) dt[i] = +J.dates.substr(i * 8, 8);
@@ -7300,55 +7365,61 @@ function renderOvs() { guard('해외 현황', ovsLevel); guard('해외 변동', 
       J.series.forEach(function (s) {
         try { col[s.c] = decodeSeries(s.d, n, s.fi, s.li); mt[s.c] = s; } catch (e) { }
       });
-      US_CHIPS.forEach(function (r) { lbl[r[0]] = r[1]; });
-      US = { N: n, DATES: dt, COL: col, LBL: lbl, META: mt, LAST: n - 1, meta: J.meta };
+      C.chips.forEach(function (r) { lbl[r[0]] = r[1]; });
+      C.axis = { N: n, DATES: dt, COL: col, LBL: lbl, META: mt, LAST: n - 1, meta: J.meta };
 
-      var a = $('us-asof');
+      var a = $(C.dom.asof);
       if (a) a.textContent = '최종 관측일 ' + fmtD(dt[n - 1]) + ' · ' + n.toLocaleString() + '영업일 (' +
-        fmtD(dt[0]) + ' ~) · FRED';
-      try { usLagNote(); } catch (e) { }
+        fmtD(dt[0]) + ' ~) · ' + C.src;
+      try { fxLagNotes(); } catch (e) { }
 
       // 칩
-      var pk = $('us-pick');
-      US_CHIPS.forEach(function (r) {
+      var pk = $(C.dom.pick);
+      C.chips.forEach(function (r) {
         if (!col[r[0]]) return;                       // 데이터에 없는 시리즈는 칩을 만들지 않는다
         var b = el('button', {}, esc(r[1]));
         var m = mt[r[0]];
         if (m) b.title = (m.full || r[1]) + ' · ' + fmtD(dt[m.fi]) + ' ~ ' + fmtD(dt[m.li]) + ' · ' + m.n.toLocaleString() + '일';
-        if (usSel.indexOf(r[0]) >= 0) b.className = 'on';
+        if (C.sel.indexOf(r[0]) >= 0) b.className = 'on';
         b.onclick = function () {
-          var k = usSel.indexOf(r[0]);
-          if (k >= 0) usSel.splice(k, 1); else usSel.push(r[0]);
-          b.className = usSel.indexOf(r[0]) >= 0 ? 'on' : '';
-          guard('미국 시계열', drawUSTS);
+          var k = C.sel.indexOf(r[0]);
+          if (k >= 0) C.sel.splice(k, 1); else C.sel.push(r[0]);
+          b.className = C.sel.indexOf(r[0]) >= 0 ? 'on' : '';
+          guard(C.short + ' 시계열', function () { fxDrawTS(cc); });
         };
         pk.appendChild(b);
       });
       // 기간 프리셋
-      var rb = $('us-range');
+      var rb = $(C.dom.range);
       [['1M', 'm', 1], ['3M', 'm', 3], ['6M', 'm', 6], ['1Y', 'y', 1], ['3Y', 'y', 3], ['5Y', 'y', 5], ['10Y', 'y', 10], ['전체', 'a', 0]].forEach(function (r) {
         var b = el('button', {}, r[0]); b.dataset.k = r[0]; b.dataset.u = r[1]; b.dataset.n = r[2];
-        if (r[0] === usRange) b.className = 'on';
+        if (r[0] === C.range) b.className = 'on';
         b.onclick = function () {
-          usRange = r[0];
-          [].forEach.call(rb.children, function (x) { x.className = x.dataset.k === usRange ? 'on' : ''; });
-          guard('미국 시계열', drawUSTS);
+          C.range = r[0];
+          [].forEach.call(rb.children, function (x) { x.className = x.dataset.k === C.range ? 'on' : ''; });
+          guard(C.short + ' 시계열', function () { fxDrawTS(cc); });
         };
         rb.appendChild(b);
       });
-      guard('미국 시계열', drawUSTS);
-      /* [2026-10-08] 해외금리 탭(현황표·변동표·기준일 줄)을 US 도착 시점에 다시 그린다.
-         BOOT 때 한 번 그려 두지만 그때는 US 가 없어 '불러오는 중'만 나온다. */
+      guard(C.short + ' 시계열', function () { fxDrawTS(cc); });
+      /* [2026-10-08] 해외금리 탭(현황표·변동표·기준일 줄)을 그 나라 도착 시점에 다시 그린다.
+         BOOT 때 한 번 그려 두지만 그때는 축이 없어 '불러오는 중'만 나온다. */
       guard('해외금리 탭', renderOvs);
-      /* 매뉴얼 §2-4 의 '미국 자체축 구간'은 이 시점에야 알 수 있다 (BOOT 시점에는 US 가 없다) */
-      guard('매뉴얼(미국축)', function () { if (typeof renderManual === 'function') renderManual(); });
+      /* 매뉴얼 §2-4 의 '자체축 구간'은 이 시점에야 알 수 있다 (BOOT 시점에는 축이 없다) */
+      guard('매뉴얼(' + C.short + '축)', function () { if (typeof renderManual === 'function') renderManual(); });
       if (window.console && console.log) {
-        console.log('[US] ' + J.meta.nseries + '시리즈 · ' + n + '영업일 · ' + J.meta.from + '~' + J.meta.to +
-          ' · 축=' + (J.meta.axis || 'US'));
+        console.log('[' + cc + '] ' + J.meta.nseries + '시리즈 · ' + n + '영업일 · ' + J.meta.from + '~' + J.meta.to +
+          ' · 축=' + (J.meta.axis || cc));
       }
-    })['catch'](function (e) { ufail((e && e.message) ? e.message : String(e)); });
-  } catch (e) { ufail(String(e)); }
-})();
+    })['catch'](function (e) { ffail((e && e.message) ? e.message : String(e)); });
+  } catch (e) { ffail(String(e)); }
+}
+/* 나라별 CSV 버튼 바인딩 — 선언은 다운로드 블록(파일상 앞쪽)에 있고 호출만 여기서 한다.
+   FX_ORDER 가 var 라 그쪽에서는 아직 undefined 이기 때문이다. */
+FX_ORDER.forEach(function (cc) { fxBindCSV(cc); });
+
+/* 나라별 로더를 각각 띄운다. 한 나라의 실패가 다른 나라를 막지 않는다(실패 격리). */
+FX_ORDER.forEach(function (cc) { guard('해외 로더(' + cc + ')', function () { fxLoad(cc); }); });
 
 /* ================================================================
    사용 매뉴얼 — 동적 슬롯 채우기
@@ -7359,7 +7430,7 @@ function renderOvs() { guard('해외 현황', ovsLevel); guard('해외 변동', 
      · 도구별 선택 가능 시리즈 → **실제 select 의 optgroup 을 센다.**
        data-reg / corrOnly 규칙이 바뀌면 표가 자동으로 따라오므로 매뉴얼이 낡지 않는다.
    출처·갱신 방식만은 데이터에 없는 사실이므로 아래 MAN_SRC 에 정적으로 적는다.
-   미국 자체축(us_rates.json)은 비동기로 도착하므로 US 로더에서 한 번 더 부른다.
+   나라별 자체축(us_rates.json 등)은 비동기로 도착하므로 fxLoad() 에서 한 번 더 부른다.
    ================================================================ */
 var MAN_SRC = {
   '한국은행 기준금리': ['한국은행 (변경이력 전방채움)', '평일 19:30 자동'],
@@ -7536,11 +7607,14 @@ function renderManual() {
       '</td><td class="l">' + r.scale + '</td><td class="l">' + r.upd + '</td><td>' + r.unit + '</td></tr>';
   }).join('') + '</tbody></table>';
 
-  /* --- 2-4 미국 자체축 구간 (비동기 — 아직 없으면 그대로 둔다) --- */
+  /* --- 2-4 나라별 자체축 구간 (비동기 — 아직 없으면 그대로 둔다) --- */
   try {
-    if (typeof US !== 'undefined' && US && US.N)
-      txt('man-us', fmtD(US.DATES[0]) + ' ~ ' + fmtD(US.DATES[US.N - 1]) + ' · ' + US.N.toLocaleString() + '영업일 (미국 영업일)');
-    else txt('man-us', '<span class="pend">로딩 중…</span>');
+    FX_ORDER.forEach(function (cc) {
+      var C = FX[cc]; if (!C.dom.man) return;
+      var A = fxAxis(cc);
+      if (A) txt(C.dom.man, fmtD(A.DATES[0]) + ' ~ ' + fmtD(A.DATES[A.N - 1]) + ' · ' + A.N.toLocaleString() + '영업일 (' + C.short + ' 영업일)');
+      else txt(C.dom.man, '<span class="pend">로딩 중…</span>');
+    });
   } catch (e) { }
 
   /* --- 5. 도구별 선택 가능 시리즈 — 실제 드롭다운을 센다 ---
@@ -7878,7 +7952,7 @@ guard('매뉴얼 목차', function () {
    renderManual 을 먼저 불러 상세가 정본이 되도록 순서를 고정한다. */
 guard('사용 매뉴얼', renderManual);
 guard('한눈에', renderManQuick);
-/* 해외금리 탭을 한 번 그려 둔다. 이 시점에는 US(us_rates.json)가 아직 안 와 있어
+/* 해외금리 탭을 한 번 그려 둔다. 이 시점에는 나라별 자체축이 아직 안 와 있어
    '불러오는 중'만 나오고, 로더가 도착하면 renderOvs 를 다시 불러 채운다. */
 guard('해외금리 탭', renderOvs);
 showView('dash');
@@ -7890,19 +7964,23 @@ showView('dash');
    그 사실이 화면에 없으면 두 카드의 변동 수치를 같은 날 기준으로 착각한다.
    국내(rates.json)·미국(us_rates.json) 로딩 순서가 보장되지 않으므로 양쪽 렌더에서 모두 부르고,
    아직 안 들어온 쪽이 있으면 조용히 비워 둔다(다른 쪽이 도착하면 다시 채운다). */
-function usLagNote() {
-  var e = document.getElementById('us-lag'); if (!e) return;
+function fxLagNote(cc) {
+  var C = FX[cc]; if (!C || !C.dom.lag) return;
+  var e = document.getElementById(C.dom.lag); if (!e) return;
   function toUTC(v) { v = '' + v; return Date.UTC(+v.substr(0, 4), +v.substr(4, 2) - 1, +v.substr(6, 2)); }
   var ud = 0, kd = 0;
-  /* US·DATES·LAST 는 모두 BOOT() 스코프의 지역 변수다 — window.US 로는 잡히지 않으니 typeof 로 본다. */
-  try { if (typeof US !== 'undefined' && US && US.DATES && US.N) ud = US.DATES[US.N - 1]; } catch (x) { }
+  /* FX·DATES·LAST 는 모두 BOOT() 스코프의 지역 변수다 — window.FX 로는 잡히지 않으니 typeof 로 본다. */
+  try { var A = fxAxis(cc); if (A) ud = A.DATES[A.N - 1]; } catch (x) { }
   try { if (typeof DATES !== 'undefined' && typeof LAST !== 'undefined' && LAST >= 0) kd = DATES[LAST]; } catch (x) { }
   if (!ud || !kd) { e.textContent = ''; return; }
   var gap = Math.round((toUTC(kd) - toUTC(ud)) / 86400000);
-  e.innerHTML = '기준일 미국 <b>' + fmtD(ud) + '</b> / 국내 <b>' + fmtD(kd) + '</b>' +
-    (gap > 0 ? ' — ' + gap + '일 시차(정상. 미국은 발표가 하루 늦습니다). 변동 수치 직접 비교 주의.'
-             : (gap < 0 ? ' — 미국이 ' + (-gap) + '일 앞섭니다.' : ' — 동일.'));
+  e.innerHTML = '기준일 ' + esc(C.short) + ' <b>' + fmtD(ud) + '</b> / 국내 <b>' + fmtD(kd) + '</b>' +
+    (gap > 0 ? ' — ' + gap + '일 시차(정상. ' + esc(C.short) + '은 발표가 하루 늦습니다). 변동 수치 직접 비교 주의.'
+             : (gap < 0 ? ' — ' + esc(C.short) + '이 ' + (-gap) + '일 앞섭니다.' : ' — 동일.'));
 }
+/** 모든 나라의 시차 줄을 갱신한다. 국내·해외 로딩 순서가 보장되지 않으므로
+    양쪽 렌더에서 모두 부르고, 아직 안 들어온 쪽은 조용히 비워 둔다. */
+function fxLagNotes() { FX_ORDER.forEach(function (cc) { try { fxLagNote(cc); } catch (x) { } }); }
 
 function newsScrollFx() {
   var s = document.getElementById('news-sec'); if (!s) return;
@@ -7924,7 +8002,7 @@ window.__NEWS_SCROLLFX = newsScrollFx;
   window.onresize = function () {
     if (t) clearTimeout(t);
     t = setTimeout(function () {
-      guard('리사이즈', drawTS); guard('리사이즈(미국)', drawUSTS);
+      guard('리사이즈', drawTS); fxDrawAll();
       guard('리사이즈(이슈스크롤)', newsScrollFx);
     }, 180);
   };
