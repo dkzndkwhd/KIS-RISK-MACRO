@@ -220,18 +220,24 @@ body{font-size:13px;}
 .feed .news h3{font-size:13px;}
 .feed .news p{font-size:12px;line-height:1.65;}
 
-/* ===== 대시보드 2·3행 정렬 (2026-09-22) =====================================
-   왼쪽에 '금리 시계열'(#ts-sec) · '미국 금리 시계열'(#us-sec) 두 카드를 같은 폭(span2)으로
-   세로로 쌓고, 오른쪽 '주요 이슈'(#news-sec) 카드를 그 두 행에 걸쳐(grid-row 2/span 2)
-   높이를 두 카드 + 간격의 합에 맞춘다.
-     · grid-template-rows 의 1fr 1fr 이 2·3행 높이를 서로 같게 만든다. 그리드 높이가
-       미정(auto)일 때 fr 행은 행들의 max-content 중 최댓값으로 균등 분배되기 때문이다.
-     · 이슈 카드는 내용(10선 ≈ 2,400px)이 길어 그대로 두면 제가 속한 fr 행 높이를 끌어올린다.
-       feedbody 를 height:0 + flex:1 1 auto 로 두어 '고유 높이 기여'를 0 으로 만들고,
-       실제 높이는 카드가 행에서 받은 높이만큼만 차지하게 한 뒤 내부 스크롤로 처리한다.
-       => 행 높이는 왼쪽 두 시계열 카드만이 결정한다.
-     · 1200px 이하에서는 아래 @media 의 1열 스택 규칙이 살아야 하므로 min-width:1201px 로 가둔다.
-       (높이 강제·행 배치가 전부 이 블록 안에만 있다) */
+/* ===== 대시보드 피드 카드 높이 정렬 — [2026-10-08 재설계] =====================
+   종전(2026-09-22)에는 `.dashgrid{grid-template-rows:auto 1fr 1fr auto}` 와
+   `#news-sec{grid-row:2/span 2}` 로 **행 번호를 하드코딩**해, 왼쪽 '금리 시계열' +
+   '미국 금리 시계열' 두 장의 합에 이슈 카드 높이를 맞췄다.
+   그 규칙은 '현물 탭의 카드 6장이 정확히 그 순서로 있을 때'만 성립했고,
+   2026-10-08 개편으로 미국 카드가 해외금리 탭으로 빠지고 CP·CD 가 들어오면서 깨졌다.
+
+   그래서 **행 번호를 쓰지 않는 방식으로 바꿨다.** 원리는 같지만 '2행에 걸친 1장'이 아니라
+   **같은 행에 나란히 놓인 짝(span2 + span1)** 단위로 맞춘다:
+     · .dashgrid 는 align-items:start 라 기본적으로 카드가 제 내용만큼만 높다.
+       짝지은 두 카드에 align-self:stretch 를 주면 **그 행의 높이**(= 둘 중 큰 쪽)까지 늘어난다.
+     · 피드 카드(.feedfit)는 내용이 길어 그대로 두면 제가 행 높이를 끌어올린다.
+       .feedbody 를 height:0 + flex:1 1 auto 로 두어 **고유 높이 기여를 0 으로** 만들고,
+       실제 높이는 행에서 받은 만큼만 차지하게 한 뒤 내부 스크롤로 처리한다.
+       => 행 높이는 **왼쪽 표/차트 카드가 단독으로** 결정한다.
+   국내금리 탭의 짝은 2행(금리 시계열 + 주요 이슈)과 3행(변동 현황 + 증권사 리포트) 두 쌍이다.
+   카드가 추가·삭제돼도 짝 관계만 유지되면 되므로 행 번호에 의존하지 않는다.
+     · 1200px 이하에서는 아래 @media 의 1열 스택 규칙이 살아야 하므로 min-width:1201px 로 가둔다. */
 /* 대시보드 하위 탭 (현물 / 선물·IRS / 단기자금시장) — 2026-09-27 신설, 2026-10-07 단기자금시장 추가
    좌측 내비의 '대시보드' 안에서만 쓰는 2단 탭. 좌측 내비(.nav nav button)와
    구분되도록 밑줄형으로 둔다. */
@@ -241,16 +247,29 @@ body{font-size:13px;}
   border-bottom:3px solid transparent;margin-bottom:-1px;}
 .subtabs button:hover{color:#17456b;background:#f4f6f9;}
 .subtabs button.on{color:#17456b;border-bottom-color:#d0021b;}
-/* 선물 탭 그리드는 아래 min-width 블록의 행 높이 강제(auto 1fr 1fr auto)를 받지 않는다.
-   그 규칙은 현물 탭의 '시계열 2장 + 이슈 1장' 배치 전용이다. */
-.futgrid{grid-template-rows:none !important;}
+/* .futgrid — 행 높이 강제가 필요 없는 그리드(선물·IRS · 단기자금 · 해외금리).
+   [2026-10-08] 종전의 `grid-template-rows:auto 1fr 1fr auto` 가 없어졌으므로 이 클래스는
+   더 이상 무력화할 대상이 없지만, 세 탭의 마크업이 쓰고 있고 '행 높이를 강제하지 않는
+   그리드'라는 뜻은 유지되므로 그대로 둔다. */
+.futgrid{grid-template-rows:none;}
+
+/* 국내금리 탭에서 단기자금(CP·CD) 블록은 별도 그리드로 아래에 이어 붙는다.
+   큰 HTML 블록을 물리적으로 옮기지 않으려고 #dash-money 를 그대로 두고 함께 보이게 했다. */
+#dash-money.sub{margin-top:14px;}
+
+/* 해외금리 탭 상단 기준일 줄. 국가가 늘면 항목이 추가된다. */
+.ovsbar{background:#fbf7ef;border:1px solid #e8dcc6;border-radius:8px;padding:9px 14px;
+     margin:0 0 14px;font-size:12.5px;color:#5c4a2a;line-height:1.75;}
+.ovsbar b{color:#8a5a20;}
+.ovsbar .kr{color:#17456b;}
+/* 해외금리 탭 하단 — 분석 도구가 한국축이라 값이 다를 수 있다는 상시 경고 */
+.axiswarn{background:#f7f9fc;border:1px solid #dde5ef;border-radius:8px;padding:10px 14px;margin:14px 0 0;}
 
 @media (min-width:1201px){
-  .dashgrid{grid-template-rows:auto 1fr 1fr auto;}
-  #ts-sec,#us-sec,#news-sec{align-self:stretch;}
-  #news-sec{grid-row:2 / span 2;grid-column:3;display:flex;flex-direction:column;
-       position:relative;min-height:0;}
-  #news-sec .feedbody{max-height:none;height:0;min-height:0;flex:1 1 auto;overflow-y:auto;}
+  /* 짝지은 두 카드를 같은 행 높이로. 행 번호를 쓰지 않는다(위 주석 참조). */
+  #ts-sec,#news-sec,#chg-sec,#rpt-sec{align-self:stretch;}
+  #news-sec,#rpt-sec{display:flex;flex-direction:column;position:relative;min-height:0;}
+  #news-sec .feedbody,#rpt-sec .feedbody{max-height:none;height:0;min-height:0;flex:1 1 auto;overflow-y:auto;}
   /* 아래에 내용이 더 있다는 표시. 끝까지 내리면 JS 가 .scrollfx 를 떼어 사라진다. */
   #news-sec::after{content:'';position:absolute;left:16px;right:22px;bottom:16px;height:40px;
        pointer-events:none;border-radius:0 0 7px 7px;opacity:0;transition:opacity .18s;
@@ -546,13 +565,21 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
 <!-- ===================== 대시보드 ===================== -->
 <div class="view" id="view-dash">
 
-<!-- 대시보드 하위 탭 — 현물(기존 카드 전부) / 선물·IRS(2026-09-27 신설) / 단기자금시장(2026-10-07 신설)
+<!-- 대시보드 하위 탭 — [2026-10-08 개편] 국내금리 / 해외금리 / 선물·IRS
+     종전 '현물 / 선물·IRS / 단기자금시장' 3분할을 **날짜축 기준**으로 다시 갈랐다.
+       · 국내금리 = 한국 영업일축만. 현물 카드 + 단기자금시장(CP·CD) 흡수, 미국채 제거
+       · 해외금리 = 그 나라 자체 날짜축만. 지금은 미국뿐이고 국가가 늘면 '행'으로 쌓는다
+       · 선물·IRS = 한국 영업일축. 종전과 동일
+     이렇게 하면 **한 탭 안에서 날짜축이 섞이지 않는다.** 종전에는 현물 탭에 한국축 8종과
+     미국 자체축 미국채 행이 공존해 기준일이 다른 수치가 같은 표에 있었다.
      탭 이름에 IRS 를 함께 적은 것은, IRS 가 선물이 아니라 스왑 고정금리(%)이기 때문이다.
-     '선물' 한 단어로 묶으면 단위와 성격을 오해한다. -->
+     ※ 단기자금시장 탭은 없어졌다. #dash-money 는 DOM 에 그대로 두고 국내금리일 때 함께
+       보인다(#dash-spot 과 #dash-money 사이의 #dash-ovs·#dash-fut 은 그때 display:none 이라
+       자리를 차지하지 않는다). 큰 HTML 블록을 물리적으로 옮기지 않기 위한 선택이다. -->
 <div class="subtabs" id="dash-subtabs">
-  <button type="button" data-d="spot" class="on">현물</button>
+  <button type="button" data-d="kr" class="on">국내금리</button>
+  <button type="button" data-d="ovs">해외금리</button>
   <button type="button" data-d="fut">선물 · IRS</button>
-  <button type="button" data-d="money">단기자금시장</button>
 </div>
 
 <div id="dash-spot">
@@ -584,33 +611,16 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
     </div>
   </section>
 
-  <!-- 미국 금리 — 한국 영업일축에 맞추지 않고 data/us_rates.json 의 미국 자체 날짜축으로 그린다.
-       2026-09-22: span3(전체폭) → span2. 위 '금리 시계열' 카드와 폭·높이를 맞추기 위함이며,
-       차트 viewBox 는 cw('us-chart') 가 컨테이너 실폭을 읽으므로 종횡비는 자동으로 따라온다. -->
-  <section class="card span2" id="us-sec">
-    <h2>미국 금리 시계열 (%) <span id="us-asof" style="font-weight:400;color:#67727f;font-size:11.5px">—</span></h2>
-    <div class="serpick" id="us-pick"></div>
-    <div style="display:flex;align-items:center;gap:8px;margin:10px 0 10px">
-      <div class="rangebar" id="us-range" style="flex:1;margin:0"></div>
-      <button type="button" class="btn" id="us-dl" style="margin-right:0;white-space:nowrap" title="선택한 시리즈의 표시 구간 전체를 일자별 로데이터로 내려받습니다">CSV 다운로드</button>
-    </div>
-    <div class="chartbox" id="us-chart"><p class="note" id="us-stat">미국 금리 데이터(data/us_rates.json)를 불러오는 중…</p></div>
-    <div class="lgd" id="us-legend"></div>
-    <!-- 2026-09-22: 이 note 가 국내 카드 note 보다 3~4배 길어 카드 높이를 벌렸다. 본문은 인라인 접기(.inlx)로
-         내려 접힌 상태에서 줄을 차지하지 않게 하고, 대신 기준일 시차만은 숫자로 항상 노출한다(#us-lag).
-         시차를 감추면 미국 변동 수치를 국내와 같은 날 기준으로 오해하므로 이 한 줄은 접지 않는다. -->
-    <!-- p 가 아니라 div 다: <details> 는 블록 요소이고 <p> 안에 올 수 없어 파서가 p 를 먼저 닫아버린다
-         (그러면 '자세히' 가 문단 밖 별도 줄로 떨어져 카드가 다시 높아진다). div 로 담아 인라인으로 흐르게 한다. -->
-    <div class="note" id="us-note"><b>x축이 미국 영업일</b>입니다. 결측 구간은 선을 끊습니다(보간하지 않음). <span id="us-lag"></span><details class="inlx"><summary>자세히</summary>위 '금리 시계열' 카드(한국 영업일축)에서는 한국 공휴일에 해당하는 미국 관측일이 버려지지만(전 기간 327일 · 2025년 16일), 이 카드에는 그 날들이 모두 들어 있습니다. <b>출처 FRED, 평일 저녁 자동 수집.</b> 미 국채 금리(H.15)·EFFR·SOFR 은 모두 <b>영업일 T 의 값이 T+1 영업일에 발표</b>되고, 수집 시각(19:30 KST)은 미 동부 오전이라 <b>국내 기준일과 1~2영업일 차이가 나는 것이 정상</b>입니다. 그 차이는 위에 항상 숫자로 표시되며, 빠진 날짜는 다음 날 수집에서 자동으로 채워집니다.</details></div>
-  </section>
+  <!-- [2026-10-08] '미국 금리 시계열' 카드는 여기(국내금리)에서 **해외금리 탭(#dash-ovs)으로 옮겼다.**
+       이 탭은 한국 영업일축 전용이 됐다. -->
 
-  <section class="card span2">
+  <section class="card span2" id="chg-sec">
     <h2>변동 현황 (bp)</h2>
     <div class="chartbox" id="box-chg"></div>
     <p class="note" id="chg-note">변동 = (기준일 금리 − 과거 기준일 금리) × 100 [bp]. 과거 기준일은 달력 기준으로 역산한 뒤 <b>그 이전 가장 가까운 영업일</b>로 대체한다(영업일 = 데이터에 행이 존재하는 날). 양쪽 중 하나라도 결측이면 계산하지 않고 <span class="na">—</span>로 둔다.</p>
   </section>
 
-  <section class="card span1 feed">
+  <section class="card span1 feed" id="rpt-sec">
     <h2>증권사 리포트 정리 <span id="rpt-cnt">—</span>건 <span id="rpt-asof" style="font-weight:400;color:#67727f;font-size:11.5px"></span></h2>
     <div class="feedbody">
       <p class="rpt-old" id="rpt-note" style="display:none"></p>
@@ -622,6 +632,63 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
 
 </div>
 </div><!-- /#dash-spot -->
+
+<!-- ===================== 대시보드 · 해외금리 =====================
+     [2026-10-08 신설] 이 탭의 모든 수치는 **그 나라 자체 날짜축**이다(국내 rates.json 의
+     한국 영업일축이 아니다). 지금은 미국뿐이지만 일본·독일·호주가 추가될 예정이라
+     **처음부터 '국가 = 표의 행' 구조**로 짰다. 국가가 늘어도 레이아웃을 다시 짤 필요가 없게
+     하기 위한 것이다 — 국가를 하위탭으로 쪼개지 않는다(하위탭 상태가 2차원이 된다).
+
+     국가별 기준일이 제각각이므로(미국 T+1, 일본 T+1 …) 탭 맨 위에 **기준일 한 줄**을
+     고정 노출한다. 국가가 늘면 그 줄에 항목이 추가된다.
+
+     만기 격자는 국내 현황표와 **같은 11개**를 쓴다. 나라마다 고유 만기가 있지만
+     (미국 1·3·6개월, 일본 4·6·8·9·25·40년) 격자를 넓히면 다른 나라 행의 빈칸만 늘어
+     읽기 나빠진다. 고유 만기는 시계열 카드의 칩으로 노출한다. -->
+<div id="dash-ovs" style="display:none">
+
+<div class="ovsbar" id="ovs-asofbar">기준일을 불러오는 중…</div>
+
+<div class="dashgrid futgrid">
+
+  <section class="card span3">
+    <h2>해외 금리 현황 (%)</h2>
+    <div class="chartbox" id="box-ovs-level"></div>
+    <p class="note">셀 표기: <b>금리(%)</b> / 아래 작은 수치는 <b>그 나라 직전 관측일 대비</b> 증감(bp).
+      <span class="up">상승(빨강)</span> · <span class="dn">하락(파랑)</span> · <span class="na">—</span>는 해당일 미고시 ·
+      <span class="na">·</span>는 그 나라에 없는 만기.
+      <b>행마다 기준일이 다릅니다</b> — 행 라벨의 날짜를 보십시오. 발표가 T+1 이라 국내 기준일보다 뒤처지는 것이 정상입니다.</p>
+  </section>
+
+  <section class="card span3" id="us-sec">
+    <h2>미국 금리 시계열 (%) <span id="us-asof" style="font-weight:400;color:#67727f;font-size:11.5px">—</span></h2>
+    <div class="serpick" id="us-pick"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin:10px 0 10px">
+      <div class="rangebar" id="us-range" style="flex:1;margin:0"></div>
+      <button type="button" class="btn" id="us-dl" style="margin-right:0;white-space:nowrap" title="선택한 시리즈의 표시 구간 전체를 일자별 로데이터로 내려받습니다">CSV 다운로드</button>
+    </div>
+    <div class="chartbox" id="us-chart"><p class="note" id="us-stat">미국 금리 데이터(data/us_rates.json)를 불러오는 중…</p></div>
+    <div class="lgd" id="us-legend"></div>
+    <!-- p 가 아니라 div 다: <details> 는 블록 요소이고 <p> 안에 올 수 없어 파서가 p 를 먼저 닫아버린다. -->
+    <div class="note" id="us-note"><b>x축이 미국 영업일</b>입니다. 결측 구간은 선을 끊습니다(보간하지 않음). <span id="us-lag"></span><details class="inlx"><summary>자세히</summary>국내금리 탭의 '금리 시계열' 카드(한국 영업일축)에서는 한국 공휴일에 해당하는 미국 관측일이 버려지지만(전 기간 327일 · 2025년 16일), 이 카드에는 그 날들이 모두 들어 있습니다. <b>출처 FRED, 평일 저녁 자동 수집.</b> 미 국채 금리(H.15)·EFFR·SOFR 은 모두 <b>영업일 T 의 값이 T+1 영업일에 발표</b>되고, 수집 시각(19:30 KST)은 미 동부 오전이라 <b>국내 기준일과 1~2영업일 차이가 나는 것이 정상</b>입니다. 그 차이는 위에 항상 숫자로 표시되며, 빠진 날짜는 다음 날 수집에서 자동으로 채워집니다.</details></div>
+  </section>
+
+  <section class="card span3">
+    <h2>해외 변동 현황 (bp)</h2>
+    <div class="chartbox" id="box-ovs-chg"></div>
+    <p class="note" id="ovs-chg-note">변동 = (기준일 금리 − 과거 기준일 금리) × 100 [bp]. 과거 기준일은 달력 기준으로 역산한 뒤
+      <b>그 나라의 그 이전 가장 가까운 관측일</b>로 대체합니다. <b>표 머리글의 날짜는 국내 기준일에서 역산한 참고값</b>이며,
+      실제 비교 구간은 나라마다 다릅니다 — <b>셀에 마우스를 올리면 그 셀이 실제로 비교한 두 날짜가 보입니다.</b>
+      그래서 어떤 나라의 '1일'은 다른 나라의 '1일'과 같은 날이 아닙니다.</p>
+  </section>
+
+</div>
+
+<p class="note axiswarn" id="ovs-toolnote"><b>분석 도구(상관·스프레드·커브·스트레스·VaR·데이터 다운로드)의 미국채 값은 이 탭과 다를 수 있습니다.</b>
+  도구는 국내 시리즈와 <b>같은 날짜끼리</b> 계산해야 하므로 <b>한국 영업일축</b>(rates.json)을 쓰고, 이 탭은 <b>미국 자체 날짜축</b>(us_rates.json)을 씁니다.
+  한국 공휴일에 해당하는 미국 관측일은 한국축에 자리가 없어 버려지므로(전 기간 327일), 그런 날이 최신일일 때 두 값의 기준일이 갈립니다. 데이터 오류가 아닙니다.</p>
+
+</div><!-- /#dash-ovs -->
 
 <!-- ===================== 대시보드 · 선물 · IRS =====================
      2026-09-27 신설. 담는 것은 IRS(원화 이자율스왑, %)와 국내 국채선물 3·10·30년이다.
@@ -2717,36 +2784,9 @@ var LEVEL_MATS = [12, 18, 24, 36, 48, 60, 84, 120, 180, 240, 360];
     body += '</tr>';
   });
 
-  /* 미국채 — [2026-10-08] **미국 자체 날짜축(data/us_rates.json)** 으로 전환했다.
-     한국 영업일축(rates.json extra[])에 얹으면 한국 공휴일에 해당하는 미국 관측일이
-     축에 자리가 없어 통째로 버려진다. 2026-10-05(한국 대체공휴일)가 그 예로, 미 국채는
-     10-05 까지 발표됐는데 한국축에는 그 행이 없고 다음 행 10-06 에는 미국 값이 없어
-     표가 10-02 를 가리켰다. 최신성이 더 중요하므로 미국축을 읽는다.
-       · 값·변동 모두 미국축 기준. 변동은 **미국축의 직전 관측일** 대비다.
-       · 기준일 라벨은 **항상** 붙인다 — 국내 행과 날짜가 다른 것이 상시 상태다.
-       · 변동 현황표의 미국채 행(usChgRows)과 같은 축·같은 규칙이 되어 두 표가 일치한다.
-       · 없는 만기(1년6월·4년·15년)는 국내 행과 동일하게 '·' 로 비운다.
-     US 는 비동기로 도착하므로 여기서는 **한국축으로 폴백 행을 먼저 그려 두고**(us_rates.json
-     로딩 실패 시에도 행이 남는다), 로더가 usLevelRow() 로 미국축 값으로 덮어쓴다. */
-  (function () {
-    var t = typeByName('미국채'); if (!t) return;
-    function lastIdx(col, upto) { for (var i = upto; i >= 0; i--) if (!isNaN(raw(col, i))) return i; return -1; }
-    var asof = -1;
-    t.mats.forEach(function (m) { var i = lastIdx(m.col, LAST); if (i > asof) asof = i; });
-    if (asof < 0) return;                       // 데이터가 아예 없으면 행을 만들지 않는다
-    var sub = '<br><span style="font-size:10.5px;color:#8a5a20">' + fmtD(DATES[asof]) + ' 기준</span>';
-    body += '<tr id="lv-us" style="background:#fcfbf8"><td class="l"><b>미국채</b>' + sub + '</td>';
-    LEVEL_MATS.forEach(function (m) {
-      var c = colOf('미국채', m);
-      if (!c) { body += '<td class="na">·</td>'; return; }
-      var i = lastIdx(c, LAST);
-      if (i < 0) { body += '<td class="na">—</td>'; return; }
-      var j = lastIdx(c, i - 1);                // 직전 '관측일' 대비 변동
-      var v = pct(c, i), d = (j < 0) ? NaN : bpDiff(c, i, j);
-      body += '<td>' + v.toFixed(3) + '<br><span class="' + cls(d) + '" style="font-size:11px">' + f1(d) + '</span></td>';
-    });
-    body += '</tr>';
-  })();
+  /* [2026-10-08] 미국채 행은 여기서 **빠졌다.** 해외금리 탭의 '해외 금리 현황'(ovsLevel)으로
+     옮겼다. 이 표는 한국 영업일축(DATES/LAST) 전용이고, 미국채는 미국 자체 날짜축이라
+     같은 표에 두면 한 표 안에 기준일이 둘이 된다. 아래 신용스프레드는 국내 기준 그대로다. */
 
   // 신용스프레드 (회사채AA- − 국고채권)
   body += '<tr style="background:#f7fafd"><td class="l"><b>신용스프레드</b><br><span style="font-size:10.5px;color:#67727f">AA- − 국고 (bp)</span></td>';
@@ -3275,19 +3315,31 @@ guard('단기자금시장 변동 현황', function () {
 /* --- 하위 탭 전환 ---
    숨어 있는 컨테이너는 폭이 0이라 cw() 가 0을 돌려주고 SVG 가 찌그러진다.
    그래서 차트는 '탭이 처음 보이는 순간'과 그 뒤 매번 다시 그린다. */
-var dashSub = 'spot';
+/* [2026-10-08] 탭 키가 바뀌었다: spot/fut/money → **kr/ovs/fut**.
+   · kr  = 국내금리. #dash-spot(현물 카드) + #dash-money(CP·CD)를 **함께** 보인다.
+          CP·CD 블록을 물리적으로 옮기지 않으려는 선택이다 — 사이에 있는 #dash-ovs·#dash-fut 은
+          그때 display:none 이라 자리를 차지하지 않으므로 화면에서는 이어 붙어 보인다.
+   · ovs = 해외금리. #dash-ovs 하나.
+   · fut = 선물·IRS. 종전과 동일.
+   종전 키(spot/money)가 어딘가에 남아 있어도 kr 로 받아 주어 탭이 비는 사고를 막는다. */
+var dashSub = 'kr';
 function showDashSub(d) {
+  if (d === 'spot' || d === 'money') d = 'kr';          // 구 키 호환
+  if (d !== 'kr' && d !== 'ovs' && d !== 'fut') d = 'kr';
   dashSub = d;
   var bar = $('dash-subtabs');
   if (bar) [].forEach.call(bar.getElementsByTagName('button'), function (b) {
     b.className = (b.getAttribute('data-d') === d) ? 'on' : '';
   });
-  var sp = $('dash-spot'), ft = $('dash-fut'), mn = $('dash-money');
-  if (sp) sp.style.display = (d === 'spot') ? '' : 'none';
+  var sp = $('dash-spot'), ov = $('dash-ovs'), ft = $('dash-fut'), mn = $('dash-money');
+  if (sp) sp.style.display = (d === 'kr') ? '' : 'none';
+  if (mn) { mn.style.display = (d === 'kr') ? '' : 'none'; mn.className = 'sub'; }
+  if (ov) ov.style.display = (d === 'ovs') ? '' : 'none';
   if (ft) ft.style.display = (d === 'fut') ? '' : 'none';
-  if (mn) mn.style.display = (d === 'money') ? '' : 'none';
-  if (d === 'spot') guard('시계열', drawTS);
-  else if (d === 'money') { guard('CP·CD 시계열', drawMnyTS); guard('CD 유통 시계열', drawRopTS); }
+  /* 숨어 있던 컨테이너는 폭이 0이라 cw() 가 0을 돌려주고 SVG 가 찌그러진다.
+     그래서 그 탭이 '보이게 된 순간' 차트를 다시 그린다. */
+  if (d === 'kr') { guard('시계열', drawTS); guard('CP·CD 시계열', drawMnyTS); guard('CD 유통 시계열', drawRopTS); }
+  else if (d === 'ovs') { guard('미국 시계열', drawUSTS); guard('해외금리 탭', renderOvs); }
   else { guard('선물 시계열', drawFutTS); guard('IRS 시계열', drawIrsTS); }
 }
 guard('대시보드 하위 탭', function () {
@@ -6978,81 +7030,156 @@ function drawUSTS() {
   }).join('');
 }
 
-/* 금리 현황표의 만기(개월) → 미국축 컬럼 키.
+/* ================================================================
+   해외금리 탭 — **국가 = 표의 행** (2026-10-08 신설)
+   ----------------------------------------------------------------
+   국가가 늘어도(일본·독일·호주 예정) 레이아웃을 다시 짜지 않도록, 현황표·변동표를
+   국가 목록(OVS_ROWS)으로 돌리는 구조로 만들었다. 국가를 추가하려면 OVS_ROWS 에
+   한 줄 넣으면 된다 — 표·기준일 줄이 자동으로 따라온다.
+
+   **각 국가는 자기 날짜축만 본다.** 축을 합치면 공휴일이 어긋나 관측일이 통째로
+   버려진다(실측: 미국축에 일본을 얹으면 일본 205일, 일본축에 미국을 얹으면 미국 375일,
+   한국축에 미국을 얹으면 미국 330일 유실). 그래서 국가마다 자체축 파일을 따로 둔다.
+
+   axis()  그 나라의 축 객체 { N, DATES, COL, LAST } 를 돌려준다. 아직 안 왔으면 null.
+           (US 는 비동기 로더가 채우므로 변수를 직접 박지 않고 함수로 감싼다)
+   col     현황표 만기(개월) → 그 나라 컬럼명. 없는 만기는 키가 없다 → '·'
+   chg     변동표에 올릴 [컬럼, 표시명] 목록
+   ================================================================ */
+/* 현황표 만기(개월) → 미국축 컬럼.
    LEVEL_MATS 중 1년6월(18)·4년(48)·15년(180)은 FRED H.15 에 없어 여기에 없다 → '·'.
-   현황표는 1년부터 시작하므로 1·3·6개월 컬럼은 쓰지 않는다. */
+   현황표는 1년부터 시작하므로 1·3·6개월 컬럼은 쓰지 않는다(시계열 카드 칩으로는 노출). */
 var US_LEVEL_COL = {
   12: '미국채_1년', 24: '미국채_2년', 36: '미국채_3년', 60: '미국채_5년',
   84: '미국채_7년', 120: '미국채_10년', 240: '미국채_20년', 360: '미국채_30년'
 };
-/** 금리 현황표의 미국채 행을 **미국 자체 날짜축(us_rates.json)** 값으로 덮어쓴다.
- *  [2026-10-08] 종전에는 한국 영업일축을 읽어, 한국 공휴일에 걸린 미국 관측일이
- *  버려진 날(예 2026-10-05 대체공휴일)에는 표가 며칠 전 값을 가리켰다.
- *  값·변동 모두 미국축이고 변동은 미국축의 직전 관측일 대비다 — 변동 현황표의
- *  미국채 행(usChgRows)과 동일한 규칙이라 두 표의 1일 변동이 서로 맞는다.
- *  행 자체는 현황표 렌더에서 한국축 폴백으로 이미 만들어져 있다(로딩 실패 대비).
- *  신용스프레드 행과 분석 도구는 한국축 그대로다 — 여기서 건드리지 않는다. */
-function usLevelRow() {
-  var tr = document.getElementById('lv-us'); if (!tr || !US) return;
-  var asof = -1;
-  LEVEL_MATS.forEach(function (m) {
-    var c = US_LEVEL_COL[m]; if (!c || !US.COL[c]) return;
-    var i = uPrevObs(c, US.LAST); if (i > asof) asof = i;
+var OVS_ROWS = [
+  {
+    code: 'US', name: '미국채', short: '미국',
+    axis: function () { return (typeof US !== 'undefined' && US && US.N) ? US : null; },
+    col: US_LEVEL_COL,
+    chg: US_CHG_ROWS
+  }
+  /* 일본은 다음 세션에 추가한다 — 수록 2000년~, 컬럼 '일본국채_N년', 자체축 data/jp_rates.json.
+     현황표 격자는 11개 그대로 두고 일본 고유 만기(6·8·9·25·40년)는 시계열 칩으로만 노출한다
+     (격자를 넓히면 미국 행 빈칸만 늘어난다). 상세는 _scripts/_일본국채_적재결정_20261008.md */
+];
+
+/** 그 축에서 from 이하로 값이 있는 가장 최근 인덱스 (휴일 공백을 건너뛴다) */
+function axPrevObs(A, c, from) {
+  var a = A && A.COL[c]; if (!a) return -1;
+  for (var i = from; i >= 0; i--) if (!isNaN(a[i])) return i;
+  return -1;
+}
+/** yyyymmdd 이하인 마지막 영업일 인덱스 (그 축 기준) */
+function axIdxLE(A, ymd) {
+  var D = A.DATES, lo = 0, hi = A.N - 1, r = -1;
+  while (lo <= hi) { var m = (lo + hi) >> 1; if (D[m] <= ymd) { r = m; lo = m + 1; } else hi = m - 1; }
+  return r;
+}
+function axVal(A, c, i) { var a = A && A.COL[c]; if (!a) return NaN; var v = a[i]; return isNaN(v) ? NaN : v / 1000; }
+function axRaw(A, c, i) { var a = A && A.COL[c]; return a ? a[i] : NaN; }
+
+/** 해외 금리 현황 — 행 = 국가, 열 = 국내 현황표와 **같은 만기 격자 11개**.
+ *  값·변동 모두 그 나라 축이고, 변동은 **그 나라 직전 관측일 대비**다.
+ *  행 라벨에 그 나라 기준일을 항상 적는다(국내와 다른 것이 상시 상태이므로). */
+function ovsLevel() {
+  var host = $('box-ovs-level'); if (!host) return;
+  var th = '<tr><th class="l" style="width:140px">구분</th>';
+  LEVEL_MATS.forEach(function (m) { th += '<th>' + matLabel(m) + '</th>'; });
+  th += '</tr>';
+  var body = '', any = 0;
+  OVS_ROWS.forEach(function (R) {
+    var A = R.axis();
+    if (!A) {                                   // 아직 로딩 중이거나 실패한 나라
+      body += '<tr><td class="l"><b>' + esc(R.name) + '</b><br><span style="font-size:10.5px;color:#67727f">불러오는 중…</span></td>' +
+        '<td class="na" colspan="' + LEVEL_MATS.length + '">—</td></tr>';
+      return;
+    }
+    var asof = -1;
+    LEVEL_MATS.forEach(function (m) {
+      var c = R.col[m]; if (!c || !A.COL[c]) return;
+      var i = axPrevObs(A, c, A.LAST); if (i > asof) asof = i;
+    });
+    if (asof < 0) return;
+    any = 1;
+    body += '<tr><td class="l"><b>' + esc(R.name) + '</b><br><span style="font-size:10.5px;color:#8a5a20">' +
+      fmtD(A.DATES[asof]) + ' 기준</span></td>';
+    LEVEL_MATS.forEach(function (m) {
+      var c = R.col[m];
+      if (!c || !A.COL[c]) { body += '<td class="na" title="' + esc(R.name) + '에 없는 만기">·</td>'; return; }
+      var i = axPrevObs(A, c, A.LAST);
+      if (i < 0) { body += '<td class="na">—</td>'; return; }
+      var j = axPrevObs(A, c, i - 1);           // 직전 '그 나라 관측일' 대비
+      var d = (j < 0) ? NaN : (axRaw(A, c, i) - axRaw(A, c, j)) / 10;
+      body += '<td title="' + fmtD(A.DATES[i]) + (j < 0 ? '' : ' (직전 ' + fmtD(A.DATES[j]) + ' 대비)') + '">' +
+        f3(axVal(A, c, i)) + '<br><span class="' + cls(d) + '" style="font-size:11px">' + f1(d) + '</span></td>';
+    });
+    body += '</tr>';
   });
-  if (asof < 0) return;                 // 미국축에서 아무 값도 못 찾으면 폴백을 그대로 둔다
-  var h = '<td class="l"><b>미국채</b><br><span style="font-size:10.5px;color:#8a5a20">' +
-          fmtD(US.DATES[asof]) + ' 기준</span></td>';
-  LEVEL_MATS.forEach(function (m) {
-    var c = US_LEVEL_COL[m];
-    if (!c || !US.COL[c]) { h += '<td class="na">·</td>'; return; }
-    var i = uPrevObs(c, US.LAST);
-    if (i < 0) { h += '<td class="na">—</td>'; return; }
-    var j = uPrevObs(c, i - 1);         // 직전 '미국 관측일' 대비 변동
-    var d = (j < 0) ? NaN : (uRaw(c, i) - uRaw(c, j)) / 10;
-    h += '<td title="' + fmtD(US.DATES[i]) + (j < 0 ? '' : ' (직전 ' + fmtD(US.DATES[j]) + ' 대비)') + '">' +
-         f3(uPct(c, i)) + '<br><span class="' + cls(d) + '" style="font-size:11px">' + f1(d) + '</span></td>';
-  });
-  tr.innerHTML = h;
+  if (!body) return;
+  setTable('box-ovs-level', 'tbl-ovs-level', '', th, body);
+  if (!any && window.console && console.warn) console.warn('[OVS] 현황표에 올릴 값이 없습니다.');
 }
 
-/** 변동현황 표에 미국채 4행을 끼워 넣는다 (국내 행·로직은 손대지 않는다).
- *  기준일이 다르다 — 국내는 DATES[LAST], 미국은 US.DATES[US.LAST].
- *  미국 행의 변동은 전부 **미국 관측일 기준**으로 계산한다. 한국 축에 맞춰 계산하면
- *  국내 최신일이 미국보다 앞설 때 '1일 변동'이 실제로는 며칠치 변동이 되어버린다. */
-function usChgRows() {
-  var tb = $('tbl-chg'); if (!tb || !tb.tBodies[0] || !US) return;
-  var body = tb.tBodies[0];
-  if (body.__us) return; body.__us = 1;
-  var L = US.LAST, asof = fmtD(US.DATES[L]);
-  var html = '';
-  US_CHG_ROWS.forEach(function (r) {
-    var c = r[0]; if (!US.COL[c]) return;
-    var iNow = uPrevObs(c, L); if (iNow < 0) return;
-    html += '<tr style="background:#fcfbf8"><td class="l">' + esc(r[1]) +
-      '<br><span style="font-size:10.5px;color:#8a5a20">미국 ' + fmtD(US.DATES[iNow]) + ' 기준</span></td>' +
-      '<td><b>' + f3(uPct(c, iNow)) + '</b></td>';
-    CHG_HORIZ.forEach(function (hz) {
-      var ri;
-      if (hz[1] === 'd' && hz[2] === 1) ri = uPrevObs(c, iNow - 1);            // 직전 미국 관측일
-      else ri = uPrevObs(c, uIdxLE(shiftCal(US.DATES[iNow], hz[1], hz[2])));   // 달력 역산 → 그 이전 미국 관측일
-      if (ri < 0) { html += '<td class="na" title="기준 관측일 없음">—</td>'; return; }
-      var d = (uRaw(c, iNow) - uRaw(c, ri)) / 10;
-      html += '<td class="' + cls(d) + '" title="' + fmtD(US.DATES[ri]) + ' → ' + fmtD(US.DATES[iNow]) + '">' + f1(d) + '</td>';
-    });
-    html += '</tr>';
+/** 해외 변동 현황 — 행 = 국가 × 만기. 전부 **그 나라 관측일 기준**으로 계산한다.
+ *  한국 축에 맞춰 계산하면 국내 최신일이 그 나라보다 앞설 때 '1일 변동'이
+ *  실제로는 며칠치 변동이 되어버린다.
+ *  머리글 날짜는 국내 기준일에서 역산한 **참고값**이고, 실제 비교 구간은 나라마다
+ *  다르므로 **셀 title 에 두 날짜를 넣는다** — 이것이 오해를 막는 유일한 장치다. */
+function ovsChg() {
+  var host = $('box-ovs-chg'); if (!host) return;
+  var refs = CHG_HORIZ.map(function (hz) {
+    if (hz[1] === 'd' && hz[2] === 1) return PREV;
+    return idxLE(shiftCal(DATES[LAST], hz[1], hz[2]));
   });
-  if (!html) return;
-  // 신용스프레드(마지막 행) 앞에 끼워 넣어 국내 금리 행들 바로 다음에 오도록 한다
-  var last = body.rows[body.rows.length - 1];
-  if (last) last.insertAdjacentHTML('beforebegin', html);
-  else body.insertAdjacentHTML('beforeend', html);
-  var note = $('chg-note');
-  if (note) note.insertAdjacentHTML('beforeend',
-    '<br><b style="color:#8a5a20">미국채 행(옅은 베이지)은 기준일이 다릅니다 — 국내 ' + fmtD(DATES[LAST]) +
-    ', 미국 ' + asof + '.</b> 표 머리글의 날짜는 국내 기준일에서 역산한 것이며, ' +
-    '미국 행은 <b>미국 자체 날짜축(data/us_rates.json)</b>에서 각자 역산한 미국 관측일 대비로 계산합니다' +
-    '(셀에 마우스를 올리면 실제 비교 구간이 보입니다). 그래서 미국 \'1일\'은 국내 \'1일\'과 같은 날이 아닙니다.');
+  var th = '<tr><th class="l" style="width:190px">구분</th><th>현재 (%)</th>';
+  CHG_HORIZ.forEach(function (hz, i) {
+    th += '<th>' + hz[0] + '<br><span style="font-weight:400;font-size:10px;color:#7d8794">' +
+      (refs[i] >= 0 ? fmtD(DATES[refs[i]]) : '—') + '</span></th>';
+  });
+  th += '</tr>';
+  var body = '';
+  OVS_ROWS.forEach(function (R) {
+    var A = R.axis(); if (!A) return;
+    R.chg.forEach(function (r) {
+      var c = r[0]; if (!A.COL[c]) return;
+      var iNow = axPrevObs(A, c, A.LAST); if (iNow < 0) return;
+      body += '<tr><td class="l">' + esc(r[1]) +
+        '<br><span style="font-size:10.5px;color:#8a5a20">' + esc(R.short) + ' ' + fmtD(A.DATES[iNow]) + ' 기준</span></td>' +
+        '<td><b>' + f3(axVal(A, c, iNow)) + '</b></td>';
+      CHG_HORIZ.forEach(function (hz) {
+        var ri;
+        if (hz[1] === 'd' && hz[2] === 1) ri = axPrevObs(A, c, iNow - 1);              // 직전 그 나라 관측일
+        else ri = axPrevObs(A, c, axIdxLE(A, shiftCal(A.DATES[iNow], hz[1], hz[2])));  // 달력 역산 → 그 이전 관측일
+        if (ri < 0) { body += '<td class="na" title="기준 관측일 없음">—</td>'; return; }
+        var d = (axRaw(A, c, iNow) - axRaw(A, c, ri)) / 10;
+        body += '<td class="' + cls(d) + '" title="' + fmtD(A.DATES[ri]) + ' → ' + fmtD(A.DATES[iNow]) + '">' + f1(d) + '</td>';
+      });
+      body += '</tr>';
+    });
+  });
+  if (!body) return;
+  setTable('box-ovs-chg', 'tbl-ovs-chg', '', th, body);
 }
+
+/** 해외금리 탭 상단 기준일 줄. 국가가 늘면 여기 항목이 자동으로 늘어난다. */
+function ovsAsofBar() {
+  var e = $('ovs-asofbar'); if (!e) return;
+  var parts = [];
+  OVS_ROWS.forEach(function (R) {
+    var A = R.axis();
+    parts.push(esc(R.short) + ' <b>' + (A ? fmtD(A.DATES[A.LAST]) : '—') + '</b>');
+  });
+  var kr = (typeof DATES !== 'undefined' && typeof LAST !== 'undefined' && LAST >= 0) ? fmtD(DATES[LAST]) : '—';
+  e.innerHTML = '<b>기준일</b> — ' + parts.join(' · ') +
+    ' <span class="kr">· 국내(참고) <b>' + kr + '</b></span><br>' +
+    '<span style="font-size:11.5px">나라마다 날짜축과 발표 시차가 다릅니다. ' +
+    '모든 발표가 <b>T+1</b>이라 국내 기준일보다 1~2영업일 뒤처지는 것이 정상이며, ' +
+    '표의 각 행은 <b>자기 기준일</b>로 계산됩니다.</span>';
+}
+
+function renderOvs() { guard('해외 현황', ovsLevel); guard('해외 변동', ovsChg); guard('해외 기준일', ovsAsofBar); }
 
 (function usLoad() {
   var URL_US = 'data/us_rates.json';
@@ -7117,8 +7244,9 @@ function usChgRows() {
         rb.appendChild(b);
       });
       guard('미국 시계열', drawUSTS);
-      guard('변동현황 미국행', usChgRows);
-      guard('현황표 미국행', usLevelRow);     // [2026-10-08] 금리 현황표 미국채 행 → 미국 자체축
+      /* [2026-10-08] 해외금리 탭(현황표·변동표·기준일 줄)을 US 도착 시점에 다시 그린다.
+         BOOT 때 한 번 그려 두지만 그때는 US 가 없어 '불러오는 중'만 나온다. */
+      guard('해외금리 탭', renderOvs);
       /* 매뉴얼 §2-4 의 '미국 자체축 구간'은 이 시점에야 알 수 있다 (BOOT 시점에는 US 가 없다) */
       guard('매뉴얼(미국축)', function () { if (typeof renderManual === 'function') renderManual(); });
       if (window.console && console.log) {
@@ -7642,6 +7770,9 @@ guard('매뉴얼 목차', function () {
    renderManual 을 먼저 불러 상세가 정본이 되도록 순서를 고정한다. */
 guard('사용 매뉴얼', renderManual);
 guard('한눈에', renderManQuick);
+/* 해외금리 탭을 한 번 그려 둔다. 이 시점에는 US(us_rates.json)가 아직 안 와 있어
+   '불러오는 중'만 나오고, 로더가 도착하면 renderOvs 를 다시 불러 채운다. */
+guard('해외금리 탭', renderOvs);
 showView('dash');
 
 /* 주요 이슈 카드 — 높이는 왼쪽 두 시계열 카드에 맞춰 고정되고 넘치는 내용은 내부 스크롤이다.
