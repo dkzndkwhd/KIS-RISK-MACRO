@@ -7088,10 +7088,11 @@ function ovsLevel() {
   var th = '<tr><th class="l" style="width:140px">구분</th>';
   LEVEL_MATS.forEach(function (m) { th += '<th>' + matLabel(m) + '</th>'; });
   th += '</tr>';
-  var body = '', any = 0;
+  var body = '', any = 0, pending = 0;
   OVS_ROWS.forEach(function (R) {
     var A = R.axis();
     if (!A) {                                   // 아직 로딩 중이거나 실패한 나라
+      pending++;
       body += '<tr><td class="l"><b>' + esc(R.name) + '</b><br><span style="font-size:10.5px;color:#67727f">불러오는 중…</span></td>' +
         '<td class="na" colspan="' + LEVEL_MATS.length + '">—</td></tr>';
       return;
@@ -7119,7 +7120,9 @@ function ovsLevel() {
   });
   if (!body) return;
   setTable('box-ovs-level', 'tbl-ovs-level', '', th, body);
-  if (!any && window.console && console.warn) console.warn('[OVS] 현황표에 올릴 값이 없습니다.');
+  /* 아직 도착하지 않은 나라가 있으면 '값 없음'이 정상이다(BOOT 시점이 그렇다).
+     전부 도착했는데도 값이 하나도 없을 때만 경고한다 — 상시 경고는 진짜 경고를 가린다. */
+  if (!any && !pending && window.console && console.warn) console.warn('[OVS] 현황표에 올릴 값이 없습니다.');
 }
 
 /** 해외 변동 현황 — 행 = 국가 × 만기. 전부 **그 나라 관측일 기준**으로 계산한다.
