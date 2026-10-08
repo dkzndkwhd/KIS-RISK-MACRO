@@ -674,6 +674,21 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
     <div class="note" id="us-note"><b>x축이 미국 영업일</b>입니다. 결측 구간은 선을 끊습니다(보간하지 않음). <span id="us-lag"></span><details class="inlx"><summary>자세히</summary>국내금리 탭의 '금리 시계열' 카드(한국 영업일축)에서는 한국 공휴일에 해당하는 미국 관측일이 버려지지만(전 기간 327일 · 2025년 16일), 이 카드에는 그 날들이 모두 들어 있습니다. <b>출처 FRED, 평일 저녁 자동 수집.</b> 미 국채 금리(H.15)·EFFR·SOFR 은 모두 <b>영업일 T 의 값이 T+1 영업일에 발표</b>되고, 수집 시각(19:30 KST)은 미 동부 오전이라 <b>국내 기준일과 1~2영업일 차이가 나는 것이 정상</b>입니다. 그 차이는 위에 항상 숫자로 표시되며, 빠진 날짜는 다음 날 수집에서 자동으로 채워집니다.</details></div>
   </section>
 
+  <!-- 일본 카드 — 미국과 **별도 카드**다. x축(일본 영업일)이 미국과 달라 한 차트에
+       겹치면 축을 합쳐야 하고, 그 순간 관측일이 통째로 버려진다(일본 205일 / 미국 375일).
+       칩은 **전 만기 15개**를 노출한다(현황표와 달리 차트는 칩 선택이라 길이 부담이 적다). -->
+  <section class="card span3" id="jp-sec">
+    <h2>일본 금리 시계열 (%) <span id="jp-asof" style="font-weight:400;color:#67727f;font-size:11.5px">—</span></h2>
+    <div class="serpick" id="jp-pick"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin:10px 0 10px">
+      <div class="rangebar" id="jp-range" style="flex:1;margin:0"></div>
+      <button type="button" class="btn" id="jp-dl" style="margin-right:0;white-space:nowrap" title="선택한 시리즈의 표시 구간 전체를 일자별 로데이터로 내려받습니다">CSV 다운로드</button>
+    </div>
+    <div class="chartbox" id="jp-chart"><p class="note" id="jp-stat">일본 금리 데이터(data/jp_rates.json)를 불러오는 중…</p></div>
+    <div class="lgd" id="jp-legend"></div>
+    <div class="note" id="jp-note"><b>x축이 일본 영업일</b>입니다. 결측 구간은 선을 끊습니다(보간하지 않음). <span id="jp-lag"></span><details class="inlx"><summary>자세히</summary><b>출처 일본 재무성(MOF), 평일 저녁 자동 수집.</b> 영업일 T 의 값이 <b>T+1</b> 에 발표되므로 국내 기준일보다 1~2영업일 뒤처지는 것이 정상입니다. <b>수록은 2000년부터</b>입니다 — 1974~1999 구간은 10·15·25·30·40년물이 없거나 짧아 선이 대부분 끊기고, 1989년 이전에는 토요일에도 장이 섰습니다(토요일 519행). 만기별 시작일이 달라 <b>25년물은 2004-03-22, 40년물은 2007-11-06</b> 부터입니다. 원본의 소수 자리가 3·2·1·0자리로 섞여 있어 화면은 <code>toFixed(3)</code> 로 통일 출력합니다 — 끝자리 0 은 유효숫자가 아니라 패딩입니다. 일본 고유 만기(6·8·9·25·40년)는 <b>위 현황표에는 넣지 않고</b> 이 카드의 칩과 분석 도구에만 노출합니다(격자를 넓히면 미국 행 빈칸만 늘어납니다).</details></div>
+  </section>
+
   <section class="card span3">
     <h2>해외 변동 현황 (bp)</h2>
     <div class="chartbox" id="box-ovs-chg"></div>
@@ -7133,10 +7148,47 @@ var FX = {
       axisNote: 'x축 = 미국 영업일 (한국 영업일축 아님)',
       file: '미국금리시계열차트_'
     }
+  },
+  JP: {
+    code: 'JP', name: '일본국채', short: '일본',
+    url: 'data/jp_rates.json', src: '일본 재무성(MOF)',
+    axis: null,
+    /* 칩은 **전 만기 15개**. 현황표 격자(11개)와 달리 차트는 칩 선택이라 길이 부담이 적다. */
+    chips: [
+      ['일본국채_1년', '일본국채 1년'], ['일본국채_2년', '일본국채 2년'], ['일본국채_3년', '일본국채 3년'],
+      ['일본국채_4년', '일본국채 4년'], ['일본국채_5년', '일본국채 5년'], ['일본국채_6년', '일본국채 6년'],
+      ['일본국채_7년', '일본국채 7년'], ['일본국채_8년', '일본국채 8년'], ['일본국채_9년', '일본국채 9년'],
+      ['일본국채_10년', '일본국채 10년'], ['일본국채_15년', '일본국채 15년'], ['일본국채_20년', '일본국채 20년'],
+      /* 25년물 2004-03-22~ · 40년물 2007-11-06~ — 다른 만기보다 늦게 시작한다.
+         칩 title 에 실제 수록 구간이 찍히므로 화면에서 확인할 수 있다. */
+      ['일본국채_25년', '일본국채 25년'], ['일본국채_30년', '일본국채 30년'], ['일본국채_40년', '일본국채 40년']
+    ],
+    sel: ['일본국채_2년', '일본국채_10년', '일본국채_30년', '일본국채_40년'],
+    range: '3Y',
+    /* 현황표 격자 11개 중 일본이 채우는 10개. 1년6월(18)만 없다 → '·'.
+       일본 고유 만기 6·8·9·25·40년은 **일부러 넣지 않는다** — 격자를 넓히면
+       미국 행 빈칸이 5개 늘어 읽기 나빠진다. 칩·분석 도구에는 전부 들어간다. */
+    levelCol: {
+      12: '일본국채_1년', 24: '일본국채_2년', 36: '일본국채_3년', 48: '일본국채_4년',
+      60: '일본국채_5년', 84: '일본국채_7년', 120: '일본국채_10년', 180: '일본국채_15년',
+      240: '일본국채_20년', 360: '일본국채_30년'
+    },
+    chgRows: [['일본국채_2년', '일본국채 2년'], ['일본국채_5년', '일본국채 5년'],
+              ['일본국채_10년', '일본국채 10년'], ['일본국채_30년', '일본국채 30년']],
+    dom: {
+      sec: 'jp-sec', chart: 'jp-chart', legend: 'jp-legend', pick: 'jp-pick',
+      range: 'jp-range', asof: 'jp-asof', dl: 'jp-dl', lag: 'jp-lag', man: 'man-jp'
+    },
+    csv: {
+      title: '일본 금리 시계열 차트 로데이터',
+      src: '일본 재무성(MOF) · JGB Interest Rate, 평일 저녁 자동 수집',
+      axisNote: 'x축 = 일본 영업일 (한국·미국 영업일축 아님)',
+      file: '일본금리시계열차트_'
+    }
   }
 };
 /* 표·기준일 줄·카드가 모두 이 순서를 따른다. 순서의 단일 출처다. */
-var FX_ORDER = ['US'];
+var FX_ORDER = ['US', 'JP'];
 
 /** 그 나라 축 (도착 전이면 null) */
 function fxAxis(cc) { var C = FX[cc]; return (C && C.axis && C.axis.N) ? C.axis : null; }
