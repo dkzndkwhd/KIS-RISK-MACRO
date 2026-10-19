@@ -1229,8 +1229,18 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
           <h3>전체 다운로드</h3>
           <div class="bd" style="padding:12px 14px 4px">
             <p style="margin:0 0 10px;font-size:12px;line-height:1.75;color:#3c4753">
-              전 기간 · <b>전체 시리즈</b>(국내 KOFIA 격자)를 하나의 wide CSV 로 내려받습니다.
+              전 기간 · <b>전체 시리즈 <span class="dyn" id="dl-all-n">—</span>개</b>를 하나의 wide CSV
+              (<span class="dyn" id="dl-all-cols">—</span>열 = 일자 + 전 시리즈)로 내려받습니다.
               용량이 크므로 생성에 수십 초가 걸릴 수 있으며, 진행률이 위에 표시됩니다.
+              <br><b>2026-10-19 범위 확대</b> — 종전에는 국내 KOFIA 격자만 담겨
+              <b>해외금리 · 단기자금 · 스왑금리 · 선물이 빠져</b> 있었습니다. 이제
+              위 개별 선택과 <b>같은 범위</b>(화면 레지스트리 전부)를 담습니다.
+              다만 <b>미국채선물(ZT·ZN·ZB)은 빠집니다</b> — 갱신이 분기 1회 수기라
+              매일 갱신되는 계열과 기준일이 어긋나기 때문이며, 2026-09-28 화면에서도
+              제거한 계열입니다(상관관계 도구에서만 쓸 수 있습니다).
+              국채선물은 월물간 보정 연결가격인 <b>수정가</b>만 담깁니다.
+              선물은 값이 금리(%)가 아니라 <b>가격(pt)</b>이라 한 파일에 단위가
+              섞입니다 — 파일 상단 주석에 pt 컬럼을 열거해 둡니다.
             </p>
             <button type="button" class="dlbtn" id="dl-all">전체 다운로드 (전 기간 · 전 시리즈)</button>
           </div>
@@ -1981,9 +1991,32 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
       <h4 id="man-s4g">4-7. 데이터 다운로드 — 시계열 원본 CSV</h4>
       <p>채권종류·만기를 골라 <b>[+ 이 만기 추가]</b> / <b>[+ 이 채권종류 전 만기]</b> / <b>[+ 한국은행 기준금리]</b>로
         장바구니(칩)에 담고, 기간을 정해 wide CSV 로 내려받습니다. <b>[선택 비우기]</b>로 초기화합니다.</p>
-      <p>아래 <b>[전체 다운로드]</b>는 전 기간 · 전 시리즈를 한 파일로 내려받습니다 — 수십 MB 이고 생성에 수십 초가 걸리며 진행률이 표시됩니다.</p>
-      <p><b>개별 선택(칩)에는 선물이 없습니다</b>(§5) — 선물만 따로 받으려면
-        대시보드 '선물·IRS' 탭의 <b>선물 시계열</b> 카드 CSV 버튼을 쓰십시오.</p>
+      <p>아래 <b>[전체 다운로드]</b>는 전 기간 · 전 시리즈를 한 파일로 내려받습니다 —
+        지금 이 데이터 기준으로 <b><span class="dyn" id="man-dlall-n">—</span>시리즈</b>
+        (CSV <span class="dyn" id="man-dlall-cols">—</span>열 = 일자 + 전 시리즈)이고,
+        구성은 <span class="dyn" id="man-dlall-break">—</span> 입니다.
+        수십 MB 이고 생성에 수십 초가 걸리며 진행률이 표시됩니다.
+        <br><b>이 숫자는 화면 레지스트리를 실행 시점에 세어 채웁니다</b> — 문구에 박아 두지
+        않으므로 시리즈가 늘어도 안내와 파일이 어긋나지 않습니다.</p>
+      <!-- [2026-10-19] 전체 다운로드 범위 확대. 기능을 고치면 이 문단도 함께 고친다. -->
+      <p><b>2026-10-19 — [전체 다운로드] 범위가 넓어졌습니다.</b> 종전에는 <b>국내 KOFIA 격자만</b>
+        담겨 <b>해외금리</b>(미국채 · 일본국채 · 호주국채) · <b>단기자금</b>(CP · CD 시가평가 · CD 유통수익률) ·
+        <b>스왑금리</b>(IRS) · <b>선물</b>이 통째로 빠져 있었습니다 — 화면에서는 고를 수 있는데
+        전체 다운로드에는 없는 상태였습니다. 이제 <b>화면 레지스트리 전부</b>를 담습니다.</p>
+      <ul>
+        <li><b>미국채선물(ZT · ZN · ZB)은 빠집니다.</b> 갱신이 분기 1회 수기라 매일 갱신되는
+          계열과 같은 파일에 두면 기준일이 어긋난 값을 최신값으로 오해하게 됩니다
+          (2026-09-28 화면에서도 제거했고, 상관관계 도구에서만 쓸 수 있습니다).</li>
+        <li><b>국채선물은 수정가</b>(월물간 보정 연결가격)만 담깁니다. 약정가는 레지스트리에 없습니다.</li>
+        <li><b>단위가 섞입니다</b> — 선물은 금리(%)가 아니라 가격(pt)입니다. 파일 상단 주석에
+          pt 컬럼을 전부 열거하므로 거기서 확인하십시오.</li>
+        <li><b>날짜축은 전부 한국 영업일축</b>입니다. 미국·일본·호주도 마스터가 한국 영업일에 맞춰
+          실은 값이라 국내 시리즈와 같은 날짜로 비교됩니다 — 대시보드 해외금리 카드가 쓰는
+          각국 자체 날짜축 사본과는 다르고, 한국 공휴일에 걸린 해외 관측일은 빠져 있습니다.</li>
+      </ul>
+      <p><b>개별 선택(칩)에는 선물이 없습니다</b>(§5) — 범위 확대는 <b>[전체 다운로드]</b> 에만
+        적용됐습니다. 선물만 따로 받으려면 대시보드 '선물·IRS' 탭의 <b>선물 시계열</b> 카드
+        CSV 버튼을 쓰십시오.</p>
       <p><b>특정 기간의 전 시리즈 변동(bp)</b>이 필요하면 이 탭이 아니라
         <b>스트레스테스트</b> 결과 표의 행을 클릭한 뒤 <b>[선택 구간 전 시리즈 변동 CSV]</b> 를
         쓰십시오(§4-1). 이 탭은 <b>수준(레벨) 시계열</b>을 내보내고 변동을 계산하지 않습니다.</p>
@@ -7621,22 +7654,52 @@ guard('다운로드 탭', function () {
     runDownload(cols, r[0], r[1], r[2], r[3], fname(cols, r[0], r[1]), '선택 시리즈 ' + cols.length + '개');
   };
 
-  /* 전체 다운로드 — 국내 KOFIA 격자 + 한국은행 기준금리. */
+  /* [2026-10-19] 전체 다운로드 범위를 국내 766 → **화면 레지스트리 전부**로 넓혔다.
+     종전에는 SERIES(국내 KOFIA 격자)만 담아서 해외금리(미국채·일본국채·호주국채)·
+     단기자금(CP·CD시가평가·CD유통)·스왑금리(IRS)·선물이 통째로 빠져 있었다 —
+     화면에서는 고를 수 있는데 '전체 다운로드'에는 없는 상태였다.
+
+     **조건 없이 전부 넣으면 안 된다.** 마스터·rates.json 에는 일부러 노출을 뺀
+     컬럼이 남아 있다. 그래서 여기서도 레지스트리(REG_TYPES)를 단일 출처로 쓴다 —
+     REG_TYPES 는 EXTRA_SERIES 에 등록된 것만 담으므로 아래가 자동으로 빠진다.
+       · 미국채선물 ZT/ZN/ZB 6컬럼 : 2026-09-28 화면 노출 제거(갱신이 분기 1회 수기라
+         매일 갱신되는 계열과 같은 파일에 두면 기준일이 어긋난 값을 최신값으로 오해한다)
+       · 국채선물 약정가 3컬럼 : 레지스트리에는 월물간 보정 연결가격인 수정가만 등록
+     레지스트리를 우회해 COL 을 직접 훑으면 이 둘이 되살아난다. 그러면 안 된다. */
   function allCols() {
     var cols = [{ c: DATA.base.c, label: '한국은행기준금리' }], seen = {};
     seen[DATA.base.c] = 1;
-    function add(c, label) { if (c && COL[c] && !seen[c]) { seen[c] = 1; cols.push({ c: c, label: label }); } }
-    TYPES.forEach(function (T) { T.mats.forEach(function (m) { add(m.col, T.name + ' ' + m.label); }); });
+    /* 집계는 **중복 제거 뒤의 cols 에서만** 센다. 레지스트리를 다시 훑어 세면
+       한국은행 기준금리가 base 와 REG_TYPES 양쪽에 있어 1개가 이중 계상되고,
+       '국내 KOFIA' 수가 1 적게 나온다(2026-10-19 실측: 766 → 765). */
+    function add(c, label, src) { if (c && COL[c] && !seen[c]) { seen[c] = 1; cols.push({ c: c, label: label, src: src }); } }
+    TYPES.forEach(function (T) { T.mats.forEach(function (m) { add(m.col, T.name + ' ' + m.label, 'kofia'); }); });
+    REG_TYPES.forEach(function (T) {
+      T.mats.forEach(function (m) { add(m.col, T.name + (T.noMat ? '' : ' ' + m.label), 'reg'); });
+    });
     return cols;
   }
 
   $('dl-all').onclick = function () {
     if (busy) return;
     var cols = allCols();
-    var nser = cols.length, ncol = cols.length + 1;
+    /* 시리즈 수는 **기준금리를 포함**한 cols.length 로 센다 — CSV 머리말의
+       '시리즈 수'(seriesHeaderLines) · 스트레스테스트의 '선택 구간 전 시리즈 변동 CSV'
+       가 모두 그 정의를 쓰므로, 여기서만 빼면 세 곳의 숫자가 어긋난다.
+       CSV 컬럼 수는 여기에 '일자' 열이 하나 더 붙는다. */
+    var nser = cols.length, ncol = cols.length + 1, i;
+    var nk = 0, nr = 0;
+    for (i = 0; i < cols.length; i++) { if (cols[i].src === 'kofia') nk++; else if (cols[i].src === 'reg') nr++; }
+    var nbase = nser - nk - nr;                             // 한국은행 기준금리(src 없음)
+    /* 셀당 바이트 추정치. 2026-10-19 실측으로 교정했다 — 전 범위(6,467행 × 835열)
+       실제 21.9MB = 셀당 4.25바이트였는데 종전 상수 6.2 는 32MB 로 과대 표시했다.
+       결측 빈 칸이 많아 평균이 낮다. */
     var mb = Math.round(N * ncol * 4.3 / 1048576);
     if (!confirm('전 기간 · 전체 ' + nser + '시리즈를 CSV 로 만듭니다.\n' +
       N.toLocaleString() + '행 × ' + ncol + '열 (일자 + ' + nser + '시리즈, 약 ' + mb + 'MB 내외).\n\n' +
+      '국내 KOFIA ' + nk + '개 + 해외금리·단기자금·스왑·선물 ' + nr + '개' +
+      (nbase ? ' + 한국은행 기준금리 ' + nbase + '개' : '') + '\n' +
+      '(미국채선물은 화면 노출 제거 계열이라 빠집니다)\n\n' +
       '생성에 수십 초가 걸릴 수 있습니다. 계속하시겠습니까?')) return;
     runDownload(cols, 0, N - 1, DATA.meta.from, DATA.meta.to,
       '금리시계열_전체' + nser + '시리즈_' + DATES[0] + '-' + DATES[N - 1] + '.csv',
@@ -8316,7 +8379,15 @@ function renderManual() {
     t.mats.forEach(function (m) { if (m.col && COL[m.col] && !dseen[m.col]) { dseen[m.col] = 1; dR++; } });
   });
   var dTot = dB + dK + dR;
+  txt('man-dlall-n', dTot.toLocaleString());
+  txt('man-dlall-cols', (dTot + 1).toLocaleString());
+  txt('man-dlall-break', '국내 KOFIA ' + dK.toLocaleString() + '개 + 해외금리·단기자금·스왑·선물 ' +
+    dR.toLocaleString() + '개' + (dB ? ' + 한국은행 기준금리 ' + dB + '개' : ''));
   txt('man-delta-n', dTot.toLocaleString());
+  txt('dl-all-n', dTot.toLocaleString());
+  txt('dl-all-cols', (dTot + 1).toLocaleString());
+  var ab = $('dl-all');
+  if (ab) ab.textContent = '전체 다운로드 (전 기간 · 전 시리즈 ' + dTot.toLocaleString() + '개)';
 
   /* --- 2-1 수록 데이터 일람 — 공용 manDataSpans() 를 그대로 표로 옮긴다 --- */
   var H = '<thead><tr><th class="l">데이터</th><th class="l">출처</th><th class="l">수록 구간 (만기별 시작일)</th>' +
@@ -8493,7 +8564,7 @@ function mqDrawMap() {
     ['스프레드 분석', '두 금리 차의 시계열 · 백분위 · z (유형 5종)'],
     ['커브+스프레드 분석', '커브 2개 × 시점 2개 → 만기별 Δ스프레드'],
     ['상관관계 분석', '비중첩 구간별 r — 선물을 고를 수 있는 유일한 도구'],
-    ['데이터 다운로드', '고른 시리즈 × 기간의 wide CSV (개별 선택에 선물 없음 · 전체 다운로드는 국내 KOFIA 격자)']
+    ['데이터 다운로드', '고른 시리즈 × 기간의 wide CSV (개별 선택에 선물 없음 · 전체 다운로드는 레지스트리 전부)']
   ]);
   group('사용|매뉴얼', null, [
     ['한눈에', '이 화면 — 그림으로 보는 안내서'],
