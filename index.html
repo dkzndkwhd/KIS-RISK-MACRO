@@ -978,7 +978,7 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
   </div>
     </section>
     <section class="card resultpanel">
-      <div class="panelhead"><h2>스트레스테스트 · 결과</h2><button type="button" class="dlbtn" id="st-dl" disabled title="화면 표 + 계산 근거 주석 + 그래프가 담고 있는 로데이터 전부를 하나의 CSV 로 내려받습니다">CSV 다운로드</button></div>
+      <div class="panelhead"><h2>스트레스테스트 · 결과</h2><button type="button" class="dlbtn" id="st-dl" disabled title="화면 표 + 계산 근거 주석 + 그래프가 담고 있는 로데이터 전부를 하나의 CSV 로 내려받습니다">CSV 다운로드</button><button type="button" class="dlbtn" id="st-dl-row" disabled title="결과 표에서 구간(행)을 클릭하면 활성화됩니다">선택 구간 전 시리즈 변동 CSV</button></div>
       <div class="out" id="st-out"><div class="placeholder">좌측에서 조건을 설정한 뒤 [분석 실행] 을 누르십시오.</div></div>
     </section>
   </div>
@@ -1229,8 +1229,8 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
           <h3>전체 다운로드</h3>
           <div class="bd" style="padding:12px 14px 4px">
             <p style="margin:0 0 10px;font-size:12px;line-height:1.75;color:#3c4753">
-              전 기간 · <b>전체 시리즈</b>를 하나의 wide CSV 로 내려받습니다.
-              용량이 크므로(약 30MB 내외) 생성에 수십 초가 걸릴 수 있으며, 진행률이 위에 표시됩니다.
+              전 기간 · <b>전체 시리즈</b>(국내 KOFIA 격자)를 하나의 wide CSV 로 내려받습니다.
+              용량이 크므로 생성에 수십 초가 걸릴 수 있으며, 진행률이 위에 표시됩니다.
             </p>
             <button type="button" class="dlbtn" id="dl-all">전체 다운로드 (전 기간 · 전 시리즈)</button>
           </div>
@@ -1242,7 +1242,14 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
           · 값은 원본 고시치 문자열 그대로이며, <b>결측은 빈 칸</b>입니다(보간하지 않고 0으로도 채우지 않습니다).<br>
           · 정렬은 <b>일자 내림차순</b>(마스터 CSV 와 동일), 일자는 <span class="mono">YYYYMMDD</span> 형식입니다.<br>
           · 파일 상단에 생성 시각·기간·관측치 수 등 계산 근거가 <b>#</b> 주석 행으로 들어갑니다.<br>
-          · 각 분석 도구의 결과는 해당 도구 화면의 <b>[CSV 다운로드]</b> 버튼으로 내려받습니다.
+          · 날짜축은 <b>전부 한국 영업일축</b>입니다. 미국·일본·호주 시리즈도 마스터가 한국
+            영업일에 맞춰 실은 값이라 국내 시리즈와 같은 날짜로 비교됩니다 — 각국 자체 날짜축
+            사본(대시보드 해외금리 카드)과는 다르며, 한국 공휴일에 걸린 해외 관측일은 빠져 있습니다.<br>
+          · 각 분석 도구의 결과는 해당 도구 화면의 <b>[CSV 다운로드]</b> 버튼으로 내려받습니다.<br>
+          · <b>스트레스테스트</b>에는 결과 표의 <b>행(구간)을 클릭</b>한 뒤 누르는
+            <b>[선택 구간 전 시리즈 변동 CSV]</b> 가 따로 있습니다 — 그 기간 동안
+            <b>전 시리즈의 시작값·종료값·변동</b>을 한 장으로 받습니다. 기간을 직접
+            입력하는 방식이 아니라, <b>스트레스테스트가 찾아낸 구간</b>을 그대로 씁니다.
         </div>
       </div>
     </section>
@@ -1350,7 +1357,10 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
     <h3>5 · 도구 × 고를 수 있는 시리즈 <span>지금 이 화면의 드롭다운을 세어 만듭니다</span></h3>
     <div class="mqbd">
       <div class="tblwrap" id="mq-mx"><p class="pend">초기화 중…</p></div>
-      <p class="mqnote"><b>선물(가격 pt)은 상관관계에만</b> 나옵니다 — 단위가 섞이기 때문입니다. <b>데이터 다운로드 탭에도 없습니다.</b><br>
+      <p class="mqnote"><b>선물(가격 pt)은 상관관계에만</b> 나옵니다 — 단위가 섞이기 때문입니다.
+        데이터 다운로드 탭의 <b>개별 선택에도 없습니다</b>. 다만 <b>[전체 다운로드]</b> 와
+        스트레스테스트의 <b>[선택 구간 전 시리즈 변동 CSV]</b> 에는 <b>국채선물 수정가가 들어갑니다</b>
+        (2026-10-19) — 파일 안에서 pt 컬럼을 따로 열거해 단위를 구분합니다.<br>
         <b>만기축이 필요한 도구</b>(스트레스테스트 · 커브 · 커브+스프레드)에는 만기 개념이 없는 <b>기준지표</b>가 나오지 않습니다.
         <b>VaR 은 기준지표를 고를 수 있습니다.</b></p>
     </div>
@@ -1371,8 +1381,8 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
           <span class="fix">→ 수준은 미조정가 · 변동은 조정계열</span></div>
         <div class="mqcard"><b>금리 × 선물 상관이 음수로 나온다</b><span>정상입니다. 금리↑ = 선물가격↓ 이기 때문입니다.</span>
           <span class="fix">→ 부호만 보고 오류로 판단하지 마십시오</span></div>
-        <div class="mqcard"><b>데이터 다운로드 탭에 선물이 없다</b><span>의도된 것입니다. 선물은 가격(pt)이라 이 탭 후보에서 빠져 있습니다.</span>
-          <span class="fix">→ 대시보드 선물·IRS 탭 → 선물 시계열 카드 CSV</span></div>
+        <div class="mqcard"><b>데이터 다운로드 탭 개별 선택에 선물이 없다</b><span>의도된 것입니다. 선물은 가격(pt)이라 개별 선택 후보에서 빠져 있습니다. 단 [전체 다운로드]에는 국채선물 수정가가 들어갑니다.</span>
+          <span class="fix">→ [전체 다운로드], 또는 대시보드 선물·IRS 탭 → 선물 시계열 카드 CSV</span></div>
       </div>
     </div>
   </div>
@@ -1764,7 +1774,8 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
           같은 표 아래 <b>스왑스프레드 = IRS − 국고채권</b>(동일 만기 단순차, bp)입니다 —
           <b>스프레드 분석 도구의 '본드스왑 스프레드'(채권 − IRS)와 부호가 반대</b>입니다(§4-4).</li>
         <li><b>선물 시계열</b> 칩: 국채선물 3·10·30년. x축은 한국 영업일.
-          [CSV 다운로드] 버튼이 있습니다 — <b>선물은 '데이터 다운로드' 탭에 없으므로</b> 선물 원본이 필요하면 이 버튼을 쓰십시오(§5).</li>
+          [CSV 다운로드] 버튼이 있습니다 — <b>선물은 '데이터 다운로드' 탭의 개별 선택에 없으므로</b>
+          선물만 따로 필요하면 이 버튼을 쓰십시오(§5). 전 시리즈를 한 번에 받으려면 그 탭의 [전체 다운로드]에 포함돼 있습니다.</li>
         <li><b>변동 현황</b> — 선물은 조정계열 기준 <b>pt</b>, IRS 는 <b>bp</b>. 수록 시작일이 서로 달라
           (국채선물 30년 2024-02-19 · IRS 2007-10-29) 긴 기간 열에 <span class="na">—</span>가 나오는 것이 정상입니다.</li>
         <li><b>블록마다 자체 기준일을 잡습니다</b> — 선물과 IRS 는 갱신 주기가 달라 최신 관측일이 서로 어긋날 수 있습니다.
@@ -1827,6 +1838,39 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
         전자는 사실상 상위 1~2개 관측치가 곧 답이라 최악 사례와 구별되지 않는다는 뜻이고,
         후자는 관측치 한두 개가 바뀌면 값이 크게 움직인다는 뜻입니다(경험칙: 꼬리 표본 10건 이상 권장).
         경고가 뜨면 퍼센타일을 낮추거나 탐색 범위를 늘리십시오.</p>
+
+      <!-- [2026-10-19] 선택 구간 전 시리즈 변동 CSV. 기능을 고치면 이 절도 함께 고친다. -->
+      <p><b>선택 구간 전 시리즈 변동 CSV</b> — 결과 표에서 <b>행(구간) 하나를 클릭</b>하면
+        결과 패널 머리의 <b>[선택 구간 전 시리즈 변동 CSV]</b> 버튼이 활성화됩니다.
+        누르면 <b>그 구간 동안 전 시리즈</b>(화면에서 고를 수 있는 모든 채권종류 × 모든 만기 —
+        지금 이 데이터 기준 <b><span class="dyn" id="man-delta-n">—</span>개</b>)의
+        <b>시작값 · 종료값 · 변동</b>이 한 장의 CSV 로 나옵니다. 기간을 직접 입력하는 방식이
+        아니라 <b>스트레스테스트가 찾아낸 구간</b>을 그대로 쓰는 것이 요점입니다.
+        세로축이 시리즈이므로 행 수가 곧 시리즈 수이고, 이 숫자는
+        <b>'데이터 다운로드' 탭의 [전체 다운로드] 와 같은 범위</b>입니다(§4-7).</p>
+      <ul>
+        <li><b>어느 표든 됩니다</b> — 상위 N건 표, 퍼센타일 사다리 표, 피벗 목록 모두 같은 방식입니다.
+          퍼센타일 표의 행은 <b>최근접순위가 지목한 실제 윈도우</b>를 씁니다(선형보간 값은
+          두 관측치 사이의 실재하지 않는 값이라 지목할 구간이 없습니다 — CSV 주석에 적힙니다).</li>
+        <li><b>선택은 하나</b>입니다. 상위 N건 표에서 고르면 퍼센타일 표의 선택이 풀리고, 그 반대도 같습니다.
+          <b>선택된 행을 다시 누르면 선택이 풀리고</b> 버튼이 다시 비활성이 됩니다.
+          분석을 다시 실행하면 선택도 초기화되고 1위(피벗은 첫 번째) 행이 자동으로 잡힙니다.</li>
+        <li><b>기존 [CSV 다운로드] 와 다른 파일</b>입니다. 기존 버튼은 <b>세로축이 윈도우</b>(탐색한
+          전체 롤링 윈도우)이고 고른 <b>2개 만기</b>만 담습니다. 이 버튼은 <b>세로축이 시리즈</b>이고
+          <b>기간은 1개</b>입니다. 둘은 겹치지 않습니다.</li>
+        <li><b>단위가 섞입니다</b> — 금리는 bp, 국채선물 수정가는 pt 입니다. 행마다 <span class="mono">변동단위</span>
+          열이 있고, 합계·정렬에 쓸 수 있게 <span class="mono">Δ(bp)</span> · <span class="mono">Δ(pt)</span> 가
+          분리돼 있습니다. 변동률(%)은 <b>가격 시리즈에만</b> 채웁니다 — 금리는 저금리·음수 구간에서
+          분모가 깨져 오해를 부르기 때문입니다.</li>
+        <li><b>결측은 빈 칸</b>이고 <span class="mono">상태</span> 열에 사유(시작일결측 · 종료일결측 ·
+          양끝결측 · 미수록)가 적힙니다. <b>보간·전방채움·직전 관측일 대체를 하지 않습니다</b> —
+          과거 구간일수록 결측이 많습니다(IRS 수기 적재 공백, CP 2012-04 · CD 시가평가 2020-01 ·
+          CD 유통 2009-02 · 일본·호주 각자 수록 시작이 다릅니다).</li>
+        <li><b>미국채선물은 빠집니다</b>(화면 노출 제거 계열), 국채선물은 <b>수정가</b>만 담깁니다.
+          구간이 <b>2023-01-09 산출기준 변경</b>을 넘나들면 주석에 경고가 들어갑니다.</li>
+        <li><b>피벗은 이벤트 기준</b>이라 구간이 전환일 t₀ ~ t₀+W 이고, 데이터 끝에 걸리면
+          <b>부분 윈도우</b>가 됩니다. 그 사실도 주석에 적힙니다.</li>
+      </ul>
 
       <h4 id="man-s4b">4-2. VaR — "h일 동안 p% 확률로 이보다 크게는 안 움직였다"</h4>
       <p>한 시리즈의 <b>h영업일 변동 분포</b>를 만들어 분위수를 냅니다. 히스토리컬 방식이며 정규분포를 가정하지 않습니다.</p>
@@ -1937,8 +1981,12 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
       <h4 id="man-s4g">4-7. 데이터 다운로드 — 시계열 원본 CSV</h4>
       <p>채권종류·만기를 골라 <b>[+ 이 만기 추가]</b> / <b>[+ 이 채권종류 전 만기]</b> / <b>[+ 한국은행 기준금리]</b>로
         장바구니(칩)에 담고, 기간을 정해 wide CSV 로 내려받습니다. <b>[선택 비우기]</b>로 초기화합니다.</p>
-      <p>아래 <b>[전체 다운로드]</b>는 전 기간 · 전 시리즈를 한 파일로 내려받습니다 — 약 <b>30MB</b>이고 생성에 수십 초가 걸리며 진행률이 표시됩니다.</p>
-      <p><b>선물은 이 탭에 없습니다</b>(§5). 선물 원본은 대시보드 '선물·IRS' 탭의 <b>선물 시계열</b> 카드 CSV 버튼으로 받습니다.</p>
+      <p>아래 <b>[전체 다운로드]</b>는 전 기간 · 전 시리즈를 한 파일로 내려받습니다 — 수십 MB 이고 생성에 수십 초가 걸리며 진행률이 표시됩니다.</p>
+      <p><b>개별 선택(칩)에는 선물이 없습니다</b>(§5) — 선물만 따로 받으려면
+        대시보드 '선물·IRS' 탭의 <b>선물 시계열</b> 카드 CSV 버튼을 쓰십시오.</p>
+      <p><b>특정 기간의 전 시리즈 변동(bp)</b>이 필요하면 이 탭이 아니라
+        <b>스트레스테스트</b> 결과 표의 행을 클릭한 뒤 <b>[선택 구간 전 시리즈 변동 CSV]</b> 를
+        쓰십시오(§4-1). 이 탭은 <b>수준(레벨) 시계열</b>을 내보내고 변동을 계산하지 않습니다.</p>
       <p class="mtop"><a href="#man-toc">↑ 목차</a></p>
     </div>
   </details>
@@ -1953,7 +2001,9 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
       <ul>
         <li><b>선물(가격 pt)은 상관관계에만</b> 나옵니다. 스트레스테스트·VaR 는 bp 변동과 커브 유형(불/베어·플랫/스팁)을 쓰고,
           커브·스프레드는 만기축 위의 금리차를 씁니다 — 가격 포인트를 넣으면 단위가 섞이므로 애초에 선택지에서 뺐습니다.
-          <b>데이터 다운로드 탭에도 없습니다.</b></li>
+          <b>데이터 다운로드 탭의 개별 선택에도 없습니다.</b> 단 같은 탭의 <b>[전체 다운로드]</b> 와
+          스트레스테스트의 <b>[선택 구간 전 시리즈 변동 CSV]</b> 에는 <b>국채선물 수정가가 들어갑니다</b>(2026-10-19) —
+          그 두 파일은 단위를 열·주석으로 구분해 표기하므로 섞여도 오해가 생기지 않습니다.</li>
         <li><b>만기축이 필요한 도구</b>(스트레스테스트·커브 분석·커브+스프레드, 그리고 스프레드의 텀 유형)에는
           <b>만기 개념이 없는 기준지표</b>(한국은행 기준금리·DFF·EFFR·SOFR)가 나오지 않습니다. 미국채(11만기)는 나옵니다.</li>
         <li><b>원화 IRS 는 금리(%)</b>라 제한이 없어 7개 도구 전부에서 고를 수 있습니다.
@@ -2098,11 +2148,16 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
           <tr><td class="l"><b>대시보드 시계열 카드</b>의 [CSV 다운로드]<br>(금리 시계열 · 미국 금리 시계열 · 선물 시계열)</td>
             <td class="l">칩으로 <b>켜 둔 시리즈 × 화면에 보이는 구간 전체</b>의 일자별 로데이터.
               정렬은 <b>일자 오름차순</b>(차트 왼쪽→오른쪽)입니다.
-              <b>선물 원본은 여기서만</b> 받을 수 있습니다.</td></tr>
+              <b>선물만 따로</b> 받으려면 여기를 쓰십시오(미조정 실제가격 포함).</td></tr>
           <tr><td class="l"><b>데이터 다운로드</b> 탭</td>
-            <td class="l">고른 시리즈 × 기간의 wide CSV, 또는 전 기간·전 시리즈(약 30MB).
+            <td class="l">고른 시리즈 × 기간의 wide CSV, 또는 <b>전 기간 · 레지스트리 전 시리즈</b>(수십 MB).
               정렬은 <b>일자 내림차순</b>(마스터 CSV 와 동일), 일자는 <span class="mono">YYYYMMDD</span>.
-              머리말에 전체 데이터 구간·요청 기간·실제 기간·시리즈 수·<b>컬럼별 구간 내 관측치 수</b>가 들어갑니다.</td></tr>
+              머리말에 전체 데이터 구간·요청 기간·실제 기간·시리즈 수·<b>컬럼별 구간 내 관측치 수</b>가 들어갑니다.
+              [전체 다운로드]는 2026-10-19 부터 해외금리·단기자금·스왑·선물까지 담습니다(미국채선물 제외).</td></tr>
+          <tr><td class="l"><b>스트레스테스트</b> · 선택 구간</td>
+            <td class="l">결과 표의 <b>행(구간)을 클릭</b>한 뒤 [선택 구간 전 시리즈 변동 CSV].
+              <b>그 기간의 전 시리즈 시작값 · 종료값 · 변동(bp, 선물은 pt)</b>을 세로로 담습니다.
+              기간은 1개이고 세로축이 시리즈라서, 같은 패널의 [CSV 다운로드](세로축이 윈도우)와 겹치지 않습니다.</td></tr>
         </tbody>
       </table></div>
       <p><b>공통 형식</b></p>
@@ -3915,6 +3970,7 @@ function classify(dl, ds_, thL, thS) {
 
 function runStress() {
   RAWDATA.st = null;                       // 이전 실행의 로데이터가 따라붙지 않게 초기화
+  dselReset();                             // 이전 실행의 표·행 선택이 따라붙지 않게 초기화
   var _sc = document.querySelector('input[name=st-sc]:checked');
   if (_sc && _sc.value === 'pivot') { return guard('피벗', runPivot); }
   if (_sc && _sc.value === 'spread') { return guard('스프레드 확대', runSpreadStress); }
@@ -4103,7 +4159,43 @@ function runStress() {
       tr.className = 'sel'; renderStressDetail(+tr.dataset.i);
     };
   });
+  /* 행 선택 → '선택 구간 전 시리즈 변동 CSV' (2026-10-19) */
+  dselTable('st-tbl', function (tr) {
+    var i = tr.getAttribute('data-i');
+    if (i == null || i === '') return null;
+    var c = picked[+i];
+    if (!c) return null;
+    return {
+      b: c.b, t: c.t, label: SC_NAME[scen].split('(')[0] + '_' + (+i + 1) + '위',
+      head: function () {
+        return stDlMeta().concat([
+          '선택 행 : 상위 N건 표 ' + (+i + 1) + '위 / ' + picked.length + '건 · 유형 ' + SC_NAME[c.kind].split('(')[0],
+          '선택 행 강도 : ' + f1n(c.strength) + 'bp (Δlevel ' + f1n(c.dlevel) + 'bp · Δslope ' + f1n(c.dslope) + 'bp)'
+        ]);
+      }
+    };
+  });
+  if (pSorted) dselTable('st-pctl-tbl', dselPctlGet);
+  dselAuto('st-tbl', function (tr) { return tr.getAttribute('data-i') === '0'; });
   renderStressDetail(0);
+}
+
+/** 퍼센타일 사다리 행 → 선택 레코드. 커브형·스프레드형이 공유한다.
+ *  data-b/data-t 는 **최근접순위**가 지목한 실제 윈도우다(선형보간 값은 실재하지 않음). */
+function dselPctlGet(tr) {
+  var b = tr.getAttribute('data-b'), t = tr.getAttribute('data-t');
+  if (b == null || t == null || b === '' || t === '') return null;
+  var p = tr.getAttribute('data-p'), rk = tr.getAttribute('data-rank'), nn = tr.getAttribute('data-n');
+  return {
+    b: +b, t: +t, label: '퍼센타일' + p + 'p',
+    head: function () {
+      return stDlMeta().concat([
+        '선택 행 : 퍼센타일 표 ' + p + '% 행',
+        '지목 윈도우 : 최근접순위 정의(numpy method=inverted_cdf)가 가리킨 실제 윈도우 — 분포 순위 ' + rk + ' / ' + nn + '건',
+        '※ 선형보간 값은 두 관측치 사이의 실재하지 않는 값이라 지목할 윈도우가 없습니다. 이 구간은 최근접순위 기준입니다.'
+      ]);
+    }
+  };
 }
 function kpi(k, v, u, big) { return '<div class="kpi' + (big ? ' big' : '') + '"><div class="k">' + k + '</div><div class="v">' + v + (u ? '<span class="u">' + u + '</span>' : '') + '</div></div>'; }
 
@@ -4175,7 +4267,12 @@ function pctlBlockHTML(o) {
   if (lad.indexOf(p) < 0) lad.push(p);
   lad.sort(function (a, b) { return a - b; });
 
-  h.push('<div class="tblwrap"><table><thead><tr>' +
+  /* [2026-10-19] 표에 clickrow + id, 각 행에 data-b/data-t 를 심는다.
+     계산·수치·문구는 전혀 바뀌지 않는다 — 행이 지목하는 윈도우(최근접순위 정의)를
+     DOM 밖에서도 알 수 있게 하려는 것뿐이다. '선택 구간 전 시리즈 변동 CSV' 가
+     이 속성을 읽는다. 선형보간 값은 실재하지 않는 중간값이라 지목할 윈도우가 없으므로
+     data-b/data-t 는 **최근접순위가 지목한 윈도우**이고, CSV 주석에 그 사실을 적는다. */
+  h.push('<div class="tblwrap"><table class="clickrow" id="st-pctl-tbl"><thead><tr>' +
     '<th style="width:74px">퍼센타일</th><th>강도 — 선형보간</th><th>강도 — 최근접순위</th>' +
     '<th class="l">해당 윈도우 (최근접순위)</th><th>분포 순위</th>' + (o.extraTh || '') +
     '<th>상위 N건 표</th></tr></thead><tbody>');
@@ -4184,7 +4281,9 @@ function pctlBlockHTML(o) {
     var c = o.rows[idx[r.nearIdxAsc]];
     var rk = rankOf(c);
     var isSel = Math.abs(q - p) < 1e-9;
-    h.push('<tr' + (isSel ? ' style="background:#eef3f9;font-weight:600"' : '') + '>' +
+    h.push('<tr data-b="' + c.b + '" data-t="' + c.t + '" data-p="' + f1n(q) + '"' +
+      ' data-rank="' + r.nearRank + '" data-n="' + n + '"' +
+      (isSel ? ' style="background:#eef3f9;font-weight:600"' : '') + '>' +
       '<td><b>' + f1n(q) + '%</b>' + (isSel ? ' ◄' : '') + '</td>' +
       '<td><b>' + f1n(r.lin) + '</b></td><td>' + f1n(r.near) + '</td>' +
       '<td class="l mono">' + fmtD(DATES[c.b]) + ' ~ ' + fmtD(DATES[c.t]) + '</td>' +
@@ -4485,6 +4584,25 @@ function runSpreadStress() {
       tr.className = 'sel'; guard('스프레드 상세', function () { renderSpreadStressDetail(+tr.dataset.i); });
     };
   });
+  /* 행 선택 → '선택 구간 전 시리즈 변동 CSV' (2026-10-19) */
+  dselTable('st-spd-tbl', function (tr) {
+    var i = tr.getAttribute('data-i');
+    if (i == null || i === '') return null;
+    var c = picked[+i];
+    if (!c) return null;
+    return {
+      b: c.b, t: c.t, label: '스프레드확대_' + (+i + 1) + '위',
+      head: function () {
+        return stDlMeta().concat([
+          '선택 행 : 상위 N건 표 ' + (+i + 1) + '위 / ' + picked.length + '건',
+          '선택 행 Δ스프레드 : ' + f1n(c.d) + 'bp (ΔA ' + f1n(c.dA) + 'bp · ΔB ' + f1n(c.dB) + 'bp)',
+          '※ A·B 두 leg 의 Δ는 아래 표에서 각 시리즈 행으로도 확인됩니다.'
+        ]);
+      }
+    };
+  });
+  if (pSorted) dselTable('st-pctl-tbl', dselPctlGet);
+  dselAuto('st-spd-tbl', function (tr) { return tr.getAttribute('data-i') === '0'; });
   renderSpreadStressDetail(0);
 }
 
@@ -4882,6 +5000,31 @@ function runPivot() {
       tr.className = 'sel'; renderPivotDetail(+tr.getAttribute('data-i'));
     };
   });
+  /* 행 선택 → '선택 구간 전 시리즈 변동 CSV' (2026-10-19)
+     피벗은 롤링 탐색이 아니라 이벤트 기준이다 — 구간은 전환일 t₀ ~ t₀+W 이고,
+     데이터 끝에 걸리면 부분 윈도우가 된다. 그 사실을 주석에 반드시 남긴다.
+     '평균' 행은 data-i 가 없어 자동으로 선택 대상에서 빠진다. */
+  dselTable('pv-tbl', function (tr) {
+    var i = tr.getAttribute('data-i');
+    if (i == null || i === '') return null;
+    var r = rows[+i];
+    if (!r) return null;
+    return {
+      b: r.b, t: r.t, label: '피벗_' + fmtD(DATES[r.b]).replace(/-/g, '') + (r.p.dir > 0 ? '_인상전환' : '_인하전환'),
+      head: function () {
+        return stDlMeta().concat([
+          '선택 행 : 피벗 목록 ' + (+i + 1) + '번 / ' + rows.length + '건 · ' +
+            fmtD(DATES[r.b]) + ' ' + (r.p.dir > 0 ? '인상 전환' : '인하 전환') +
+            ' (' + pvRate(r.p.from) + ' → ' + pvRate(r.p.to) + ')',
+          '구간 성격 : 이벤트 기준입니다 — 전환일 t₀ 부터 요청 윈도우 ' + r.W + '영업일. 롤링 탐색이 아닙니다.',
+          r.truncated
+            ? '⚠ 부분 윈도우 : 요청 ' + r.W + '영업일의 종료일이 데이터 범위를 넘어, 확보된 ' + r.bizDays + '영업일까지만입니다.'
+            : '부분 윈도우 : 해당 없음 (' + r.bizDays + '영업일 전부 확보)'
+        ]);
+      }
+    };
+  });
+  dselAuto('pv-tbl', function (tr) { return tr.getAttribute('data-i') === '0'; });
   renderPivotDetail(0);
 }
 
@@ -6627,7 +6770,19 @@ var DL = (function () {
     L.push(cmt('실제 기간 : ' + fmtD(DATES[i0]) + ' ~ ' + fmtD(DATES[i1]) +
       ' (' + (i1 - i0 + 1).toLocaleString() + '영업일, 영업일 = 데이터에 행이 존재하는 날)'));
     L.push(cmt('시리즈 수 : ' + cols.length));
-    L.push(cmt('단위 : % (연율). 값은 원본 고시치 그대로이며 결측은 빈 칸입니다 (보간·0채움 없음).'));
+    /* [2026-10-19] 단위가 섞일 수 있다 — 레지스트리 시리즈가 들어오면서 국채선물
+       수정가(가격 pt)가 금리(%) 와 같은 파일에 담긴다. pt 컬럼은 수가 적으므로
+       컬럼 목록이 생략되는 대형 파일에서도 **여기에 전부 열거**한다. */
+    var pcols = [];
+    for (var pi = 0; pi < cols.length; pi++) if (PRICE_COLS[cols[pi].c]) pcols.push(cols[pi].c);
+    if (pcols.length) {
+      L.push(cmt('단위 : 금리 시리즈는 % (연율), 가격 시리즈는 pt — 한 파일에 섞여 있습니다.'));
+      L.push(cmt('  가격(pt) 컬럼 ' + pcols.length + '개 : ' + pcols.join(', ')));
+      L.push(cmt('  ⚠ 열을 가로로 합산·비교할 때 단위를 확인하십시오.'));
+      L.push(cmt('값은 원본 고시치 그대로이며 결측은 빈 칸입니다 (보간·0채움 없음).'));
+    } else {
+      L.push(cmt('단위 : % (연율). 값은 원본 고시치 그대로이며 결측은 빈 칸입니다 (보간·0채움 없음).'));
+    }
     L.push(cmt('정렬 : 일자 내림차순 (마스터 CSV 와 동일)'));
     L.push(cmt('컬럼명 : 마스터 CSV 와 동일 (채권종류 정식명_만기)'));
     L.push(cmt('산출기준 변경 : ' + fmtD(REGIME) + ' — 이전/이후 산정방식이 달라 단순 비교 시 주의가 필요합니다.'));
@@ -6671,7 +6826,11 @@ var DL = (function () {
     var arrs = [];
     for (k = 0; k < cols.length; k++) arrs.push(COL[cols[k].c] || null);
     var decs = [];
-    for (k = 0; k < cols.length; k++) decs.push(cols[k].c === BASE_COL ? -1 : 0); // -1 = 항상 2자리
+    /* -1 = 항상 2자리(기준금리) · -2 = 항상 3자리(가격 pt — 저장 단위가 0.001pt 라
+       3자리가 무손실이다) · 0 = 금리 기본(DEC_SWITCH 전 2자리, 후 3자리) */
+    for (k = 0; k < cols.length; k++) {
+      decs.push(cols[k].c === BASE_COL ? -1 : (PRICE_COLS[cols[k].c] ? -2 : 0));
+    }
 
     var total = i1 - i0 + 1;
     var i = i1;                    // 내림차순
@@ -6691,7 +6850,8 @@ var DL = (function () {
           var a = arrs[k2];
           if (a) {
             var v = a[i];
-            if (!isNaN(v)) line += (v / 1000).toFixed(decs[k2] < 0 ? 2 : (DATES[i] >= DEC_SWITCH ? 3 : 2));
+            if (!isNaN(v)) line += (v / 1000).toFixed(
+              decs[k2] === -1 ? 2 : (decs[k2] === -2 ? 3 : (DATES[i] >= DEC_SWITCH ? 3 : 2)));
           }
         }
         buf.push(line);
@@ -6715,40 +6875,265 @@ var DL = (function () {
   };
 })();
 
+/* ================================================================
+   선택 구간 × 전 시리즈 변동분 CSV   — 2026-10-19 신설
+   ----------------------------------------------------------------
+   무엇인가
+     스트레스테스트 결과 표에서 **행 하나(= 특정 기간)를 고르면** 그 기간 동안
+     레지스트리에 등록된 **전 시리즈**의 시작값·종료값·변동을 한 장으로 내보낸다.
+
+   기존 CSV 와 축이 직교한다 — 중복이 아니다
+     기존 st-dl : 세로축 = 윈도우(전체 롤링 수천 건), 가로축 = 선택한 2개 leg.
+     이 CSV     : 세로축 = 시리즈(수백 개), 가로축 = 시작·종료·변동. 기간은 1개.
+
+   범위는 **레지스트리 기준**이다 (마스터 전 컬럼이 아니다)
+     TYPES(국내 KOFIA 격자) + REG_TYPES(EXTRA_SERIES 등록분) + 한국은행 기준금리.
+     마스터 컬럼을 직접 훑으면 **화면 노출을 일부러 제거한 계열이 되살아난다** —
+     미국채선물 ZT/ZN/ZB 6컬럼(2026-09-28 제거, 갱신이 분기 수기)과 국채선물
+     약정가 3컬럼(수정가만 등록)이 그 경우다. 레지스트리를 단일 출처로 둔다.
+
+   단위가 섞인다
+     금리는 bp, 국채선물 수정가는 pt. unitOf() 를 그대로 재사용하고,
+     행마다 '단위' 열 + 'Δ(bp)' / 'Δ(pt)' 분리 열로 세 겹 표기한다.
+
+   결측
+     보간·전방채움·0채움을 하지 않는다(사이트 전역 원칙). 양 끝 중 하나라도
+     미고시면 변동을 빈 칸으로 두고 '상태' 열에 사유를 적는다.
+   ================================================================ */
+
+/** 변동분 CSV 의 시리즈 모집단. [{g, t, mat, months, col, price, fi, li}] */
+function deltaUniverse() {
+  var out = [], seen = {};
+  function push(g, tname, m, price) {
+    if (!m || !m.col || seen[m.col] || !COL[m.col]) return;
+    seen[m.col] = 1;
+    out.push({
+      g: g, t: tname, mat: m.label, months: m.months, col: m.col,
+      price: !!price, fi: (m.fi == null ? -1 : m.fi), li: (m.li == null ? -1 : m.li)
+    });
+  }
+  // 한국은행 기준금리 — 전방채움 계열이라 주석에서 따로 고지한다
+  push('기준지표', '한국은행 기준금리', { label: '해당없음', months: 0, col: DATA.base.c, fi: DATA.base.fi, li: DATA.base.li }, false);
+  TYPES.forEach(function (T) {
+    T.mats.forEach(function (m) { push(T.g || '국내', T.name, m, false); });
+  });
+  REG_TYPES.forEach(function (T) {
+    T.mats.forEach(function (m) { push(T.g || '기타', T.name, m, !!T.price); });
+  });
+  return out;
+}
+
+/** 선택 구간 전 시리즈 변동 CSV 본문.
+ *  iB/iT = DATES 인덱스(시작/종료). head = '#' 주석으로 넣을 문장 배열. */
+function buildDeltaCSV(iB, iT, head) {
+  var U = deltaUniverse(), L = [], i;
+  var nPrice = 0, nMiss = 0, nNone = 0;
+  for (i = 0; i < U.length; i++) if (U[i].price) nPrice++;
+
+  var body = [], calc = 0;
+  for (i = 0; i < U.length; i++) {
+    var u = U[i], a = COL[u.col];
+    var v0 = a ? a[iB] : NaN, v1 = a ? a[iT] : NaN;
+    var un = unitOf(u.col, false);                 // 변동 단위 : bp 또는 pt
+    var lv = unitOf(u.col, true);                  // 수준 단위 : % 또는 pt
+    var d = (isNaN(v0) || isNaN(v1)) ? NaN : (v1 - v0) / un.div;
+    var st = '';
+    if (u.fi < 0 || u.li < 0 || u.fi > iT || u.li < iB) { st = '미수록'; nNone++; }
+    else if (isNaN(v0) && isNaN(v1)) { st = '양끝결측'; nMiss++; }
+    else if (isNaN(v0)) { st = '시작일결측'; nMiss++; }
+    else if (isNaN(v1)) { st = '종료일결측'; nMiss++; }
+    else calc++;
+    // 변동률 — 가격(pt)에만 넣는다. 금리는 저금리·음수 구간에서 분모가 깨져 오해를 부른다
+    var rate = '';
+    if (u.price && !isNaN(v0) && !isNaN(v1) && v0 !== 0) rate = nnum(100 * (v1 - v0) / Math.abs(v0), 4);
+    var obs = 0;
+    if (a) for (var k = iB; k <= iT; k++) if (!isNaN(a[k])) obs++;
+    body.push([
+      u.g, u.t, u.mat, u.col, un.sfx,
+      nnum(isNaN(v0) ? NaN : v0 / lv.div, 3), lv.sfx,
+      nnum(isNaN(v1) ? NaN : v1 / lv.div, 3),
+      nnum(d, 4),
+      u.price ? '' : nnum(d, 4),
+      u.price ? nnum(d, 4) : '',
+      rate, st, obs,
+      u.fi >= 0 ? fmtD(DATES[u.fi]) : ''
+    ]);
+  }
+
+  L.push(DL.cmt('금리 분석 대시보드 (kisbond.com) — 선택 구간 × 전 시리즈 변동'));
+  L.push(DL.cmt('생성 시각 : ' + DL.nowStr()));
+  L.push(DL.cmt('원자료 : KOFIA 채권정보센터 채권시가평가수익률 (마스터 ' + DATA.meta.source + ') + 레지스트리 등록 시리즈'));
+  L.push(DL.cmt('데이터 기준일 : ' + fmtD(DATES[LAST]) + ' · 전체 수록 ' + fmtD(DATA.meta.from) + ' ~ ' + fmtD(DATA.meta.to)));
+  for (i = 0; i < (head || []).length; i++) L.push(DL.cmt(head[i]));
+  L.push(DL.cmt(''));
+  L.push(DL.cmt('--- 선택 구간 ---'));
+  L.push(DL.cmt('시작일 : ' + fmtD(DATES[iB])));
+  L.push(DL.cmt('종료일 : ' + fmtD(DATES[iT])));
+  L.push(DL.cmt('구간 길이 : ' + (iT - iB) + '영업일 (달력 ' + dayDiff(DATES[iT], DATES[iB]) + '일) · 영업일 = 데이터에 행이 존재하는 날'));
+  if (crossesRegime(iB, iT)) {
+    L.push(DL.cmt('⚠ 이 구간은 산출기준 변경일 ' + fmtD(REGIME) + ' 을 넘나듭니다 —'));
+    L.push(DL.cmt('  변동에 산정방식 효과(평균 약 10.6bp)가 섞여 있습니다. 순수 시장 변동이 아닙니다.'));
+  }
+  L.push(DL.cmt(''));
+  L.push(DL.cmt('--- 시리즈 모집단 ---'));
+  L.push(DL.cmt('시리즈 수 : ' + U.length + '개 (화면 레지스트리 기준 = 국내 KOFIA 격자 + 등록 시리즈 + 한국은행 기준금리)'));
+  L.push(DL.cmt('  양끝 모두 관측 ' + calc + '개 · 한쪽 이상 결측 ' + nMiss + '개 · 구간 전체 미수록 ' + nNone + '개'));
+  L.push(DL.cmt('제외 : 미국채선물 ZT/ZN/ZB (2026-09-28 화면 노출 제거 — 갱신이 분기 1회 수기라 기준일이 어긋납니다),'));
+  L.push(DL.cmt('       국채선물 약정가 (레지스트리에는 월물간 보정 연결가격인 수정가만 등록돼 있습니다)'));
+  L.push(DL.cmt('날짜축 : 전부 한국 영업일축입니다. 미국·일본·호주 시리즈도 마스터가 한국 영업일에'));
+  L.push(DL.cmt('       left join 한 값이라 같은 날짜로 비교됩니다 — 각국 자체축 사본(us/jp/au_rates.json)과는'));
+  L.push(DL.cmt('       다릅니다. 한국 공휴일에 걸린 해외 관측일은 축에 자리가 없어 빠져 있습니다.'));
+  L.push(DL.cmt('한국은행 기준금리는 전방채움 계열입니다(변경일에만 값이 바뀜).'));
+  L.push(DL.cmt(''));
+  L.push(DL.cmt('--- 단위 ---'));
+  L.push(DL.cmt('금리 시리즈 : 수준 % (연율) · 변동 bp'));
+  L.push(DL.cmt('가격 시리즈 : 수준 pt · 변동 pt — 국채선물 수정가 ' + nPrice + '개가 해당합니다.'));
+  L.push(DL.cmt('  ⚠ Δ 열은 두 단위가 섞입니다. 합계·정렬에는 Δ(bp) / Δ(pt) 분리 열을 쓰십시오.'));
+  L.push(DL.cmt('변동률(%) : 가격 시리즈에만 채웁니다. 금리는 저금리·음수 구간에서 분모가 깨져 비워 둡니다.'));
+  L.push(DL.cmt('결측 : 빈 칸입니다 (보간·전방채움·0채움 없음). 사유는 상태 열을 보십시오.'));
+  L.push(DL.cmt('인코딩 : UTF-8 (BOM), 줄바꿈 CRLF'));
+  L.push(DL.cmt(''));
+  L.push(DL.row(['그룹', '채권종류', '만기', '컬럼명', '변동단위',
+    '시작값', '수준단위', '종료값', 'Δ', 'Δ(bp)', 'Δ(pt)', '변동률(%)', '상태', '구간내관측일수', '수록시작일']));
+  for (i = 0; i < body.length; i++) L.push(DL.row(body[i]));
+  return { text: L.join(DL.CRLF) + DL.CRLF, n: U.length, calc: calc, miss: nMiss, none: nNone };
+}
+
+/* ---- 선택 상태 관리 ----------------------------------------------
+   `.sel` 이 곧 선택이다 — 기존 .clickrow 관행을 그대로 쓰고 새 시각 언어를
+   만들지 않는다. 등록된 표들 사이에서 선택은 **하나**다(상위 N건 표에서 고르면
+   퍼센타일 표의 선택이 풀리고, 그 반대도 같다).
+   재실행(run)마다 리셋되고, 각 도구가 0위 행을 자동 선택한다 —
+   화면이 이미 0위 상세를 그리고 있으므로 선택 표시와 어긋나지 않게 하려는 것이다.
+   선택된 행을 다시 누르면 선택이 풀리고 버튼이 다시 비활성이 된다. */
+var DSEL = null;          // { b, t, label, head() }
+var DSEL_TBLS = [];       // [{ el, get(tr) }]
+
+function dselSync() {
+  var b = $('st-dl-row');
+  if (!b) return;
+  b.disabled = !DSEL;
+  b.title = DSEL
+    ? '선택 구간 ' + fmtD(DATES[DSEL.b]) + ' ~ ' + fmtD(DATES[DSEL.t]) + ' 의 전 시리즈 변동을 CSV 로 내려받습니다'
+    : '결과 표에서 구간(행)을 클릭하면 활성화됩니다';
+}
+/** 실행 시작마다 호출 — 이전 실행의 표·선택이 따라붙지 않게 한다 */
+function dselReset() { DSEL = null; DSEL_TBLS = []; dselSync(); }
+/** 등록된 모든 표에서 .sel 을 지운다 (피벗의 '평균' 행처럼 data-i 없는 행은 건드리지 않는다) */
+function dselUnmark() {
+  DSEL_TBLS.forEach(function (R) {
+    if (!R.el || !R.el.tBodies || !R.el.tBodies[0]) return;
+    [].forEach.call(R.el.tBodies[0].rows, function (x) {
+      if (x.className === 'sel') x.className = '';
+    });
+  });
+}
+function dselPick(tr, rec) {
+  dselUnmark();
+  tr.className = 'sel';
+  DSEL = rec;
+  dselSync();
+}
+/** 표를 선택 대상으로 등록. get(tr) 이 {b,t,label,head} 또는 null 을 돌려준다.
+ *  기존 tr.onclick(상세 렌더)은 건드리지 않는다 — 표에 위임 리스너를 하나 더 얹는다.
+ *  속성 핸들러가 먼저 불리므로, 여기서 최종 상태를 정하면 된다. */
+function dselTable(tblId, get) {
+  var el = $(tblId);
+  if (!el) return;
+  DSEL_TBLS.push({ el: el, get: get });
+  if (el.__dsel) return;                  // 리스너는 표 한 장에 한 번만
+  el.__dsel = 1;
+  if (!el.addEventListener) return;
+  el.addEventListener('click', function (ev) {
+    var tr = ev.target;
+    while (tr && tr.nodeName !== 'TR') tr = tr.parentNode;
+    if (!tr || !el.contains(tr)) return;
+    var R = null;
+    for (var i = 0; i < DSEL_TBLS.length; i++) if (DSEL_TBLS[i].el === el) { R = DSEL_TBLS[i]; break; }
+    if (!R) return;
+    var rec = null;
+    try { rec = R.get(tr); } catch (e) { rec = null; }
+    if (!rec) return;
+    // 이미 선택된 행을 다시 누르면 선택 해제
+    if (DSEL && DSEL.b === rec.b && DSEL.t === rec.t && DSEL.label === rec.label) {
+      dselUnmark(); DSEL = null; dselSync(); return;
+    }
+    dselPick(tr, rec);
+  });
+}
+/** 사용자 클릭 없이 특정 행을 선택 (실행 직후 0위 행) */
+function dselAuto(tblId, matchFn) {
+  var el = $(tblId);
+  if (!el || !el.tBodies || !el.tBodies[0]) return;
+  var R = null;
+  for (var i = 0; i < DSEL_TBLS.length; i++) if (DSEL_TBLS[i].el === el) { R = DSEL_TBLS[i]; break; }
+  if (!R) return;
+  var rows = el.tBodies[0].rows;
+  for (i = 0; i < rows.length; i++) {
+    if (matchFn && !matchFn(rows[i])) continue;
+    var rec = null;
+    try { rec = R.get(rows[i]); } catch (e) { rec = null; }
+    if (rec) { dselPick(rows[i], rec); return; }
+  }
+}
+
+guard('다운로드·선택구간변동', function () {
+  var btn = $('st-dl-row');
+  if (!btn) return;
+  dselSync();
+  btn.onclick = function () {
+    if (btn.disabled || !DSEL) return;
+    var old = btn.textContent;
+    try {
+      btn.textContent = 'CSV 생성 중…'; btn.disabled = true;
+      var r = buildDeltaCSV(DSEL.b, DSEL.t, DSEL.head ? DSEL.head() : null);
+      DL.saveText('구간변동_' + DL.safe(DSEL.label) + '_' +
+        DATES[DSEL.b] + '-' + DATES[DSEL.t] + '_' + DL.today() + '.csv', r.text);
+    } catch (e) {
+      alert('CSV 생성 중 오류: ' + (e && e.message ? e.message : e));
+    } finally {
+      btn.textContent = old; dselSync();
+    }
+  };
+});
+
 /* ---------------- 도구 6종 결과 다운로드 버튼 연결 ---------------- */
+/** 스트레스테스트 CSV 머리말 — st-dl 과 '선택 구간 변동 CSV' 가 **같은 출처**를 쓴다.
+ *  한쪽만 고치면 두 파일의 조건 표기가 어긋난다. */
+function stDlMeta() {
+  var sc = document.querySelector('input[name=st-sc]:checked');
+  var v = sc ? sc.value : 'all';
+  // 퍼센타일 옵션이 켜져 있으면 정의를 주석으로 남긴다 (표만 떼어봐도 정의를 알 수 있게)
+  var po = pctlOpt();
+  var pc = (po.on && v !== 'pivot') ? [
+    '퍼센타일 : ' + f1n(po.p) + '% · 모집단은 상위 N건 표와 동일',
+    '퍼센타일 정의 : 선형보간 h=(n-1)p/100 (numpy method=linear) / 최근접순위 k=ceil(n*p/100) (numpy method=inverted_cdf)',
+    '※ 롤링 윈도우는 서로 겹치므로 n건이 독립 표본 n개가 아님'
+  ] : [];
+  if (v === 'spread') {
+    return ['도구 : 스트레스테스트 — 스프레드 확대',
+    '시리즈 A(크레딧) : ' + serName($('st-sa').value, +$('st-sma').value),
+    '시리즈 B(기준) : ' + serName($('st-sb').value, +$('st-smb').value),
+    '방향 : ' + $('st-sdir').value + ' · 윈도우 ' + $('st-win').value + '영업일 · 상위 ' + $('st-topn').value + '건'].concat(pc);
+  }
+  if (v === 'pivot') {
+    return ['도구 : 스트레스테스트 — 피벗(기준금리 방향 전환)',
+    '채권종류 : ' + $('st-type').value,
+    '만기 : ' + matLabel(+$('st-short').value) + ' / ' + matLabel(+$('st-long').value),
+    '전환 방향 : ' + $('st-pv-dir').value + ' · 윈도우 ' + $('st-win').value + '영업일'];
+  }
+  return ['도구 : 스트레스테스트 — 커브 시나리오',
+  '채권종류 : ' + $('st-type').value,
+  '만기 : 단기 ' + matLabel(+$('st-short').value) + ' / 장기 ' + matLabel(+$('st-long').value),
+  '시나리오 : ' + v + ' · 윈도우 ' + $('st-win').value + '영업일 · 상위 ' + $('st-topn').value + '건'].concat(pc);
+}
 guard('다운로드·스트레스', function () {
   DL.bindPanel('st-out', 'st-dl', '스트레스테스트 · 결과', function () {
     var sc = document.querySelector('input[name=st-sc]:checked');
     var v = sc ? sc.value : 'all';
     var nm = { bull_flat: '불플랫', bull_steep: '불스팁', bear_flat: '베어플랫', bear_steep: '베어스팁', all: '전체', pivot: '피벗', spread: '스프레드확대' }[v] || v;
     return '스트레스테스트_' + DL.safe(nm) + '_' + DL.today() + '.csv';
-  }, function () {
-    var sc = document.querySelector('input[name=st-sc]:checked');
-    var v = sc ? sc.value : 'all';
-    // 퍼센타일 옵션이 켜져 있으면 정의를 주석으로 남긴다 (표만 떼어봐도 정의를 알 수 있게)
-    var po = pctlOpt();
-    var pc = (po.on && v !== 'pivot') ? [
-      '퍼센타일 : ' + f1n(po.p) + '% · 모집단은 상위 N건 표와 동일',
-      '퍼센타일 정의 : 선형보간 h=(n-1)p/100 (numpy method=linear) / 최근접순위 k=ceil(n*p/100) (numpy method=inverted_cdf)',
-      '※ 롤링 윈도우는 서로 겹치므로 n건이 독립 표본 n개가 아님'
-    ] : [];
-    if (v === 'spread') {
-      return ['도구 : 스트레스테스트 — 스프레드 확대',
-      '시리즈 A(크레딧) : ' + serName($('st-sa').value, +$('st-sma').value),
-      '시리즈 B(기준) : ' + serName($('st-sb').value, +$('st-smb').value),
-      '방향 : ' + $('st-sdir').value + ' · 윈도우 ' + $('st-win').value + '영업일 · 상위 ' + $('st-topn').value + '건'].concat(pc);
-    }
-    if (v === 'pivot') {
-      return ['도구 : 스트레스테스트 — 피벗(기준금리 방향 전환)',
-      '채권종류 : ' + $('st-type').value,
-      '만기 : ' + matLabel(+$('st-short').value) + ' / ' + matLabel(+$('st-long').value),
-      '전환 방향 : ' + $('st-pv-dir').value + ' · 윈도우 ' + $('st-win').value + '영업일'];
-    }
-    return ['도구 : 스트레스테스트 — 커브 시나리오',
-    '채권종류 : ' + $('st-type').value,
-    '만기 : 단기 ' + matLabel(+$('st-short').value) + ' / 장기 ' + matLabel(+$('st-long').value),
-    '시나리오 : ' + v + ' · 윈도우 ' + $('st-win').value + '영업일 · 상위 ' + $('st-topn').value + '건'].concat(pc);
-  }, function () { return RAWDATA.st; });
+  }, stDlMeta, function () { return RAWDATA.st; });
 });
 guard('다운로드·VaR', function () {
   DL.bindPanel('vr-out', 'vr-dl', 'VaR · 결과', function () {
@@ -7176,7 +7561,9 @@ guard('다운로드 탭', function () {
             if (box) {
               box.innerHTML = ok
                 ? '<div class="alert i">✔ <b>' + esc(filename) + '</b> 내려받기를 시작했습니다 · ' +
-                (i1 - i0 + 1).toLocaleString() + '행 × ' + cols.length + '열 · 생성 ' + Math.round(el2 - t0) + 'ms<br>' +
+                /* 열 수에는 '일자' 열이 포함된다 — buildSeriesCSV 가 head 에 '일자' 를 앞세운다.
+                   cols.length 만 적으면 파일을 열었을 때 실제 열 수와 1 어긋난다. */
+                (i1 - i0 + 1).toLocaleString() + '행 × ' + (cols.length + 1) + '열(일자 + ' + cols.length + '시리즈) · 생성 ' + Math.round(el2 - t0) + 'ms<br>' +
                 '<span style="color:#67727f">브라우저 다운로드 폴더를 확인하십시오. Excel 에서 바로 열립니다(UTF-8 BOM).</span></div>'
                 : '<div class="alert e">파일 생성에 실패했습니다.</div>';
             }
@@ -7234,14 +7621,23 @@ guard('다운로드 탭', function () {
     runDownload(cols, r[0], r[1], r[2], r[3], fname(cols, r[0], r[1]), '선택 시리즈 ' + cols.length + '개');
   };
 
+  /* 전체 다운로드 — 국내 KOFIA 격자 + 한국은행 기준금리. */
+  function allCols() {
+    var cols = [{ c: DATA.base.c, label: '한국은행기준금리' }], seen = {};
+    seen[DATA.base.c] = 1;
+    function add(c, label) { if (c && COL[c] && !seen[c]) { seen[c] = 1; cols.push({ c: c, label: label }); } }
+    TYPES.forEach(function (T) { T.mats.forEach(function (m) { add(m.col, T.name + ' ' + m.label); }); });
+    return cols;
+  }
+
   $('dl-all').onclick = function () {
     if (busy) return;
-    var nser = SERIES.length;
+    var cols = allCols();
+    var nser = cols.length, ncol = cols.length + 1;
+    var mb = Math.round(N * ncol * 4.3 / 1048576);
     if (!confirm('전 기간 · 전체 ' + nser + '시리즈를 CSV 로 만듭니다.\n' +
-      N.toLocaleString() + '행 × ' + (nser + 1) + '열 (약 30MB 내외).\n' +
+      N.toLocaleString() + '행 × ' + ncol + '열 (일자 + ' + nser + '시리즈, 약 ' + mb + 'MB 내외).\n\n' +
       '생성에 수십 초가 걸릴 수 있습니다. 계속하시겠습니까?')) return;
-    var cols = [{ c: DATA.base.c, label: '한국은행기준금리' }];
-    SERIES.forEach(function (s) { cols.push({ c: s.c, label: s.t + ' ' + s.m }); });
     runDownload(cols, 0, N - 1, DATA.meta.from, DATA.meta.to,
       '금리시계열_전체' + nser + '시리즈_' + DATES[0] + '-' + DATES[N - 1] + '.csv',
       '전체 ' + nser + '시리즈');
@@ -7849,7 +8245,7 @@ var MAN_TOOLS = [
   ['스프레드 분석', 'sp-ta', '유형에 따라 후보가 더 좁혀짐 (표는 \'전체\' 유형 기준)'],
   ['커브+스프레드 분석', 'cs-ta', '만기축 필수'],
   ['상관관계 분석', 'co-ta', '<b>선물을 고를 수 있는 유일한 도구</b>'],
-  ['데이터 다운로드', 'dl-type', '선물 없음']
+  ['데이터 다운로드', 'dl-type', '개별 선택에 선물 없음 (전체 다운로드에는 포함)']
 ];
 var MAN_MATRIX = null;
 function manBuildMatrix() {
@@ -7904,6 +8300,23 @@ function renderManual() {
   var irs = regTypeByName('원화 IRS');
   var irsTxt = irs ? irs.mats.map(function (m) { return m.label; }).join(' · ') : '—';
   txt('man-irsmats', irsTxt); txt('man-irsmats2', irsTxt);
+
+  /* --- 다운로드 범위 숫자 (2026-10-19) ------------------------------
+     매뉴얼·안내 문구에 시리즈 수를 **하드코딩하지 않는다.** 과거에
+     '766시리즈'라고 적어 둔 문구가 범위 확대 뒤에도 그대로 남아 실제
+     파일(834컬럼)과 어긋난 적이 있다. 레지스트리에서 실행 시점에 센다.
+     세는 규칙은 allCols()/deltaUniverse() 와 같다 —
+     기준금리 1 + TYPES + REG_TYPES, 컬럼 중복은 1개로 센다. */
+  var dseen = {}, dK = 0, dR = 0, dB = 0;
+  if (COL[bc]) { dseen[bc] = 1; dB = 1; }
+  TYPES.forEach(function (t) {
+    t.mats.forEach(function (m) { if (m.col && COL[m.col] && !dseen[m.col]) { dseen[m.col] = 1; dK++; } });
+  });
+  REG_TYPES.forEach(function (t) {
+    t.mats.forEach(function (m) { if (m.col && COL[m.col] && !dseen[m.col]) { dseen[m.col] = 1; dR++; } });
+  });
+  var dTot = dB + dK + dR;
+  txt('man-delta-n', dTot.toLocaleString());
 
   /* --- 2-1 수록 데이터 일람 — 공용 manDataSpans() 를 그대로 표로 옮긴다 --- */
   var H = '<thead><tr><th class="l">데이터</th><th class="l">출처</th><th class="l">수록 구간 (만기별 시작일)</th>' +
@@ -8080,7 +8493,7 @@ function mqDrawMap() {
     ['스프레드 분석', '두 금리 차의 시계열 · 백분위 · z (유형 5종)'],
     ['커브+스프레드 분석', '커브 2개 × 시점 2개 → 만기별 Δ스프레드'],
     ['상관관계 분석', '비중첩 구간별 r — 선물을 고를 수 있는 유일한 도구'],
-    ['데이터 다운로드', '고른 시리즈 × 기간의 wide CSV (선물 없음)']
+    ['데이터 다운로드', '고른 시리즈 × 기간의 wide CSV (개별 선택에 선물 없음 · 전체 다운로드는 국내 KOFIA 격자)']
   ]);
   group('사용|매뉴얼', null, [
     ['한눈에', '이 화면 — 그림으로 보는 안내서'],
