@@ -238,7 +238,8 @@ body{font-size:13px;}
    국내금리 탭의 짝은 2행(금리 시계열 + 주요 이슈)과 3행(변동 현황 + 증권사 리포트) 두 쌍이다.
    카드가 추가·삭제돼도 짝 관계만 유지되면 되므로 행 번호에 의존하지 않는다.
      · 1200px 이하에서는 아래 @media 의 1열 스택 규칙이 살아야 하므로 min-width:1201px 로 가둔다. */
-/* 대시보드 하위 탭 (국내금리 / 해외금리 / 선물·IRS) — 2026-09-27 신설,
+/* 대시보드 하위 탭 (국내금리 / 히트맵 / 해외금리 / 선물·IRS) — 2026-09-27 신설,
+   2026-10-21 히트맵 탭 추가(국내금리와 해외금리 사이),
    2026-10-07 단기자금시장 탭 추가 → 2026-10-08 날짜축 기준 3분할로 재편(단기자금 탭 폐지)
    좌측 내비의 '대시보드' 안에서만 쓰는 2단 탭. 좌측 내비(.nav nav button)와
    구분되도록 밑줄형으로 둔다. */
@@ -623,6 +624,7 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
 <div class="view" id="view-dash">
 
 <!-- 대시보드 하위 탭 — [2026-10-08 개편] 국내금리 / 해외금리 / 선물·IRS
+     [2026-10-21] 국내금리와 해외금리 사이에 **히트맵** 추가 → 국내금리 / 히트맵 / 해외금리 / 선물·IRS
      종전 '현물 / 선물·IRS / 단기자금시장' 3분할을 **날짜축 기준**으로 다시 갈랐다.
        · 국내금리 = 한국 영업일축만. 현물 카드 + 단기자금시장(CP·CD) 흡수, 미국채 제거
        · 해외금리 = 그 나라 자체 날짜축만. 지금은 미국뿐이고 국가가 늘면 '행'으로 쌓는다
@@ -968,6 +970,12 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
     <div class="fld"><label>색 상한 (bp)</label>
       <input type="number" id="hm-cap" min="0.1" step="1" placeholder="자동">
     </div>
+    <div class="sep"></div>
+    <div class="fld"><label>격자</label>
+      <div class="hmmode">
+        <label><input type="checkbox" id="hm-all"> 전체 (live 전 종류 × 3월~10년)</label>
+      </div>
+    </div>
     <div class="fld"><label>&nbsp;</label>
       <div class="presets">
         <button type="button" id="hm-dl-xlsx">xlsx 다운로드 (색상)</button>
@@ -984,6 +992,13 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
     <div class="hmwrap" id="hm-box"></div>
     <p class="hmcnt" id="hm-cnt"></p>
     <p class="note hmnote" id="hm-note"></p>
+  </section>
+
+  <!-- 단기자금 — 만기축(7일~1년)이 위 격자(1년~10년)와 겹치지 않아 따로 둔다 -->
+  <section class="card span3" style="margin-top:14px">
+    <h2>단기자금 (CP · CD)</h2>
+    <div class="hmwrap" id="hm-box2"></div>
+    <p class="note hmnote" id="hm-note2"></p>
   </section>
 
 </div><!-- /#dash-heat -->
@@ -1424,6 +1439,9 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
         <div class="mqrow"><span class="q">미국 금리가 얼마인가 · 미국 기준일이 언제인가</span><span class="ar">→</span><span class="go d">대시보드 · 해외금리</span></div>
         <div class="mqrow"><span class="q">어제 · 1주 · 1년 전 대비 얼마 움직였나</span><span class="ar">→</span><span class="go d">대시보드 · 변동 현황</span></div>
         <div class="mqrow"><span class="q">왜 탭의 미국채 값과 도구의 미국채 값이 다른가</span><span class="ar">→</span><span class="go">상세 §2-4 (날짜축이 다름)</span></div>
+        <div class="mqrow"><span class="q">어느 등급·만기가 많이 움직였나 (한눈에)</span><span class="ar">→</span><span class="go d">대시보드 · 히트맵</span></div>
+        <div class="mqrow"><span class="q">크레딧 스프레드가 벌어졌나 좁혀졌나</span><span class="ar">→</span><span class="go d">대시보드 · 히트맵 (스프레드 모드)</span></div>
+        <div class="mqrow"><span class="q">색이 들어간 엑셀로 받고 싶다</span><span class="ar">→</span><span class="go d">대시보드 · 히트맵 · xlsx 다운로드</span></div>
         <div class="mqrow"><span class="q">선물 가격이 얼마인가</span><span class="ar">→</span><span class="go d">대시보드 · 선물·IRS</span></div>
         <div class="mqrow"><span class="q">두 금리 차이가 어떻게 변했나 · 지금 넓은가 좁은가</span><span class="ar">→</span><span class="go">스프레드 분석</span></div>
         <div class="mqrow"><span class="q">채권이 IRS 대비 싼가 비싼가 (본드스왑)</span><span class="ar">→</span><span class="go">스프레드 분석 · 본드스왑</span></div>
@@ -1532,9 +1550,10 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
           <li><a href="#man-s2d">해외 금리가 나라마다 두 벌인 이유</a></li>
         </ol>
       </li>
-      <li><a href="#man-s3">대시보드 — 국내금리 / 해외금리 / 선물·IRS</a>
+      <li><a href="#man-s3">대시보드 — 국내금리 / 히트맵 / 해외금리 / 선물·IRS</a>
         <ol>
           <li><a href="#man-s3a">국내금리 탭</a></li>
+          <li><a href="#man-s3h">히트맵 탭</a></li>
           <li><a href="#man-s3b">해외금리 탭</a></li>
           <li><a href="#man-s3c">선물 · IRS 탭</a></li>
         </ol>
@@ -1574,6 +1593,8 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
       <ul>
         <li>금리 <b>수준은 %</b>, 금리 <b>변동은 bp</b>(1bp = 0.01%p), 선물은 <b>가격 포인트(pt)</b>입니다.</li>
         <li>증감 색: <span class="up">상승 = 빨강</span> · <span class="dn">하락 = 파랑</span>.
+          <b>히트맵 탭도 같은 방향</b>이며, 칸을 칠할 때는 이 두 색 대신 <b>ColorBrewer RdBu 9단계</b>를 씁니다
+          (단계가 필요하고 적록색맹에서도 구분되어야 하기 때문입니다). 자세한 것은 §3-2.
           <span class="na">—</span> 는 <b>해당일 미고시(결측)</b>, <span class="na">·</span> 는 <b>그 만기가 애초에 없음</b>입니다.</li>
         <li><b>보간하지 않습니다.</b> 결측일은 차트 선을 끊고, 차·스프레드·상관은 <b>양쪽 모두 값이 있는 날만</b> 계산합니다.
           빈칸은 0이 아닙니다.</li>
@@ -1735,7 +1756,7 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
 
   <!-- ===== 3 ===== -->
   <details class="msec" id="man-s3">
-    <summary>3. 대시보드 — 국내금리 / 해외금리 / 선물·IRS</summary>
+    <summary>3. 대시보드 — 국내금리 / 히트맵 / 해외금리 / 선물·IRS</summary>
     <div class="mbd">
       <p>대시보드는 상단의 <span class="mkey">국내금리</span> · <span class="mkey">해외금리</span> ·
         <span class="mkey">선물 · IRS</span> 세 하위 탭으로 갈립니다.
@@ -1818,7 +1839,65 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
         </tbody>
       </table></div>
 
-      <h4 id="man-s3b">3-2. 해외금리 탭</h4>
+      <h4 id="man-s3h">3-2. 히트맵 탭</h4>
+      <p>채권종류·등급을 <b>행</b>, 만기를 <b>열</b>로 놓고 <b>변동을 색으로</b> 칠합니다.
+        어느 등급·어느 만기 구간이 움직였는지를 한눈에 보기 위한 탭입니다.
+        <b>국내 한국 영업일축</b>이며, 해외·선물·IRS 는 들어 있지 않습니다(아래 '넣지 않은 것').</p>
+      <ul>
+        <li><b>두 모드가 있습니다.</b>
+          <ul>
+            <li><b>스프레드</b> — <b>국고 대비 스프레드</b>와 그 변동. 크레딧에서 실제로 의미 있는 값입니다.
+              금리가 내려도 국고가 더 내렸으면 크레딧은 약해진 것이라, 금리 변동만 봐서는 알 수 없습니다.</li>
+            <li><b>레벨 (금리)</b> — 금리 자체와 그 변동. 국채·통안도 보통 행으로 들어갑니다.</li>
+          </ul>
+        </li>
+        <li><b>스프레드 기준은 만기마다 다릅니다</b> — <b>1년·2년은 통안증권</b>, <b>3년 이상은 국고채권</b>
+          동월물 대비 단순차(bp)입니다. 전체 격자에서는 <b>2년 이하가 통안</b>입니다.
+          <span class="fix">국내 증권사 리서치의 크레딧 표와 같은 규약입니다.</span></li>
+        <li><b>국채·통안 행은 스프레드 모드에서 기준 자신</b>이라 스프레드가 <span class="na">—</span>이고,
+          변동 열에는 <b>금리 변동</b>이 회색으로 들어갑니다. 이 칸들은 <b>색을 칠하지 않고 색 상한 계산에서도 제외</b>합니다
+          — 크기가 한 자릿수 커서 스케일을 독점해 나머지 칸의 색을 눌러 버리기 때문입니다.</li>
+        <li><b>기간</b>은 변동 현황과 같은 6개(<b>1일·1주·1개월·3개월·6개월·1년</b>)에 더해
+          <b>임의 2일 직접 입력</b>이 가능합니다. 과거 기준일은 달력으로 역산한 뒤
+          <b>그 이전 가장 가까운 영업일</b>로 대체하며, 대체가 일어나면 경고가 뜹니다(§2-1과 같은 규칙).</li>
+        <li><b>색 방향은 사이트 전역과 같습니다</b> — <span class="up">상승 = 빨강</span> ·
+          <span class="dn">하락 = 파랑</span>. 팔레트는 <b>ColorBrewer RdBu 9단계</b>로,
+          적록 축을 쓰지 않아 <b>적록색맹에서도 구분</b>되고 0 근처가 회백색이라 움직이지 않은 칸이 튀지 않습니다.</li>
+        <li><b>색 상한 — 가장 중요합니다.</b> 상한은 <b>색이 가장 진해지는 변동폭</b>입니다.
+          상한이 ±20bp 면 20bp 든 80bp 든 <b>똑같이 가장 진한 색</b>이 되어 색으로는 구별할 수 없습니다.
+          <ul>
+            <li><b>기본은 자동</b>입니다. 지금 화면에 칠해진 칸들의 <b>|변동| p95</b>를 잡고,
+              <b>최소 5bp</b>로 올린 뒤, <b>눈금(5·10·20·30·50·75·100…)으로 올림</b>합니다.</li>
+            <li><b>왜 하나로 고정하지 않나</b> — 기간마다 움직이는 폭이 다릅니다. 실측하면
+              스프레드 변동 p95 가 <b>1일 0.8bp · 1주 3.0 · 1개월 8.7 · 1년 27.4bp</b> 입니다.
+              상한을 20으로 고정하면 1일 화면은 거의 하얗고, 긴 기간은 전부 포화됩니다.</li>
+            <li><b>왜 최소 5bp 인가</b> — 고시가 0.1bp 단위라, 조용한 날 p95 가 0.8bp 면
+              <b>반올림 노이즈가 새빨갛게</b> 보입니다. 전 칸이 완전히 같은 날(예 2025-12-31)은
+              p95 가 0 이라 계산 자체가 깨집니다. 하한이 이를 막습니다.</li>
+            <li><b>왜 눈금으로 올리나</b> — 자동값이 날마다 흔들리면 같은 색이 날마다 다른 크기를 뜻하게 됩니다.
+              눈금에 올리면 <b>1일 기준 96%의 날이 전일과 같은 상한</b>이 되어 날짜 간 비교가 살아납니다.</li>
+            <li><b>수동 고정</b> — 상한 칸에 숫자를 넣으면 그 값으로 고정됩니다.
+              여러 날 화면을 캡처해 나란히 비교하거나 보고서에 넣을 때 씁니다. <b>지우면 자동으로 돌아갑니다.</b></li>
+            <li><b>현재 상한은 범례에 항상 표시</b>됩니다 — <span class="mono">±32 bp (자동)</span> 처럼
+              값과 자동/수동 상태가 같이 보입니다. <b>상한을 넘은 칸은 테두리를 진하게</b> 그리고
+              몇 칸인지도 함께 적습니다.</li>
+            <li><b>두 모드는 상한을 공유하지 않습니다.</b> 실측상 스프레드 변동이 금리 변동보다
+              <b>5~6배 작아</b>(1년 p95 27bp vs 156bp) 같은 상한을 쓰면 한쪽이 반드시 망가집니다.</li>
+          </ul>
+        </li>
+        <li><b>전체 격자</b> 체크박스를 켜면 기본 24종 대신 <b>live 전 종류(59개) × 3월~10년(12만기)</b>로 펼쳐집니다.
+          15·20·30·50년은 넣지 않았습니다 — live 종류 59개 중 <b>12개에만 있어</b> 켜 봐야 오른쪽이 거의 빕니다.</li>
+        <li><b>단기자금(CP·CD)</b>은 아래에 <b>따로</b> 붙습니다. 만기축이 <b>7일·15일</b>부터라
+          위 격자(1년~10년)와 겹치지 않기 때문입니다. 스프레드 모드에서는 <b>CD AAA 동일 만기</b>가 기준입니다.
+          색 상한은 <b>위 격자와 같은 값</b>을 씁니다 — 한 화면에 스케일이 둘이면 오독합니다.</li>
+        <li><b>다운로드</b>는 <b>xlsx(색상 포함)</b>와 <b>CSV</b> 두 가지입니다. §8-2 참조.</li>
+        <li><b>넣지 않은 것</b> — <b>선물</b>은 단위가 <b>pt</b>(102~130)라 bp 색표에 섞으면 스케일이 깨집니다.
+          <b>IRS</b> 는 국고 대비 스프레드 개념이 달라 선물·IRS 탭에 그대로 둡니다.
+          <b>해외(미·일·호)</b>는 그 자체가 국채라 뺄 기준이 없고 날짜축도 달라
+          <b>해외금리 탭의 '해외 변동 현황'</b>이 같은 역할을 합니다.</li>
+      </ul>
+
+      <h4 id="man-s3b">3-3. 해외금리 탭</h4>
       <p><b>이 탭의 모든 숫자는 그 나라 자체 날짜축입니다.</b> 국내 기준일과 다른 것이 정상이며,
         발표가 T+1 이라 보통 국내보다 1~2영업일 뒤처집니다(§2-2).</p>
       <ul>
@@ -1872,7 +1951,7 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
         10-05 가 한국 대체공휴일이라 한국축에 행이 없기 때문입니다. 자세한 사정과 어느 쪽을 써야 하는지는 §2-4 입니다.
         탭 하단에도 같은 경고가 상시 붙어 있습니다.</p>
 
-      <h4 id="man-s3c">3-3. 선물 · IRS 탭</h4>
+      <h4 id="man-s3c">3-4. 선물 · IRS 탭</h4>
       <p><b>가격 컬럼을 두 벌 쓴다는 점이 핵심입니다.</b></p>
       <div class="tblwrap"><table>
         <thead><tr><th class="l">어디</th><th class="l">쓰는 계열</th><th class="l">왜</th></tr></thead>
@@ -2303,6 +2382,10 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
       <p><b>공통 형식</b></p>
       <ul>
         <li>인코딩 <b>UTF-8 (BOM)</b> · 줄바꿈 <b>CRLF</b> — <b>엑셀에서 바로 열어도 한글이 깨지지 않습니다.</b></li>
+        <li><b>히트맵 탭만 xlsx 도 제공</b>합니다 — <b>화면과 같은 색이 셀 배경에 그대로 들어간</b> 진짜 .xlsx 입니다.
+          시트는 <b>격자 · 단기자금 · 설명</b> 3장이고 머리 2행·좌측 2열이 <b>틀 고정</b>됩니다.
+          <b>외부 라이브러리를 쓰지 않고</b> 직접 생성하므로(이 파일은 CDN 을 일절 쓰지 않습니다)
+          <b>엑셀 경고가 뜨지 않습니다</b>. 색이 필요 없으면 CSV 를 쓰십시오.</li>
         <li>머리말은 <b><span class="mono">#</span> 주석 행</b>입니다. 엑셀에서는 그냥 텍스트 행으로 보이므로,
           표만 쓰려면 주석 행을 지우고 쓰십시오.</li>
         <li>컬럼명은 마스터 CSV 와 같은 규칙 <span class="mono">채권종류 정식명_만기</span>입니다.</li>
@@ -7097,8 +7180,34 @@ var HM = (function () {
   var MATS = [12, 24, 36, 60, 120];
   var MLAB = ['1년', '2년', '3년', '5년', '10년'];
 
-  /** 스프레드 기준 — 1·2년은 통안, 3년 이상은 국고 */
-  function baseOf(m) { return (m === 12 || m === 24) ? '통안증권' : '국고채권'; }
+  /* ---- 전체 격자(확장 토글) ----
+     기본 24행은 실무에서 보는 등급만 추린 것이다. 전부 보고 싶을 때를 위해
+     **live 전 종류 × 3월~10년 12만기**를 그대로 펴는 토글을 둔다.
+     15·20·30·50년은 넣지 않는다 — live 종류 59개 중 12개만 있어 채움률이 12% 라
+     오른쪽이 거의 비고 읽기만 나빠진다(실측). */
+  var MATS12 = [3, 6, 9, 12, 18, 24, 30, 36, 48, 60, 84, 120];
+  var MLAB12 = ['3월', '6월', '9월', '1년', '1년6월', '2년', '2년6월', '3년', '4년', '5년', '7년', '10년'];
+  var allRowsCache = null;
+  function allRows() {
+    if (allRowsCache) return allRowsCache;
+    var out = [];
+    for (var i = 0; i < TYPES.length; i++) {
+      var t = TYPES[i], live = false;
+      for (var j = 0; j < t.mats.length; j++) if (t.mats[j].li >= N - 1) { live = true; break; }
+      if (!live) continue;                       // 종료된 계열은 뺀다
+      out.push({ g: t.g || '기타', n: t.name, t: t.name,
+                 base: (t.name === '국고채권' || t.name === '통안증권') ? 1 : 0 });
+    }
+    allRowsCache = out; return out;
+  }
+  var showAll = false;
+  function curRows() { return showAll ? allRows() : ROWS; }
+  function curMats() { return showAll ? MATS12 : MATS; }
+  function curLabs() { return showAll ? MLAB12 : MLAB; }
+
+  /** 스프레드 기준 — 1·2년은 통안, 3년 이상은 국고.
+      전체 격자에서는 통안이 3년까지만 고시되므로 1년 미만도 통안을 쓴다. */
+  function baseOf(m) { return (m <= 24) ? '통안증권' : '국고채권'; }
 
   /* ---- 색 ----
      ColorBrewer RdBu 9단계를 **음수(파랑) → 양수(빨강)** 순으로 뒤집어 담았다.
@@ -7205,14 +7314,15 @@ var HM = (function () {
       $('hm-leg').innerHTML = ''; $('hm-cnt').textContent = ''; return;
     }
     var isSp = (mode === 'sp');
+    var RW = curRows(), MT = curMats(), ML = curLabs();
 
     /* 1) 값 계산 */
     var cells = [], scaleVals = [], r, j, i;
-    for (r = 0; r < ROWS.length; r++) {
-      var row = ROWS[r], rec = { row: row, lv: [], sp: [], ch: [] };
+    for (r = 0; r < RW.length; r++) {
+      var row = RW[r], rec = { row: row, lv: [], sp: [], ch: [] };
       var isBase = isSp && row.base;
-      for (j = 0; j < MATS.length; j++) {
-        var m = MATS[j];
+      for (j = 0; j < MT.length; j++) {
+        var m = MT[j];
         rec.lv.push(lvAt(row.t, m, R.iB));
         rec.sp.push(isBase ? NaN : spAt(row.t, m, R.iB));
         var cv = isSp ? (isBase ? lvChg(row.t, m, R.iA, R.iB) : spChg(row.t, m, R.iA, R.iB))
@@ -7232,16 +7342,16 @@ var HM = (function () {
     var isAuto = !(isFinite(man) && man > 0);
 
     /* 3) 그리기 */
-    var nMat = MATS.length;
+    var nMat = MT.length;
     var h = ['<table class="hm"><thead>'];
-    h.push('<tr><th class="rh l" rowspan="2">구분</th><th class="rg l" rowspan="2">등급</th>');
+    h.push('<tr><th class="rh l" rowspan="2">구분</th><th class="rg l" rowspan="2">' + (showAll ? '종류' : '등급') + '</th>');
     h.push('<th class="grp" colspan="' + nMat + '">금리 (%)</th>');
     if (isSp) h.push('<th class="grp" colspan="' + nMat + '">스프레드 (bp)</th>');
     h.push('<th class="grp" colspan="' + nMat + '">' + (isSp ? '스프레드 변동' : '금리 변동') + ' (bp)</th>');
     h.push('</tr><tr>');
     var blocks = isSp ? 3 : 2;
     for (var b = 0; b < blocks; b++)
-      for (j = 0; j < nMat; j++) h.push('<th' + (j === 0 ? ' class="bsep"' : '') + '>' + MLAB[j] + '</th>');
+      for (j = 0; j < nMat; j++) h.push('<th' + (j === 0 ? ' class="bsep"' : '') + '>' + ML[j] + '</th>');
     h.push('</tr></thead><tbody>');
 
     var nClip = 0, nCalc = 0, nMiss = 0, prevG = null;
@@ -7291,15 +7401,96 @@ var HM = (function () {
       (hzIdx >= 0 ? ' (' + CHG_HORIZ[hzIdx][0] + ')' : ' (임의 구간)');
     $('hm-cnt').innerHTML = '계산된 칸 <b>' + nCalc + '</b>개 · 결측 <b>' + nMiss + '</b>개' +
       (nClip ? ' · 상한 밖 <b>' + nClip + '</b>개' : '');
+    guard('히트맵 · 단기자금', function () { renderMny(R, cap); });
+
     $('hm-note').innerHTML = isSp
       ? '<b>스프레드 = 동일 만기 단순차(bp)</b>입니다. 기준은 만기마다 다릅니다 — ' +
-        '<b>1년·2년은 통안증권</b>, <b>3년 이상은 국고채권</b> 동월물 대비입니다. ' +
+        '<b>' + (showAll ? '2년 이하는 통안증권' : '1년·2년은 통안증권') + '</b>, <b>' +
+        (showAll ? '2년 초과는' : '3년 이상은') + ' 국고채권</b> 동월물 대비입니다. ' +
         '<b>국채·통안 행은 기준 자신</b>이라 스프레드가 없고, 변동 열에는 <b>금리 변동</b>을 ' +
         '회색 숫자로 넣되 <b>색을 칠하지 않고 색 상한 계산에서도 제외</b>합니다 — 크기가 한 자릿수 커서 ' +
         '스케일을 독점하기 때문입니다. ' + NOTE_COMMON()
       : '<b>금리 변동 = (시점 2 − 시점 1) × 100 [bp]</b>입니다. 이 모드에서는 국채·통안도 ' +
         '보통 행으로 들어갑니다. <b>통안증권은 3년까지만 고시</b>되어 5년·10년은 ' +
         '<span class="na">—</span>입니다. ' + NOTE_COMMON();
+  }
+
+  /* ---- 단기자금(CP·CD) 패널 ----
+     만기축이 7일·15일부터라 위 격자(1년~10년)와 겹치지 않는다. 그래서 같은 표에 넣지 않고
+     아래에 따로 붙인다. 4행 × 6만기가 **전부 채워진 완전 밀집 격자**다.
+     스프레드 모드에서는 **CD AAA 동일 만기**를 기준으로 쓴다 — 단기 크레딧 스프레드다.
+     CD 유통 91일은 고시 체계가 달라(유통수익률) 3월 칸에만 넣고 스프레드는 내지 않는다.
+     색 상한은 **위 격자와 같은 값**을 쓴다 — 한 화면에 두 스케일이 있으면 오독한다. */
+  var MNY = {
+    rows: [
+      { g: 'CP', n: 'A1', c: 'CP_A1', base: 1 },
+      { g: 'CP', n: 'A2+', c: 'CP_A2+' },
+      { g: 'CP', n: 'A3+', c: 'CP_A3+' },
+      { g: 'CD', n: 'AAA (시가평가)', c: 'CD_AAA', cdbase: 1 },
+      { g: 'CD', n: '유통 91일', c: null, rop: 1 }
+    ],
+    mats: ['7일', '15일', '1월', '3월', '6월', '1년']
+  };
+  function mnyCol(r, mlab) {
+    if (r.rop) return (mlab === '3월') ? 'CD유통_91일' : null;
+    return r.c + '_' + mlab;
+  }
+  function renderMny(R, cap) {
+    var box = $('hm-box2'); if (!box) return;
+    var isSp = (mode === 'sp'), j, r;
+    var h = ['<table class="hm"><thead><tr><th class="rh l" rowspan="2">구분</th><th class="rg l" rowspan="2">등급</th>'];
+    h.push('<th class="grp" colspan="6">금리 (%)</th>');
+    if (isSp) h.push('<th class="grp" colspan="6">CD AAA 대비 (bp)</th>');
+    h.push('<th class="grp" colspan="6">' + (isSp ? '스프레드 변동' : '금리 변동') + ' (bp)</th></tr><tr>');
+    var blocks = isSp ? 3 : 2;
+    for (var b = 0; b < blocks; b++)
+      for (j = 0; j < MNY.mats.length; j++) h.push('<th' + (j === 0 ? ' class="bsep"' : '') + '>' + MNY.mats[j] + '</th>');
+    h.push('</tr></thead><tbody>');
+    var prevG = null;
+    for (r = 0; r < MNY.rows.length; r++) {
+      var row = MNY.rows[r];
+      h.push('<tr' + ((prevG !== null && row.g !== prevG) ? ' class="gtop"' : '') + '>');
+      h.push('<td class="rh l">' + (row.g === prevG ? '' : esc(row.g)) + '</td>');
+      h.push('<td class="rg l">' + esc(row.n) + '</td>');
+      prevG = row.g;
+      /* 금리 */
+      for (j = 0; j < MNY.mats.length; j++) {
+        var c = mnyCol(row, MNY.mats[j]);
+        var v = c ? pct(c, R.iB) : NaN;
+        h.push('<td class="num' + (j === 0 ? ' bsep' : '') + '">' + (isFinite(v) ? v.toFixed(2) : '<span class="na">—</span>') + '</td>');
+      }
+      /* CD 대비 스프레드 */
+      var noSp = row.cdbase || row.rop;
+      if (isSp) for (j = 0; j < MNY.mats.length; j++) {
+        var c2 = mnyCol(row, MNY.mats[j]), bc = 'CD_AAA_' + MNY.mats[j];
+        var sv = (noSp || !c2) ? NaN : ((raw(c2, R.iB) - raw(bc, R.iB)) / 10);
+        h.push('<td class="num' + (j === 0 ? ' bsep' : '') + '">' + (isFinite(sv) ? sv.toFixed(1) : '<span class="na">—</span>') + '</td>');
+      }
+      /* 변동 */
+      for (j = 0; j < MNY.mats.length; j++) {
+        var c3 = mnyCol(row, MNY.mats[j]), sep = (j === 0 ? ' bsep' : '');
+        if (!c3) { h.push('<td class="cell na' + sep + '">—</td>'); continue; }
+        var cv;
+        if (isSp && !noSp) {
+          var b3 = 'CD_AAA_' + MNY.mats[j];
+          var a1 = raw(c3, R.iA) - raw(b3, R.iA), a2 = raw(c3, R.iB) - raw(b3, R.iB);
+          cv = (isNaN(a1) || isNaN(a2)) ? NaN : (a2 - a1) / 10;
+        } else cv = bpDiff(c3, R.iB, R.iA);
+        if (!isFinite(cv)) { h.push('<td class="cell na' + sep + '">—</td>'); continue; }
+        if (isSp && noSp) { h.push('<td class="cell base' + sep + '">' + cv.toFixed(1) + '</td>'); continue; }
+        var bi = binOf(cv, cap), clip = Math.abs(cv) > cap;
+        h.push('<td class="cell' + sep + (clip ? ' clip' : '') + '" style="background:' + PAL[bi] +
+          (DARK[bi] ? ';color:#fff' : '') + '">' + cv.toFixed(1) + '</td>');
+      }
+      h.push('</tr>');
+    }
+    h.push('</tbody></table>');
+    box.innerHTML = h.join('');
+    $('hm-note2').innerHTML = '수록 시작일이 서로 달라(<b>CP 2012-04-02</b> · <b>CD 시가평가 2020-01-02</b> · ' +
+      '<b>CD 유통 2009-02-04</b>) 긴 기간이나 과거 시점에는 <span class="na">—</span>가 정상적으로 나옵니다. ' +
+      (isSp ? '스프레드 기준은 <b>CD AAA 동일 만기</b>입니다 — CD AAA 자신과 CD 유통은 기준이거나 고시 체계가 달라 ' +
+              '스프레드를 내지 않고, 변동 열에는 금리 변동을 회색으로 넣되 색을 칠하지 않습니다. ' : '') +
+      '<b>색 상한은 위 격자와 같은 값</b>을 씁니다 — 한 화면에 스케일이 둘이면 오독하기 때문입니다.';
   }
 
   function NOTE_COMMON() {
@@ -7316,30 +7507,59 @@ var HM = (function () {
     try {
       var R = resolve(); if (R.iA < 0 || R.iB < 0) { alert('기간이 올바르지 않습니다.'); return; }
       var isSp = (mode === 'sp'), L = [], j, r;
-      L.push(DL.cmt('크레딧 히트맵 — ' + (isSp ? '스프레드' : '레벨(금리)') + ' 모드'));
+      var RW = curRows(), MT = curMats(), ML = curLabs();
+      L.push(DL.cmt('크레딧 히트맵 — ' + (isSp ? '스프레드' : '레벨(금리)') + ' 모드' + (showAll ? ' · 전체 격자' : '')));
       L.push(DL.cmt('시점 1 (과거) : ' + fmtD(DATES[R.iA]) + (hzIdx >= 0 ? '  [' + CHG_HORIZ[hzIdx][0] + ']' : '  [임의]')));
       L.push(DL.cmt('시점 2 (최근) : ' + fmtD(DATES[R.iB])));
-      if (isSp) L.push(DL.cmt('스프레드 기준 : 1년·2년 = 통안증권, 3년 이상 = 국고채권 (동일 만기 단순차)'));
+      if (isSp) L.push(DL.cmt('스프레드 기준 : ' + (showAll ? '2년 이하 = 통안증권, 2년 초과' : '1년·2년 = 통안증권, 3년 이상') +
+        ' = 국고채권 (동일 만기 단순차)'));
       L.push(DL.cmt('단위 : 금리 %, 스프레드·변동 bp. 결측은 빈 칸(0 채움·보간 없음)'));
       L.push(DL.cmt('인코딩 : UTF-8 (BOM), 줄바꿈 CRLF'));
-      var hd = ['구분', '등급'];
-      for (j = 0; j < MLAB.length; j++) hd.push('금리_' + MLAB[j]);
-      if (isSp) for (j = 0; j < MLAB.length; j++) hd.push('스프레드_' + MLAB[j]);
-      for (j = 0; j < MLAB.length; j++) hd.push((isSp ? '스프레드변동_' : '금리변동_') + MLAB[j]);
+      var hd = ['구분', showAll ? '종류' : '등급'];
+      for (j = 0; j < ML.length; j++) hd.push('금리_' + ML[j]);
+      if (isSp) for (j = 0; j < ML.length; j++) hd.push('스프레드_' + ML[j]);
+      for (j = 0; j < ML.length; j++) hd.push((isSp ? '스프레드변동_' : '금리변동_') + ML[j]);
       L.push(DL.row(hd));
       var nn = function (x, d) { return isFinite(x) ? x.toFixed(d) : ''; };
-      for (r = 0; r < ROWS.length; r++) {
-        var row = ROWS[r], isBase = isSp && row.base, out = [row.g, row.n];
-        for (j = 0; j < MATS.length; j++) out.push(nn(lvAt(row.t, MATS[j], R.iB), 2));
-        if (isSp) for (j = 0; j < MATS.length; j++) out.push(isBase ? '' : nn(spAt(row.t, MATS[j], R.iB), 1));
-        for (j = 0; j < MATS.length; j++) {
-          var m = MATS[j];
+      for (r = 0; r < RW.length; r++) {
+        var row = RW[r], isBase = isSp && row.base, out = [row.g, row.n];
+        for (j = 0; j < MT.length; j++) out.push(nn(lvAt(row.t, MT[j], R.iB), 2));
+        if (isSp) for (j = 0; j < MT.length; j++) out.push(isBase ? '' : nn(spAt(row.t, MT[j], R.iB), 1));
+        for (j = 0; j < MT.length; j++) {
+          var m = MT[j];
           out.push(nn(isSp ? (isBase ? lvChg(row.t, m, R.iA, R.iB) : spChg(row.t, m, R.iA, R.iB))
                            : lvChg(row.t, m, R.iA, R.iB), 1));
         }
         L.push(DL.row(out));
       }
-      DL.saveText('크레딧히트맵_' + (isSp ? '스프레드' : '레벨') + '_' +
+      /* 단기자금은 만기축이 달라 같은 표에 못 넣는다 — 블록을 아래에 이어 붙인다 */
+      L.push(''); L.push(DL.cmt('단기자금 (CP · CD)' + (isSp ? ' — 스프레드 기준 = CD AAA 동일 만기' : '')));
+      var hd2 = ['구분', '등급'];
+      for (j = 0; j < MNY.mats.length; j++) hd2.push('금리_' + MNY.mats[j]);
+      if (isSp) for (j = 0; j < MNY.mats.length; j++) hd2.push('CD대비_' + MNY.mats[j]);
+      for (j = 0; j < MNY.mats.length; j++) hd2.push((isSp ? '스프레드변동_' : '금리변동_') + MNY.mats[j]);
+      L.push(DL.row(hd2));
+      for (r = 0; r < MNY.rows.length; r++) {
+        var mr = MNY.rows[r], noSp = mr.cdbase || mr.rop, o2 = [mr.g, mr.n];
+        for (j = 0; j < MNY.mats.length; j++) { var c = mnyCol(mr, MNY.mats[j]); o2.push(c ? nn(pct(c, R.iB), 2) : ''); }
+        if (isSp) for (j = 0; j < MNY.mats.length; j++) {
+          var c2 = mnyCol(mr, MNY.mats[j]);
+          o2.push((noSp || !c2) ? '' : nn((raw(c2, R.iB) - raw('CD_AAA_' + MNY.mats[j], R.iB)) / 10, 1));
+        }
+        for (j = 0; j < MNY.mats.length; j++) {
+          var c3 = mnyCol(mr, MNY.mats[j]);
+          if (!c3) { o2.push(''); continue; }
+          var cv;
+          if (isSp && !noSp) {
+            var b3 = 'CD_AAA_' + MNY.mats[j];
+            var q1 = raw(c3, R.iA) - raw(b3, R.iA), q2 = raw(c3, R.iB) - raw(b3, R.iB);
+            cv = (isNaN(q1) || isNaN(q2)) ? NaN : (q2 - q1) / 10;
+          } else cv = bpDiff(c3, R.iB, R.iA);
+          o2.push(nn(cv, 1));
+        }
+        L.push(DL.row(o2));
+      }
+      DL.saveText('크레딧히트맵_' + (isSp ? '스프레드' : '레벨') + (showAll ? '_전체' : '') + '_' +
         DATES[R.iA] + '-' + DATES[R.iB] + '.csv', L.join(DL.CRLF) + DL.CRLF);
     } catch (e) { alert('CSV 생성 중 오류: ' + (e && e.message ? e.message : e)); }
   }
@@ -7351,14 +7571,15 @@ var HM = (function () {
     try {
       var R = resolve(); if (R.iA < 0 || R.iB < 0) { alert('기간이 올바르지 않습니다.'); return; }
       var isSp = (mode === 'sp'), S = XW.S, j, r;
+      var RW = curRows(), MT = curMats(), ML = curLabs();
 
       /* 화면과 동일한 상한을 쓴다 */
       var sv = [];
-      for (r = 0; r < ROWS.length; r++) {
-        var rw = ROWS[r], ib = isSp && rw.base;
+      for (r = 0; r < RW.length; r++) {
+        var rw = RW[r], ib = isSp && rw.base;
         if (ib) continue;
-        for (j = 0; j < MATS.length; j++) {
-          var cv0 = isSp ? spChg(rw.t, MATS[j], R.iA, R.iB) : lvChg(rw.t, MATS[j], R.iA, R.iB);
+        for (j = 0; j < MT.length; j++) {
+          var cv0 = isSp ? spChg(rw.t, MT[j], R.iA, R.iB) : lvChg(rw.t, MT[j], R.iA, R.iB);
           if (isFinite(cv0)) sv.push(cv0);
         }
       }
@@ -7366,10 +7587,10 @@ var HM = (function () {
       var cap = (isFinite(man) && man > 0) ? man : auto, isAuto = !(isFinite(man) && man > 0);
 
       /* --- 시트 1: 격자 --- */
-      var rows = [], hdr1 = [{ t: '구분', s: S.HEAD }, { t: '등급', s: S.HEAD }], hdr2 = [null, null];
+      var rows = [], hdr1 = [{ t: '구분', s: S.HEAD }, { t: showAll ? '종류' : '등급', s: S.HEAD }], hdr2 = [null, null];
       function blockHead(label) {
-        for (j = 0; j < MATS.length; j++) hdr1.push({ t: (j === 0 ? label : ''), s: S.HEAD });
-        for (j = 0; j < MATS.length; j++) hdr2.push({ t: MLAB[j], s: S.HEAD });
+        for (j = 0; j < MT.length; j++) hdr1.push({ t: (j === 0 ? label : ''), s: S.HEAD });
+        for (j = 0; j < MT.length; j++) hdr2.push({ t: ML[j], s: S.HEAD });
       }
       blockHead('금리 (%)');
       if (isSp) blockHead('스프레드 (bp)');
@@ -7377,16 +7598,16 @@ var HM = (function () {
       rows.push(hdr1); rows.push(hdr2);
 
       var nClip = 0;
-      for (r = 0; r < ROWS.length; r++) {
-        var row = ROWS[r], isBase = isSp && row.base, out = [];
+      for (r = 0; r < RW.length; r++) {
+        var row = RW[r], isBase = isSp && row.base, out = [];
         out.push({ t: row.g, s: S.TEXT }); out.push({ t: row.n, s: S.TEXT });
-        for (j = 0; j < MATS.length; j++) { var lv = lvAt(row.t, MATS[j], R.iB); out.push(isFinite(lv) ? { v: +lv.toFixed(3), s: S.N2 } : null); }
-        if (isSp) for (j = 0; j < MATS.length; j++) {
-          var sp = isBase ? NaN : spAt(row.t, MATS[j], R.iB);
+        for (j = 0; j < MT.length; j++) { var lv = lvAt(row.t, MT[j], R.iB); out.push(isFinite(lv) ? { v: +lv.toFixed(3), s: S.N2 } : null); }
+        if (isSp) for (j = 0; j < MT.length; j++) {
+          var sp = isBase ? NaN : spAt(row.t, MT[j], R.iB);
           out.push(isFinite(sp) ? { v: +sp.toFixed(1), s: S.N1 } : null);
         }
-        for (j = 0; j < MATS.length; j++) {
-          var m = MATS[j];
+        for (j = 0; j < MT.length; j++) {
+          var m = MT[j];
           var cv = isSp ? (isBase ? lvChg(row.t, m, R.iA, R.iB) : spChg(row.t, m, R.iA, R.iB))
                         : lvChg(row.t, m, R.iA, R.iB);
           if (!isFinite(cv)) { out.push(null); continue; }
@@ -7397,18 +7618,61 @@ var HM = (function () {
         }
         rows.push(out);
       }
-      var wid = [10, 13];
-      for (j = 0; j < MATS.length * (isSp ? 3 : 2); j++) wid.push(9.5);
+      var wid = [showAll ? 16 : 10, showAll ? 22 : 13];
+      for (j = 0; j < MT.length * (isSp ? 3 : 2); j++) wid.push(9.5);
+
+      /* --- 시트 2: 단기자금 (만기축이 달라 별도 시트) --- */
+      var mr2 = [], mh1 = [{ t: '구분', s: S.HEAD }, { t: '등급', s: S.HEAD }], mh2 = [null, null];
+      function mBlock(label) {
+        for (j = 0; j < MNY.mats.length; j++) mh1.push({ t: (j === 0 ? label : ''), s: S.HEAD });
+        for (j = 0; j < MNY.mats.length; j++) mh2.push({ t: MNY.mats[j], s: S.HEAD });
+      }
+      mBlock('금리 (%)');
+      if (isSp) mBlock('CD AAA 대비 (bp)');
+      mBlock(isSp ? '스프레드 변동 (bp)' : '금리 변동 (bp)');
+      mr2.push(mh1); mr2.push(mh2);
+      for (r = 0; r < MNY.rows.length; r++) {
+        var m0 = MNY.rows[r], noSp = m0.cdbase || m0.rop, o3 = [{ t: m0.g, s: S.TEXT }, { t: m0.n, s: S.TEXT }];
+        for (j = 0; j < MNY.mats.length; j++) {
+          var cA = mnyCol(m0, MNY.mats[j]), vA = cA ? pct(cA, R.iB) : NaN;
+          o3.push(isFinite(vA) ? { v: +vA.toFixed(3), s: S.N2 } : null);
+        }
+        if (isSp) for (j = 0; j < MNY.mats.length; j++) {
+          var cB = mnyCol(m0, MNY.mats[j]);
+          var vB = (noSp || !cB) ? NaN : (raw(cB, R.iB) - raw('CD_AAA_' + MNY.mats[j], R.iB)) / 10;
+          o3.push(isFinite(vB) ? { v: +vB.toFixed(1), s: S.N1 } : null);
+        }
+        for (j = 0; j < MNY.mats.length; j++) {
+          var cC = mnyCol(m0, MNY.mats[j]);
+          if (!cC) { o3.push(null); continue; }
+          var vC;
+          if (isSp && !noSp) {
+            var bB = 'CD_AAA_' + MNY.mats[j];
+            var z1 = raw(cC, R.iA) - raw(bB, R.iA), z2 = raw(cC, R.iB) - raw(bB, R.iB);
+            vC = (isNaN(z1) || isNaN(z2)) ? NaN : (z2 - z1) / 10;
+          } else vC = bpDiff(cC, R.iB, R.iA);
+          if (!isFinite(vC)) { o3.push(null); continue; }
+          if (isSp && noSp) { o3.push({ v: +vC.toFixed(1), s: S.N1G }); continue; }
+          var bi2 = binOf(vC, cap), cl2 = Math.abs(vC) > cap;
+          if (cl2) nClip++;
+          o3.push({ v: +vC.toFixed(1), s: S.PAL0 + bi2 + (cl2 ? PAL.length : 0) });
+        }
+        mr2.push(o3);
+      }
+      var wid2 = [8, 16];
+      for (j = 0; j < MNY.mats.length * (isSp ? 3 : 2); j++) wid2.push(9.5);
 
       /* --- 시트 2: 설명 --- */
       var ex = [
         ['항목', '내용'],
         ['자료', '크레딧 히트맵 (대시보드 · 히트맵 탭)'],
-        ['모드', isSp ? '스프레드 — 국고 대비 스프레드와 그 변동' : '레벨 — 금리와 그 변동'],
+        ['모드', (isSp ? '스프레드 — 국고 대비 스프레드와 그 변동' : '레벨 — 금리와 그 변동') +
+                 (showAll ? '   /   전체 격자 (live 전 종류 × 3월~10년)' : '   /   기본 격자 (주요 24종 × 1·2·3·5·10년)')],
         ['시점 1 (과거)', fmtD(DATES[R.iA]) + (hzIdx >= 0 ? '   [' + CHG_HORIZ[hzIdx][0] + ']' : '   [임의 구간]')],
         ['시점 2 (최근)', fmtD(DATES[R.iB])],
         ['기준일 해석', '달력으로 역산한 뒤 그 이전 가장 가까운 영업일로 대체'],
-        ['스프레드 기준', isSp ? '1년·2년 = 통안증권 / 3년 이상 = 국고채권 (동일 만기 단순차)' : '해당 없음'],
+        ['스프레드 기준', isSp ? ((showAll ? '2년 이하 = 통안증권 / 2년 초과' : '1년·2년 = 통안증권 / 3년 이상') +
+                 ' = 국고채권 (동일 만기 단순차). 단기자금 시트는 CD AAA 동일 만기 기준') : '해당 없음'],
         ['기준행 처리', isSp ? '국채·통안은 기준 자신이라 스프레드 없음. 변동 열은 금리 변동이며 색을 칠하지 않고 색 상한 계산에서도 제외' : '해당 없음'],
         ['색 상한', '±' + cap + ' bp (' + (isAuto ? '자동' : '수동') + ')'],
         ['자동 산출', isAuto ? '색칠 대상 |변동| 의 p95 → 최소 5bp → 눈금(5·10·20·30·50·75·100…) 올림' : '수동 고정값 사용'],
@@ -7425,9 +7689,10 @@ var HM = (function () {
 
       var bytes = XW.book([
         { name: isSp ? '스프레드' : '레벨', cols: wid, freeze: { r: 2, c: 2 }, rows: rows },
+        { name: '단기자금', cols: wid2, freeze: { r: 2, c: 2 }, rows: mr2 },
         { name: '설명', cols: [16, 92], rows: exRows }
       ], PAL);
-      XW.save('크레딧히트맵_' + (isSp ? '스프레드' : '레벨') + '_' +
+      XW.save('크레딧히트맵_' + (isSp ? '스프레드' : '레벨') + (showAll ? '_전체' : '') + '_' +
         DATES[R.iA] + '-' + DATES[R.iB] + '.xlsx', bytes);
     } catch (e) { alert('xlsx 생성 중 오류: ' + (e && e.message ? e.message : e)); }
   }
@@ -7478,6 +7743,8 @@ var HM = (function () {
     };
     var dl = $('hm-dl-csv'); if (dl) dl.onclick = csv;
     var dx = $('hm-dl-xlsx'); if (dx) dx.onclick = xlsx;
+    var al = $('hm-all');
+    if (al) al.onchange = function () { showAll = !!al.checked; render(); };
     paintPresets(); syncDates();
   }
 
