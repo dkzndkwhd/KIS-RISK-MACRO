@@ -258,6 +258,62 @@ body{font-size:13px;}
    큰 HTML 블록을 물리적으로 옮기지 않으려고 #dash-money 를 그대로 두고 함께 보이게 했다. */
 #dash-money.sub{margin-top:14px;}
 
+/* ===== 히트맵 탭 — 2026-10-21 신설 =====
+   국내금리와 해외금리 사이. 크레딧 격자(행=종류·등급 / 열=만기)를 색으로 칠한다.
+   · SVG 를 쓰지 않는다 — 숨은 컨테이너 폭 0 함정(cw()=0)을 피하려고 HTML table 로 짰다.
+   · 색 방향은 사이트 전역 규약과 같다: 상승=빨강(.up #d0021b) · 하락=파랑(.dn #0057c7).
+     팔레트는 ColorBrewer RdBu 9단계(색맹 안전·중심이 회백색)를 쓴다. */
+.hmbar{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;
+  background:#f7fafd;border:1px solid #dde5ef;border-radius:8px;padding:11px 14px;margin:0 0 14px;}
+.hmbar .fld{display:flex;flex-direction:column;gap:4px;}
+.hmbar label{font-size:11px;font-weight:600;color:#67727f;letter-spacing:-.2px;}
+.hmbar input[type=date],.hmbar input[type=number]{font:inherit;font-size:12.5px;padding:5px 7px;
+  border:1px solid #cdd6e0;border-radius:5px;background:#fff;color:#1d2a36;}
+.hmbar input[type=number]{width:92px;}
+.hmbar .presets{display:flex;gap:3px;flex-wrap:wrap;}
+.hmbar .presets button{font:inherit;font-size:11.5px;padding:4px 9px;border:1px solid #cdd6e0;
+  border-radius:5px;background:#fff;color:#4a5765;cursor:pointer;}
+.hmbar .presets button:hover{background:#eef3f9;}
+.hmbar .presets button.on{background:#17456b;border-color:#17456b;color:#fff;font-weight:600;}
+.hmbar .sep{width:1px;align-self:stretch;background:#dde5ef;margin:0 2px;}
+
+/* 모드 전환 — 기존 라디오 관행(.fld > label > input[radio])을 따른다 */
+.hmmode{display:flex;gap:10px;}
+.hmmode label{display:flex;align-items:center;gap:5px;font-size:12.5px;font-weight:500;
+  color:#1d2a36;cursor:pointer;letter-spacing:-.2px;}
+.hmmode input{width:auto;margin:0;}
+
+/* 범례 */
+.hmleg{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px;font-size:11.5px;color:#67727f;}
+.hmleg .sw{display:flex;border:1px solid #cdd6e0;border-radius:3px;overflow:hidden;}
+.hmleg .sw i{width:19px;height:13px;display:block;}
+.hmleg b{color:#1d2a36;font-size:12px;}
+.hmleg .st{background:#eef3f9;border:1px solid #cdd6e0;border-radius:4px;padding:1px 7px;color:#17456b;font-weight:600;}
+
+/* 격자 */
+.hmwrap{overflow-x:auto;}
+table.hm{border-collapse:separate;border-spacing:0;font-size:12px;white-space:nowrap;}
+table.hm th,table.hm td{border-bottom:1px solid #eef1f5;padding:4px 7px;text-align:center;}
+table.hm thead th{background:#f4f7fa;color:#4a5765;font-weight:600;font-size:11.5px;
+  position:sticky;top:0;z-index:2;border-bottom:1px solid #dbe2ea;}
+table.hm thead th.grp{background:#eef3f9;color:#17456b;border-left:1px solid #dbe2ea;}
+table.hm td.l,table.hm th.l{text-align:left;}
+/* 행 머리 2열(구분·등급) 고정 */
+table.hm .rh{position:sticky;left:0;z-index:1;background:#fff;color:#1d2a36;font-weight:600;
+  min-width:78px;border-right:0;}
+table.hm .rg{position:sticky;left:78px;z-index:1;background:#fff;color:#4a5765;
+  min-width:74px;border-right:1px solid #dbe2ea;}
+table.hm thead .rh,table.hm thead .rg{background:#f4f7fa;z-index:3;}
+table.hm tr.gtop td,table.hm tr.gtop th{border-top:1px solid #cdd6e0;}
+table.hm td.num{font-variant-numeric:tabular-nums;color:#1d2a36;}
+table.hm td.base{color:#8a939e;}
+table.hm td.cell{font-variant-numeric:tabular-nums;color:#1d2a36;border-left:1px solid #fff;}
+table.hm td.clip{box-shadow:inset 0 0 0 2px #5a6673;}
+table.hm td.na{color:#b6bdc6;}
+table.hm .bsep{border-left:1px solid #dbe2ea;}
+.hmnote{margin-top:10px;}
+.hmcnt{font-size:11.5px;color:#67727f;margin:8px 0 0;}
+
 /* 해외금리 탭 상단 기준일 줄. 국가가 늘면 항목이 추가된다. */
 .ovsbar{background:#fbf7ef;border:1px solid #e8dcc6;border-radius:8px;padding:9px 14px;
      margin:0 0 14px;font-size:12.5px;color:#5c4a2a;line-height:1.75;}
@@ -579,6 +635,7 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
        자리를 차지하지 않는다). 큰 HTML 블록을 물리적으로 옮기지 않기 위한 선택이다. -->
 <div class="subtabs" id="dash-subtabs">
   <button type="button" data-d="kr" class="on">국내금리</button>
+  <button type="button" data-d="heat">히트맵</button>
   <button type="button" data-d="ovs">해외금리</button>
   <button type="button" data-d="fut">선물 · IRS</button>
 </div>
@@ -880,6 +937,55 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
 
 </div>
 </div><!-- /#dash-money -->
+
+<!-- ===================== 대시보드 · 히트맵 =====================
+     [2026-10-21 신설] 국내금리와 해외금리 사이의 하위 탭.
+     행 = 채권종류·등급(국채·통안·특수채·특은채·은행채·여전채·회사채), 열 = 1·2·3·5·10년.
+     두 모드:
+       · 스프레드 — 국고 대비 스프레드(1·2년은 통안 기준)와 그 변동. 국채·통안은 기준이라
+                    스프레드가 없고 변동 열에는 금리 변동을 넣되 색 스케일에서는 제외한다.
+       · 레벨     — 금리 자체와 그 변동. 국채·통안도 보통 행으로 들어간다.
+     두 모드는 변동 크기가 5~6배 다르므로(실측: 1년 p95 스프레드 27bp vs 금리 156bp)
+     **색 상한을 공유하지 않는다.** 모드별로 따로 잡는다.
+     DOM 위치는 #dash-money 뒤지만, showDashSub 가 'heat' 일 때만 보이므로 순서는 무관하다. -->
+<div id="dash-heat" style="display:none">
+
+  <div class="hmbar">
+    <div class="fld"><label>모드</label>
+      <div class="hmmode">
+        <label><input type="radio" name="hm-mode" value="sp" checked> 스프레드</label>
+        <label><input type="radio" name="hm-mode" value="lv"> 레벨 (금리)</label>
+      </div>
+    </div>
+    <div class="sep"></div>
+    <div class="fld"><label>변동 기간</label>
+      <div class="presets" id="hm-hz-p"></div>
+    </div>
+    <div class="sep"></div>
+    <div class="fld"><label>시점 1 (과거)</label><input type="date" id="hm-d1"></div>
+    <div class="fld"><label>시점 2 (최근)</label><input type="date" id="hm-d2"></div>
+    <div class="sep"></div>
+    <div class="fld"><label>색 상한 (bp)</label>
+      <input type="number" id="hm-cap" min="0.1" step="1" placeholder="자동">
+    </div>
+    <div class="fld"><label>&nbsp;</label>
+      <div class="presets">
+        <button type="button" id="hm-dl-csv">CSV 다운로드</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="hm-warn"></div>
+
+  <section class="card span3">
+    <h2>크레딧 히트맵 <span id="hm-sub" style="font-weight:400;color:#67727f;font-size:12px"></span></h2>
+    <div class="hmleg" id="hm-leg"></div>
+    <div class="hmwrap" id="hm-box"></div>
+    <p class="hmcnt" id="hm-cnt"></p>
+    <p class="note hmnote" id="hm-note"></p>
+  </section>
+
+</div><!-- /#dash-heat -->
 </div>
 
 <div class="view" id="view-stress" style="display:none">
@@ -3707,23 +3813,27 @@ guard('단기자금 변동 현황', function () {
    · ovs = 해외금리. #dash-ovs 하나.
    · fut = 선물·IRS. 종전과 동일.
    종전 키(spot/money)가 어딘가에 남아 있어도 kr 로 받아 주어 탭이 비는 사고를 막는다. */
+/* [2026-10-21] 'heat'(히트맵) 추가 — 국내금리와 해외금리 사이. */
 var dashSub = 'kr';
 function showDashSub(d) {
   if (d === 'spot' || d === 'money') d = 'kr';          // 구 키 호환
-  if (d !== 'kr' && d !== 'ovs' && d !== 'fut') d = 'kr';
+  if (d !== 'kr' && d !== 'heat' && d !== 'ovs' && d !== 'fut') d = 'kr';
   dashSub = d;
   var bar = $('dash-subtabs');
   if (bar) [].forEach.call(bar.getElementsByTagName('button'), function (b) {
     b.className = (b.getAttribute('data-d') === d) ? 'on' : '';
   });
-  var sp = $('dash-spot'), ov = $('dash-ovs'), ft = $('dash-fut'), mn = $('dash-money');
+  var sp = $('dash-spot'), ov = $('dash-ovs'), ft = $('dash-fut'), mn = $('dash-money'), ht = $('dash-heat');
   if (sp) sp.style.display = (d === 'kr') ? '' : 'none';
   if (mn) { mn.style.display = (d === 'kr') ? '' : 'none'; mn.className = 'sub'; }
+  if (ht) ht.style.display = (d === 'heat') ? '' : 'none';
   if (ov) ov.style.display = (d === 'ovs') ? '' : 'none';
   if (ft) ft.style.display = (d === 'fut') ? '' : 'none';
   /* 숨어 있던 컨테이너는 폭이 0이라 cw() 가 0을 돌려주고 SVG 가 찌그러진다.
-     그래서 그 탭이 '보이게 된 순간' 차트를 다시 그린다. */
+     그래서 그 탭이 '보이게 된 순간' 차트를 다시 그린다.
+     히트맵은 HTML table 이라 폭 0 함정이 없지만, 처음 보일 때 한 번은 그려야 한다. */
   if (d === 'kr') { guard('시계열', drawTS); guard('CP·CD 시계열', drawMnyTS); guard('CD 유통 시계열', drawRopTS); }
+  else if (d === 'heat') { guard('히트맵', HM.render); }
   else if (d === 'ovs') { fxDrawAll(); guard('해외금리 탭', renderOvs); }
   else { guard('선물 시계열', drawFutTS); guard('IRS 시계열', drawIrsTS); }
 }
@@ -6907,6 +7017,383 @@ var DL = (function () {
     tableGrid: tableGrid, evidLines: evidLines
   };
 })();
+
+/* ================================================================
+   히트맵 — 2026-10-21 신설
+   ----------------------------------------------------------------
+   행 = 채권종류·등급 24행, 열 = 1·2·3·5·10년.
+
+   두 모드
+     · sp(스프레드) : 금리 | 국고 대비 스프레드 | 스프레드 변동(색)
+                      기준은 만기마다 다르다 — **1·2년은 통안증권, 3년 이상은 국고채권**.
+                      (하나증권 리서치 표와 같은 규약이고, 2026-10-16 기준으로 전 칸 대조해
+                       숫자가 일치함을 확인했다.)
+                      국채·통안 행은 기준 자신이라 스프레드가 없다. 변동 열에는 금리 변동을
+                      넣되 **색을 칠하지 않고 색 상한 계산에서도 제외**한다 — 성격이 다르고
+                      크기가 한 자릿수 커서 스케일을 독점하기 때문이다.
+     · lv(레벨)     : 금리 | 금리 변동(색). 국채·통안도 보통 행으로 들어간다.
+
+   색
+     ColorBrewer RdBu 9단계. **사이트 전역 규약대로 상승=빨강 · 하락=파랑**
+     (.up #d0021b / .dn #0057c7 과 같은 방향. 매뉴얼에 명문화된 규약을 따른다).
+
+   색 상한
+     기본 자동 = 색칠 대상 칸의 |변동| p95 → 최소 5bp 가드 → 눈금 올림.
+     · p95 : 극단값 1~2칸에 끌려가지 않게 위쪽 몇 칸을 자른다.
+     · 5bp 하한 : 스프레드 1일 변동은 **보통 날 p95 가 0.8bp** 이고 고시가 0.1bp 단위라,
+               하한이 없으면 반올림 노이즈가 최고 채도로 칠해진다. 2025-12-31 처럼
+               **전 칸이 완전히 동일한 날은 p95=0 이라 0 나눗셈**이 된다.
+     · 눈금 올림 : 자동값이 날마다 흔들리면 색의 뜻이 날마다 달라진다. 눈금에 올리면
+               1일 기준으로 **96%의 날이 전일과 같은 상한**이 되어 날짜 간 비교가 산다.
+     수동 입력칸에 값을 넣으면 고정, 비우면 자동. 범례에 항상 "±N bp (자동/수동)" 로 적는다.
+
+   두 모드는 상한을 공유하지 않는다 — 실측상 스프레드 변동이 금리 변동보다 5~6배 작다
+   (1년 p95: 스프레드 27bp vs 금리 156bp). 모드별로 따로 보관한다.
+
+   SVG 를 쓰지 않는다. HTML table 이라 '숨은 컨테이너 폭 0'(cw()=0) 함정이 없다.
+   ================================================================ */
+var HM = (function () {
+
+  /* ---- 행 정의 ----
+     사용자 지정: 국채 · 통안 · 은행 · 여전 · 회사 · 특수 · 특은.
+     KOFIA 분류 매핑 —
+       여전채(여신전문금융회사채) = **금융채II(금융기관채)**. 은행 외 금융기관 계열이고,
+         첨부 리서치 표의 '여전채' 값과 이 계열 값이 전 칸 일치함을 확인했다.
+       특은채(특수은행채) = 금융채I 안의 **산금채·중금채**(산업금융채권·중소기업금융채권).
+     등급은 1·2·3·5·10년이 전부 live 인 것만 넣었다(통안 제외 — 통안은 3년까지만 고시). */
+  var ROWS = [
+    { g: '국채', n: '국고채권', t: '국고채권', base: 1 },
+    { g: '통안', n: '통안증권', t: '통안증권', base: 1 },
+
+    { g: '특수채', n: 'AAA', t: '특수채AAA' },
+    { g: '특수채', n: 'AA+', t: '특수채AA+' },
+    { g: '특수채', n: 'AA', t: '특수채AA' },
+    { g: '특수채', n: '정부보증', t: '특수채 정부보증' },
+
+    { g: '특은채', n: 'AAA (산금채)', t: '은행채AAA(산금채)' },
+    { g: '특은채', n: 'AAA (중금채)', t: '은행채AAA(중금채)' },
+
+    { g: '은행채', n: 'AAA', t: '은행채AAA' },
+    { g: '은행채', n: 'AA', t: '은행채AA' },
+    { g: '은행채', n: 'A+', t: '은행채A+' },
+
+    { g: '여전채', n: 'AA+', t: '금융기관채AA+' },
+    { g: '여전채', n: 'AA0', t: '금융기관채AA0' },
+    { g: '여전채', n: 'AA-', t: '금융기관채AA-' },
+    { g: '여전채', n: 'A+', t: '금융기관채A+' },
+    { g: '여전채', n: 'A0', t: '금융기관채A0' },
+
+    { g: '회사채', n: 'AAA', t: '회사채AAA' },
+    { g: '회사채', n: 'AA+', t: '회사채AA+' },
+    { g: '회사채', n: 'AA0', t: '회사채AA0' },
+    { g: '회사채', n: 'AA-', t: '회사채AA-' },
+    { g: '회사채', n: 'A+', t: '회사채A+' },
+    { g: '회사채', n: 'A0', t: '회사채A0' },
+    { g: '회사채', n: 'A-', t: '회사채A-' },
+    { g: '회사채', n: 'BBB+', t: '회사채BBB+' }
+  ];
+
+  var MATS = [12, 24, 36, 60, 120];
+  var MLAB = ['1년', '2년', '3년', '5년', '10년'];
+
+  /** 스프레드 기준 — 1·2년은 통안, 3년 이상은 국고 */
+  function baseOf(m) { return (m === 12 || m === 24) ? '통안증권' : '국고채권'; }
+
+  /* ---- 색 ----
+     ColorBrewer RdBu 9단계를 **음수(파랑) → 양수(빨강)** 순으로 뒤집어 담았다.
+     중심(인덱스 4)이 회백색이라 '움직이지 않은 칸'이 눈에 띄지 않는다. */
+  var PAL = ['#2166AC', '#4393C3', '#92C5DE', '#D1E5F0', '#F7F7F7',
+             '#FDDBC7', '#F4A582', '#D6604D', '#B2182B'];
+  var DARK = { 0: 1, 1: 1, 7: 1, 8: 1 };        // 흰 글씨를 써야 하는 칸
+
+  function binOf(v, cap) {
+    var t = v / cap; if (t > 1) t = 1; if (t < -1) t = -1;
+    var b = Math.round((t + 1) / 2 * 8);
+    return (b < 0) ? 0 : (b > 8 ? 8 : b);
+  }
+
+  /* ---- 상한 ---- */
+  var LADDER = [5, 10, 20, 30, 50, 75, 100, 150, 200, 300, 500, 750, 1000, 1500, 2000, 3000];
+  function snapUp(x) {
+    for (var i = 0; i < LADDER.length; i++) if (x <= LADDER[i]) return LADDER[i];
+    return Math.ceil(x / 1000) * 1000;
+  }
+  var CAP_MIN = 5;                               // 하한 가드 (bp)
+  /** 색칠 대상 값들로 자동 상한을 낸다. 빈 배열·전부 0 이어도 5bp 를 돌려준다. */
+  function autoCap(vals) {
+    var a = [], i;
+    for (i = 0; i < vals.length; i++) if (isFinite(vals[i])) a.push(Math.abs(vals[i]));
+    if (!a.length) return CAP_MIN;
+    a.sort(function (x, y) { return x - y; });
+    var p = a[Math.floor(0.95 * (a.length - 1))];
+    if (!(p > 0)) p = 0;                         // 전 칸 동일한 날 → 0 → 하한으로
+    if (p < CAP_MIN) p = CAP_MIN;
+    return snapUp(p);
+  }
+
+  /* ---- 상태 ---- */
+  var mode = 'sp';
+  var hzIdx = 0;                                 // CHG_HORIZ 인덱스, -1 = 임의 2일
+  var reqA = 0, reqB = 0;                        // 임의 모드에서 사용자가 요청한 날짜
+  var capManual = { sp: NaN, lv: NaN };          // 모드별로 따로 — 변동 크기가 5~6배 다르다
+
+  /* ---- 값 ---- */
+  function lvAt(t, m, i) {                       // 금리 (%)
+    var c = colOf(t, m); return c ? pct(c, i) : NaN;
+  }
+  function spAt(t, m, i) {                       // 스프레드 (bp)
+    var c = colOf(t, m), b = colOf(baseOf(m), m);
+    if (!c || !b) return NaN;
+    var x = raw(c, i), y = raw(b, i);
+    return (isNaN(x) || isNaN(y)) ? NaN : (x - y) / 10;
+  }
+  function lvChg(t, m, iA, iB) {                 // 금리 변동 (bp)
+    var c = colOf(t, m); return c ? bpDiff(c, iB, iA) : NaN;
+  }
+  function spChg(t, m, iA, iB) {                 // 스프레드 변동 (bp)
+    var a = spAt(t, m, iA), b = spAt(t, m, iB);
+    return (isNaN(a) || isNaN(b)) ? NaN : (b - a);
+  }
+
+  /* ---- 기간 해석 ----
+     기존 변동 현황과 **같은 규칙**: 달력으로 역산한 뒤 그 이전 가장 가까운 영업일.
+     1일만 PREV 를 그대로 쓴다(기존 CHG_HORIZ 처리와 동일). */
+  function resolve() {
+    var iB, iA, rA, rB;
+    if (hzIdx >= 0) {
+      var hz = CHG_HORIZ[hzIdx];
+      iB = LAST; rB = DATES[LAST];
+      if (hz[1] === 'd' && hz[2] === 1) { iA = PREV; rA = DATES[PREV] ; }
+      else { rA = shiftCal(DATES[LAST], hz[1], hz[2]); iA = idxLE(rA); }
+    } else {
+      rA = reqA || DATES[PREV]; rB = reqB || DATES[LAST];
+      if (rA > rB) { var t0 = rA; rA = rB; rB = t0; }
+      iA = idxLE(rA); iB = idxLE(rB);
+    }
+    return { iA: iA, iB: iB, rA: rA, rB: rB };
+  }
+
+  /* ---- 경고 ---- */
+  function warnHTML(R) {
+    var h = [];
+    if (R.iA < 0 || R.iB < 0) {
+      h.push('<div class="alert w">⚠ 요청한 시점이 데이터 수록 구간(' +
+        fmtD(DATES[0]) + ' ~ ' + fmtD(DATES[LAST]) + ') 밖입니다.</div>');
+      return h.join('');
+    }
+    if (hzIdx < 0) {
+      if (DATES[R.iA] !== R.rA) h.push('<div class="alert w">⚠ 시점 1 <b>' + fmtD(R.rA) +
+        '</b>은 영업일이 아니어서 <b>' + fmtD(DATES[R.iA]) + '</b>로 대체했습니다.</div>');
+      if (DATES[R.iB] !== R.rB) h.push('<div class="alert w">⚠ 시점 2 <b>' + fmtD(R.rB) +
+        '</b>은 영업일이 아니어서 <b>' + fmtD(DATES[R.iB]) + '</b>로 대체했습니다.</div>');
+    }
+    if (R.iA === R.iB) h.push('<div class="alert w">⚠ 두 시점이 같은 영업일(<b>' +
+      fmtD(DATES[R.iA]) + '</b>)로 해석되어 변동이 전부 0 입니다.</div>');
+    if (crossesRegime(R.iA, R.iB)) h.push('<div class="alert w">⚠ <b>2023-01-09 산출기준 변경</b>을 ' +
+      '사이에 두고 비교합니다. 경계를 넘는 변동은 기준 변경 효과가 섞입니다.</div>');
+    return h.join('');
+  }
+
+  /* ---- 본체 ---- */
+  function render() {
+    var box = $('hm-box'); if (!box) return;
+    var R = resolve();
+    var wrap = $('hm-warn'); if (wrap) wrap.innerHTML = warnHTML(R);
+    if (R.iA < 0 || R.iB < 0) {
+      box.innerHTML = '<p class="note">표시할 수 없습니다.</p>';
+      $('hm-leg').innerHTML = ''; $('hm-cnt').textContent = ''; return;
+    }
+    var isSp = (mode === 'sp');
+
+    /* 1) 값 계산 */
+    var cells = [], scaleVals = [], r, j, i;
+    for (r = 0; r < ROWS.length; r++) {
+      var row = ROWS[r], rec = { row: row, lv: [], sp: [], ch: [] };
+      var isBase = isSp && row.base;
+      for (j = 0; j < MATS.length; j++) {
+        var m = MATS[j];
+        rec.lv.push(lvAt(row.t, m, R.iB));
+        rec.sp.push(isBase ? NaN : spAt(row.t, m, R.iB));
+        var cv = isSp ? (isBase ? lvChg(row.t, m, R.iA, R.iB) : spChg(row.t, m, R.iA, R.iB))
+                      : lvChg(row.t, m, R.iA, R.iB);
+        rec.ch.push(cv);
+        /* 기준행(국채·통안)은 스프레드 모드에서 색 상한 계산에 넣지 않는다 */
+        if (!isBase && isFinite(cv)) scaleVals.push(cv);
+      }
+      rec.isBase = isBase;
+      cells.push(rec);
+    }
+
+    /* 2) 상한 */
+    var man = capManual[mode];
+    var auto = autoCap(scaleVals);
+    var cap = (isFinite(man) && man > 0) ? man : auto;
+    var isAuto = !(isFinite(man) && man > 0);
+
+    /* 3) 그리기 */
+    var nMat = MATS.length;
+    var h = ['<table class="hm"><thead>'];
+    h.push('<tr><th class="rh l" rowspan="2">구분</th><th class="rg l" rowspan="2">등급</th>');
+    h.push('<th class="grp" colspan="' + nMat + '">금리 (%)</th>');
+    if (isSp) h.push('<th class="grp" colspan="' + nMat + '">스프레드 (bp)</th>');
+    h.push('<th class="grp" colspan="' + nMat + '">' + (isSp ? '스프레드 변동' : '금리 변동') + ' (bp)</th>');
+    h.push('</tr><tr>');
+    var blocks = isSp ? 3 : 2;
+    for (var b = 0; b < blocks; b++)
+      for (j = 0; j < nMat; j++) h.push('<th' + (j === 0 ? ' class="bsep"' : '') + '>' + MLAB[j] + '</th>');
+    h.push('</tr></thead><tbody>');
+
+    var nClip = 0, nCalc = 0, nMiss = 0, prevG = null;
+    for (r = 0; r < cells.length; r++) {
+      var C = cells[r], g = C.row.g;
+      var topCls = (prevG !== null && g !== prevG) ? ' class="gtop"' : '';
+      h.push('<tr' + topCls + '>');
+      h.push('<td class="rh l">' + (g === prevG ? '' : esc(g)) + '</td>');
+      h.push('<td class="rg l">' + esc(C.row.n) + '</td>');
+      prevG = g;
+      /* 금리 */
+      for (j = 0; j < nMat; j++)
+        h.push('<td class="num' + (j === 0 ? ' bsep' : '') + '">' + (isFinite(C.lv[j]) ? C.lv[j].toFixed(2) : '<span class="na">—</span>') + '</td>');
+      /* 스프레드 */
+      if (isSp) for (j = 0; j < nMat; j++)
+        h.push('<td class="num' + (j === 0 ? ' bsep' : '') + '">' + (isFinite(C.sp[j]) ? C.sp[j].toFixed(1) : '<span class="na">—</span>') + '</td>');
+      /* 변동 */
+      for (j = 0; j < nMat; j++) {
+        var v = C.ch[j], sep = (j === 0 ? ' bsep' : '');
+        if (!isFinite(v)) { h.push('<td class="cell na' + sep + '">—</td>'); nMiss++; continue; }
+        nCalc++;
+        if (C.isBase) {           // 기준행 — 색 없이 숫자만
+          h.push('<td class="cell base' + sep + '">' + v.toFixed(1) + '</td>');
+          continue;
+        }
+        var bi = binOf(v, cap), clip = Math.abs(v) > cap;
+        if (clip) nClip++;
+        h.push('<td class="cell' + sep + (clip ? ' clip' : '') + '" style="background:' + PAL[bi] +
+          (DARK[bi] ? ';color:#fff' : '') + '">' + v.toFixed(1) + '</td>');
+      }
+      h.push('</tr>');
+    }
+    h.push('</tbody></table>');
+    box.innerHTML = h.join('');
+
+    /* 4) 범례 */
+    var sw = '';
+    for (i = 0; i < PAL.length; i++) sw += '<i style="background:' + PAL[i] + '"></i>';
+    $('hm-leg').innerHTML =
+      '<span>하락</span><span class="sw">' + sw + '</span><span>상승</span>' +
+      '<b>±' + cap + ' bp</b><span class="st">' + (isAuto ? '자동' : '수동') + '</span>' +
+      (isAuto ? '<span>자동 산출 = |변동| p95 → 최소 ' + CAP_MIN + 'bp → 눈금 올림</span>' : '') +
+      (nClip ? '<span>상한 밖 <b>' + nClip + '</b>칸 (테두리 강조)</span>' : '');
+
+    /* 5) 머리말·각주 */
+    $('hm-sub').textContent = fmtD(DATES[R.iA]) + ' → ' + fmtD(DATES[R.iB]) +
+      (hzIdx >= 0 ? ' (' + CHG_HORIZ[hzIdx][0] + ')' : ' (임의 구간)');
+    $('hm-cnt').innerHTML = '계산된 칸 <b>' + nCalc + '</b>개 · 결측 <b>' + nMiss + '</b>개' +
+      (nClip ? ' · 상한 밖 <b>' + nClip + '</b>개' : '');
+    $('hm-note').innerHTML = isSp
+      ? '<b>스프레드 = 동일 만기 단순차(bp)</b>입니다. 기준은 만기마다 다릅니다 — ' +
+        '<b>1년·2년은 통안증권</b>, <b>3년 이상은 국고채권</b> 동월물 대비입니다. ' +
+        '<b>국채·통안 행은 기준 자신</b>이라 스프레드가 없고, 변동 열에는 <b>금리 변동</b>을 ' +
+        '회색 숫자로 넣되 <b>색을 칠하지 않고 색 상한 계산에서도 제외</b>합니다 — 크기가 한 자릿수 커서 ' +
+        '스케일을 독점하기 때문입니다. ' + NOTE_COMMON()
+      : '<b>금리 변동 = (시점 2 − 시점 1) × 100 [bp]</b>입니다. 이 모드에서는 국채·통안도 ' +
+        '보통 행으로 들어갑니다. <b>통안증권은 3년까지만 고시</b>되어 5년·10년은 ' +
+        '<span class="na">—</span>입니다. ' + NOTE_COMMON();
+  }
+
+  function NOTE_COMMON() {
+    return '과거 기준일은 달력으로 역산한 뒤 <b>그 이전 가장 가까운 영업일</b>로 대체합니다' +
+      '(기존 변동 현황과 같은 규칙). 양쪽 중 하나라도 결측이면 계산하지 않고 ' +
+      '<span class="na">—</span>로 둡니다 — <b>0 채움·보간을 하지 않습니다</b>. ' +
+      '<span class="up">상승 = 빨강</span> · <span class="dn">하락 = 파랑</span>으로 ' +
+      '사이트 전역 규약과 같습니다. 색 상한을 넘은 칸은 더 진해지지 않으므로 ' +
+      '<b>테두리를 진하게</b> 표시했습니다.';
+  }
+
+  /* ---- CSV ---- */
+  function csv() {
+    try {
+      var R = resolve(); if (R.iA < 0 || R.iB < 0) { alert('기간이 올바르지 않습니다.'); return; }
+      var isSp = (mode === 'sp'), L = [], j, r;
+      L.push(DL.cmt('크레딧 히트맵 — ' + (isSp ? '스프레드' : '레벨(금리)') + ' 모드'));
+      L.push(DL.cmt('시점 1 (과거) : ' + fmtD(DATES[R.iA]) + (hzIdx >= 0 ? '  [' + CHG_HORIZ[hzIdx][0] + ']' : '  [임의]')));
+      L.push(DL.cmt('시점 2 (최근) : ' + fmtD(DATES[R.iB])));
+      if (isSp) L.push(DL.cmt('스프레드 기준 : 1년·2년 = 통안증권, 3년 이상 = 국고채권 (동일 만기 단순차)'));
+      L.push(DL.cmt('단위 : 금리 %, 스프레드·변동 bp. 결측은 빈 칸(0 채움·보간 없음)'));
+      L.push(DL.cmt('인코딩 : UTF-8 (BOM), 줄바꿈 CRLF'));
+      var hd = ['구분', '등급'];
+      for (j = 0; j < MLAB.length; j++) hd.push('금리_' + MLAB[j]);
+      if (isSp) for (j = 0; j < MLAB.length; j++) hd.push('스프레드_' + MLAB[j]);
+      for (j = 0; j < MLAB.length; j++) hd.push((isSp ? '스프레드변동_' : '금리변동_') + MLAB[j]);
+      L.push(DL.row(hd));
+      var nn = function (x, d) { return isFinite(x) ? x.toFixed(d) : ''; };
+      for (r = 0; r < ROWS.length; r++) {
+        var row = ROWS[r], isBase = isSp && row.base, out = [row.g, row.n];
+        for (j = 0; j < MATS.length; j++) out.push(nn(lvAt(row.t, MATS[j], R.iB), 2));
+        if (isSp) for (j = 0; j < MATS.length; j++) out.push(isBase ? '' : nn(spAt(row.t, MATS[j], R.iB), 1));
+        for (j = 0; j < MATS.length; j++) {
+          var m = MATS[j];
+          out.push(nn(isSp ? (isBase ? lvChg(row.t, m, R.iA, R.iB) : spChg(row.t, m, R.iA, R.iB))
+                           : lvChg(row.t, m, R.iA, R.iB), 1));
+        }
+        L.push(DL.row(out));
+      }
+      DL.saveText('크레딧히트맵_' + (isSp ? '스프레드' : '레벨') + '_' +
+        DATES[R.iA] + '-' + DATES[R.iB] + '.csv', L.join(DL.CRLF) + DL.CRLF);
+    } catch (e) { alert('CSV 생성 중 오류: ' + (e && e.message ? e.message : e)); }
+  }
+
+  /* ---- 배선 ---- */
+  function syncDates() {                          // 프리셋이 해석한 날짜를 입력칸에 반영
+    var R = resolve();
+    if (R.iA >= 0) $('hm-d1').value = fmtD(DATES[R.iA]);
+    if (R.iB >= 0) $('hm-d2').value = fmtD(DATES[R.iB]);
+  }
+  function paintPresets() {
+    var p = $('hm-hz-p'); if (!p) return;
+    [].forEach.call(p.getElementsByTagName('button'), function (b, i) {
+      b.className = (i === hzIdx) ? 'on' : '';
+    });
+  }
+  function bind() {
+    var p = $('hm-hz-p');
+    if (p) {
+      p.innerHTML = CHG_HORIZ.map(function (hz) {
+        return '<button type="button">' + hz[0] + '</button>';
+      }).join('');
+      [].forEach.call(p.getElementsByTagName('button'), function (b, i) {
+        b.onclick = function () { hzIdx = i; paintPresets(); syncDates(); render(); };
+      });
+    }
+    [].forEach.call(document.getElementsByName('hm-mode'), function (b) {
+      b.onchange = function () {
+        mode = b.value;
+        var c = capManual[mode];
+        $('hm-cap').value = isFinite(c) && c > 0 ? c : '';   // 모드별 상한을 따로 보관
+        render();
+      };
+    });
+    ['hm-d1', 'hm-d2'].forEach(function (id) {
+      var el = $(id); if (!el) return;
+      el.onchange = function () {
+        reqA = parseD($('hm-d1').value || ''); reqB = parseD($('hm-d2').value || '');
+        if (!reqA || !reqB) return;
+        hzIdx = -1; paintPresets(); render();
+      };
+    });
+    var cp = $('hm-cap');
+    if (cp) cp.oninput = function () {
+      var v = parseFloat(cp.value);
+      capManual[mode] = (isFinite(v) && v > 0) ? v : NaN;    // 지우면 자동 복귀
+      render();
+    };
+    var dl = $('hm-dl-csv'); if (dl) dl.onclick = csv;
+    paintPresets(); syncDates();
+  }
+
+  return { render: render, bind: bind, _rows: ROWS, _mats: MATS, _autoCap: autoCap, _snapUp: snapUp };
+})();
+guard('히트맵 배선', HM.bind);
 
 /* ================================================================
    선택 구간 × 전 시리즈 변동분 CSV   — 2026-10-19 신설
