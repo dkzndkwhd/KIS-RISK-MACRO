@@ -970,6 +970,7 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
     </div>
     <div class="fld"><label>&nbsp;</label>
       <div class="presets">
+        <button type="button" id="hm-dl-xlsx">xlsx 다운로드 (색상)</button>
         <button type="button" id="hm-dl-csv">CSV 다운로드</button>
       </div>
     </div>
@@ -7343,6 +7344,94 @@ var HM = (function () {
     } catch (e) { alert('CSV 생성 중 오류: ' + (e && e.message ? e.message : e)); }
   }
 
+  /* ---- xlsx (색상 포함) ----
+     XW 모듈이 이 아래에 정의되지만, 클릭 시점에는 이미 할당돼 있다(DL 과 같은 패턴).
+     화면과 **같은 RdBu 색**을 셀 배경에 넣는다 — 색이 다르면 받는 의미가 없다. */
+  function xlsx() {
+    try {
+      var R = resolve(); if (R.iA < 0 || R.iB < 0) { alert('기간이 올바르지 않습니다.'); return; }
+      var isSp = (mode === 'sp'), S = XW.S, j, r;
+
+      /* 화면과 동일한 상한을 쓴다 */
+      var sv = [];
+      for (r = 0; r < ROWS.length; r++) {
+        var rw = ROWS[r], ib = isSp && rw.base;
+        if (ib) continue;
+        for (j = 0; j < MATS.length; j++) {
+          var cv0 = isSp ? spChg(rw.t, MATS[j], R.iA, R.iB) : lvChg(rw.t, MATS[j], R.iA, R.iB);
+          if (isFinite(cv0)) sv.push(cv0);
+        }
+      }
+      var man = capManual[mode], auto = autoCap(sv);
+      var cap = (isFinite(man) && man > 0) ? man : auto, isAuto = !(isFinite(man) && man > 0);
+
+      /* --- 시트 1: 격자 --- */
+      var rows = [], hdr1 = [{ t: '구분', s: S.HEAD }, { t: '등급', s: S.HEAD }], hdr2 = [null, null];
+      function blockHead(label) {
+        for (j = 0; j < MATS.length; j++) hdr1.push({ t: (j === 0 ? label : ''), s: S.HEAD });
+        for (j = 0; j < MATS.length; j++) hdr2.push({ t: MLAB[j], s: S.HEAD });
+      }
+      blockHead('금리 (%)');
+      if (isSp) blockHead('스프레드 (bp)');
+      blockHead(isSp ? '스프레드 변동 (bp)' : '금리 변동 (bp)');
+      rows.push(hdr1); rows.push(hdr2);
+
+      var nClip = 0;
+      for (r = 0; r < ROWS.length; r++) {
+        var row = ROWS[r], isBase = isSp && row.base, out = [];
+        out.push({ t: row.g, s: S.TEXT }); out.push({ t: row.n, s: S.TEXT });
+        for (j = 0; j < MATS.length; j++) { var lv = lvAt(row.t, MATS[j], R.iB); out.push(isFinite(lv) ? { v: +lv.toFixed(3), s: S.N2 } : null); }
+        if (isSp) for (j = 0; j < MATS.length; j++) {
+          var sp = isBase ? NaN : spAt(row.t, MATS[j], R.iB);
+          out.push(isFinite(sp) ? { v: +sp.toFixed(1), s: S.N1 } : null);
+        }
+        for (j = 0; j < MATS.length; j++) {
+          var m = MATS[j];
+          var cv = isSp ? (isBase ? lvChg(row.t, m, R.iA, R.iB) : spChg(row.t, m, R.iA, R.iB))
+                        : lvChg(row.t, m, R.iA, R.iB);
+          if (!isFinite(cv)) { out.push(null); continue; }
+          if (isBase) { out.push({ v: +cv.toFixed(1), s: S.N1G }); continue; }   // 기준행 — 색 없음
+          var bi = binOf(cv, cap), clip = Math.abs(cv) > cap;
+          if (clip) nClip++;
+          out.push({ v: +cv.toFixed(1), s: S.PAL0 + bi + (clip ? PAL.length : 0) });
+        }
+        rows.push(out);
+      }
+      var wid = [10, 13];
+      for (j = 0; j < MATS.length * (isSp ? 3 : 2); j++) wid.push(9.5);
+
+      /* --- 시트 2: 설명 --- */
+      var ex = [
+        ['항목', '내용'],
+        ['자료', '크레딧 히트맵 (대시보드 · 히트맵 탭)'],
+        ['모드', isSp ? '스프레드 — 국고 대비 스프레드와 그 변동' : '레벨 — 금리와 그 변동'],
+        ['시점 1 (과거)', fmtD(DATES[R.iA]) + (hzIdx >= 0 ? '   [' + CHG_HORIZ[hzIdx][0] + ']' : '   [임의 구간]')],
+        ['시점 2 (최근)', fmtD(DATES[R.iB])],
+        ['기준일 해석', '달력으로 역산한 뒤 그 이전 가장 가까운 영업일로 대체'],
+        ['스프레드 기준', isSp ? '1년·2년 = 통안증권 / 3년 이상 = 국고채권 (동일 만기 단순차)' : '해당 없음'],
+        ['기준행 처리', isSp ? '국채·통안은 기준 자신이라 스프레드 없음. 변동 열은 금리 변동이며 색을 칠하지 않고 색 상한 계산에서도 제외' : '해당 없음'],
+        ['색 상한', '±' + cap + ' bp (' + (isAuto ? '자동' : '수동') + ')'],
+        ['자동 산출', isAuto ? '색칠 대상 |변동| 의 p95 → 최소 5bp → 눈금(5·10·20·30·50·75·100…) 올림' : '수동 고정값 사용'],
+        ['색 방향', '상승 = 빨강 · 하락 = 파랑 (사이트 전역 규약). 팔레트 ColorBrewer RdBu 9단계'],
+        ['상한 밖 칸', nClip + ' 칸 — 굵은 테두리로 표시. 상한을 넘어도 더 진해지지 않음'],
+        ['결측', '빈 칸. 0 채움·보간을 하지 않음'],
+        ['단위', '금리 %, 스프레드·변동 bp'],
+        ['원자료', '금융투자협회 채권정보센터 채권시가평가수익률'],
+        ['생성', DL.nowStr ? DL.nowStr() : '']
+      ];
+      var exRows = ex.map(function (e, i) {
+        return [{ t: e[0], s: i === 0 ? S.HEAD : S.TEXT }, { t: e[1], s: i === 0 ? S.HEAD : S.TEXT }];
+      });
+
+      var bytes = XW.book([
+        { name: isSp ? '스프레드' : '레벨', cols: wid, freeze: { r: 2, c: 2 }, rows: rows },
+        { name: '설명', cols: [16, 92], rows: exRows }
+      ], PAL);
+      XW.save('크레딧히트맵_' + (isSp ? '스프레드' : '레벨') + '_' +
+        DATES[R.iA] + '-' + DATES[R.iB] + '.xlsx', bytes);
+    } catch (e) { alert('xlsx 생성 중 오류: ' + (e && e.message ? e.message : e)); }
+  }
+
   /* ---- 배선 ---- */
   function syncDates() {                          // 프리셋이 해석한 날짜를 입력칸에 반영
     var R = resolve();
@@ -7388,12 +7477,253 @@ var HM = (function () {
       render();
     };
     var dl = $('hm-dl-csv'); if (dl) dl.onclick = csv;
+    var dx = $('hm-dl-xlsx'); if (dx) dx.onclick = xlsx;
     paintPresets(); syncDates();
   }
 
   return { render: render, bind: bind, _rows: ROWS, _mats: MATS, _autoCap: autoCap, _snapUp: snapUp };
 })();
 guard('히트맵 배선', HM.bind);
+
+/* ================================================================
+   XW — 색상 xlsx 생성기 (외부 라이브러리 0개)   2026-10-21 신설
+   ----------------------------------------------------------------
+   왜 직접 짰나
+     .xlsx 는 **XML 몇 개를 담은 ZIP** 이다. ZIP 을 STORED(무압축)로 쓰면
+     압축 알고리즘이 필요 없고 CRC32 표만 있으면 된다. 그래서 라이브러리 없이
+     **셀 배경색이 들어간 진짜 .xlsx** 를 만들 수 있다.
+
+   왜 라이브러리를 안 썼나
+     · SheetJS CE(무료판) — 셀 서식이 **Pro 전용**이라 색을 못 넣는다.
+     · xlsx-js-style / ExcelJS — 색은 되지만 900KB~1MB. 이 파일은 외부 CDN 을
+       일절 쓰지 않는 단일 HTML 이라(현재 <script src> 0건) 통째로 인라인해야 하는데
+       656KB 짜리 파일이 1.5MB 를 넘어간다.
+     · SpreadsheetML(.xls XML) / HTML table→.xls — 의존성은 0이지만 엑셀이 매번
+       "확장자와 형식이 다르다" 경고를 띄운다. 사내 배포물로 부적절.
+     → 직접 생성: 코드 약 6KB, 엑셀 경고 없음, 진짜 xlsx.
+
+   검증 (구현 전 실물로 확인)
+     59행×12열 색상 파일 생성 → openpyxl 로 **경고 0건 재파싱**,
+     셀 fill 전 칸 보존, 숫자가 문자열이 아닌 숫자로, 한글(시트명·셀) 정상.
+     무압축이라 32KB 정도 — 이 용도에선 무의미한 크기다.
+
+   주의
+     · styles.xml 에 <cellStyles> 가 없으면 일부 도구가 "no default style" 경고를 낸다. 넣었다.
+     · 숫자는 반드시 <v>, 문자열은 t="inlineStr" 로 쓴다(sharedStrings 를 안 만들기 위해).
+   ================================================================ */
+var XW = (function () {
+
+  /* ---- UTF-8 ---- */
+  function u8(s) {
+    if (typeof TextEncoder !== 'undefined') return new TextEncoder().encode(s);
+    var o = [], i, c;                       // 구형 브라우저 폴백
+    for (i = 0; i < s.length; i++) {
+      c = s.charCodeAt(i);
+      if (c < 0x80) o.push(c);
+      else if (c < 0x800) o.push(192 | (c >> 6), 128 | (c & 63));
+      else if (c < 0xd800 || c >= 0xe000) o.push(224 | (c >> 12), 128 | ((c >> 6) & 63), 128 | (c & 63));
+      else { i++; c = 0x10000 + (((c & 1023) << 10) | (s.charCodeAt(i) & 1023));
+             o.push(240 | (c >> 18), 128 | ((c >> 12) & 63), 128 | ((c >> 6) & 63), 128 | (c & 63)); }
+    }
+    return new Uint8Array(o);
+  }
+
+  /* ---- CRC32 ---- */
+  var CRCT = (function () {
+    var t = new Int32Array(256), n, k, c;
+    for (n = 0; n < 256; n++) { c = n; for (k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c; }
+    return t;
+  })();
+  function crc32(b) {
+    var c = -1, i;
+    for (i = 0; i < b.length; i++) c = (c >>> 8) ^ CRCT[(c ^ b[i]) & 0xFF];
+    return (c ^ -1) >>> 0;
+  }
+
+  /* ---- ZIP (STORED) ---- */
+  function wr16(a, o, v) { a[o] = v & 255; a[o + 1] = (v >>> 8) & 255; }
+  function wr32(a, o, v) { a[o] = v & 255; a[o + 1] = (v >>> 8) & 255; a[o + 2] = (v >>> 16) & 255; a[o + 3] = (v >>> 24) & 255; }
+  function zip(files) {
+    var local = [], central = [], off = 0, i;
+    for (i = 0; i < files.length; i++) {
+      var nm = u8(files[i].name), d = files[i].data, c = crc32(d);
+      var lh = new Uint8Array(30 + nm.length);
+      wr32(lh, 0, 0x04034b50); wr16(lh, 4, 20); wr16(lh, 6, 0); wr16(lh, 8, 0);
+      wr16(lh, 10, 0); wr16(lh, 12, 0); wr32(lh, 14, c);
+      wr32(lh, 18, d.length); wr32(lh, 22, d.length);
+      wr16(lh, 26, nm.length); wr16(lh, 28, 0); lh.set(nm, 30);
+      local.push(lh, d);
+      var ch = new Uint8Array(46 + nm.length);
+      wr32(ch, 0, 0x02014b50); wr16(ch, 4, 20); wr16(ch, 6, 20);
+      wr32(ch, 16, c); wr32(ch, 20, d.length); wr32(ch, 24, d.length);
+      wr16(ch, 28, nm.length); wr32(ch, 42, off); ch.set(nm, 46);
+      central.push(ch);
+      off += lh.length + d.length;
+    }
+    var cdLen = 0, j;
+    for (j = 0; j < central.length; j++) cdLen += central[j].length;
+    var eocd = new Uint8Array(22);
+    wr32(eocd, 0, 0x06054b50); wr16(eocd, 8, files.length); wr16(eocd, 10, files.length);
+    wr32(eocd, 12, cdLen); wr32(eocd, 16, off);
+    var total = off + cdLen + 22, out = new Uint8Array(total), p = 0;
+    for (j = 0; j < local.length; j++) { out.set(local[j], p); p += local[j].length; }
+    for (j = 0; j < central.length; j++) { out.set(central[j], p); p += central[j].length; }
+    out.set(eocd, p);
+    return out;
+  }
+
+  /* ---- XML 유틸 ---- */
+  function x(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function colName(n) {                     // 0 -> A
+    var s = '';
+    do { s = String.fromCharCode(65 + (n % 26)) + s; n = Math.floor(n / 26) - 1; } while (n >= 0);
+    return s;
+  }
+
+  /* ---- 스타일 ----
+     fills: 0 none, 1 gray125(규격상 필수), 2 헤더, 3.. 팔레트
+     cellXfs: 0 기본 / 1 헤더 / 2 좌측텍스트 / 3 0.00 / 4 0.0 / 5 0.0 회색
+              6..  팔레트 0.0  /  그 뒤 팔레트+굵은테두리(상한 밖) */
+  function buildStyles(pal) {
+    var i, fills = ['<fill><patternFill patternType="none"/></fill>',
+                    '<fill><patternFill patternType="gray125"/></fill>',
+                    '<fill><patternFill patternType="solid"><fgColor rgb="FFF4F7FA"/><bgColor indexed="64"/></patternFill></fill>'];
+    for (i = 0; i < pal.length; i++)
+      fills.push('<fill><patternFill patternType="solid"><fgColor rgb="FF' +
+        pal[i].replace('#', '').toUpperCase() + '"/><bgColor indexed="64"/></patternFill></fill>');
+
+    var xfs = [
+      '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>',
+      '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>',
+      '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="left"/></xf>',
+      '<xf numFmtId="2" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>',
+      '<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>',
+      '<xf numFmtId="164" fontId="2" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1"/>'
+    ];
+    for (i = 0; i < pal.length; i++)                       // 일반 색칠
+      xfs.push('<xf numFmtId="164" fontId="' + (i === 0 || i === 1 || i === pal.length - 1 || i === pal.length - 2 ? 3 : 0) +
+        '" fillId="' + (3 + i) + '" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1" applyFont="1"/>');
+    for (i = 0; i < pal.length; i++)                       // 상한 밖 — 굵은 테두리
+      xfs.push('<xf numFmtId="164" fontId="' + (i === 0 || i === 1 || i === pal.length - 1 || i === pal.length - 2 ? 3 : 0) +
+        '" fillId="' + (3 + i) + '" borderId="2" xfId="0" applyNumberFormat="1" applyFill="1" applyFont="1" applyBorder="1"/>');
+
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+      '<numFmts count="1"><numFmt numFmtId="164" formatCode="0.0"/></numFmts>' +
+      '<fonts count="4">' +
+        '<font><sz val="10"/><name val="맑은 고딕"/></font>' +
+        '<font><b/><sz val="10"/><color rgb="FF17456B"/><name val="맑은 고딕"/></font>' +
+        '<font><sz val="10"/><color rgb="FF8A939E"/><name val="맑은 고딕"/></font>' +
+        '<font><sz val="10"/><color rgb="FFFFFFFF"/><name val="맑은 고딕"/></font>' +
+      '</fonts>' +
+      '<fills count="' + fills.length + '">' + fills.join('') + '</fills>' +
+      '<borders count="3"><border/>' +
+        '<border><bottom style="thin"><color rgb="FFDBE2EA"/></bottom></border>' +
+        '<border><left style="medium"><color rgb="FF5A6673"/></left><right style="medium"><color rgb="FF5A6673"/></right>' +
+        '<top style="medium"><color rgb="FF5A6673"/></top><bottom style="medium"><color rgb="FF5A6673"/></bottom></border>' +
+      '</borders>' +
+      '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+      '<cellXfs count="' + xfs.length + '">' + xfs.join('') + '</cellXfs>' +
+      '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>' +
+      '</styleSheet>';
+  }
+  var S = { DEF: 0, HEAD: 1, TEXT: 2, N2: 3, N1: 4, N1G: 5, PAL0: 6 };
+
+  /* ---- 시트 ----
+     sheet = { name, cols:[폭...], freeze:{r,c}, rows:[ [cell...] ] }
+     cell  = null | {v:number, s:style} | {t:string, s:style} */
+  function sheetXML(sh) {
+    var rows = [], r, c, i;
+    for (r = 0; r < sh.rows.length; r++) {
+      var cs = [], row = sh.rows[r];
+      for (c = 0; c < row.length; c++) {
+        var cell = row[c]; if (cell == null) continue;
+        var ref = colName(c) + (r + 1), st = cell.s || 0;
+        if (cell.t !== undefined)
+          cs.push('<c r="' + ref + '" s="' + st + '" t="inlineStr"><is><t xml:space="preserve">' + x(cell.t) + '</t></is></c>');
+        else if (isFinite(cell.v))
+          cs.push('<c r="' + ref + '" s="' + st + '"><v>' + cell.v + '</v></c>');
+        else
+          cs.push('<c r="' + ref + '" s="' + st + '"/>');
+      }
+      rows.push('<row r="' + (r + 1) + '">' + cs.join('') + '</row>');
+    }
+    var cols = '';
+    if (sh.cols && sh.cols.length) {
+      var cc = [];
+      for (i = 0; i < sh.cols.length; i++)
+        cc.push('<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + sh.cols[i] + '" customWidth="1"/>');
+      cols = '<cols>' + cc.join('') + '</cols>';
+    }
+    var pane = '';
+    if (sh.freeze) {
+      var ref2 = colName(sh.freeze.c) + (sh.freeze.r + 1);
+      pane = '<pane xSplit="' + sh.freeze.c + '" ySplit="' + sh.freeze.r +
+        '" topLeftCell="' + ref2 + '" activePane="bottomRight" state="frozen"/>';
+    }
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+      '<sheetViews><sheetView workbookViewId="0">' + pane + '</sheetView></sheetViews>' +
+      cols + '<sheetData>' + rows.join('') + '</sheetData></worksheet>';
+  }
+
+  /** sheets: [{name, cols, freeze, rows}] → Uint8Array(.xlsx) */
+  function book(sheets, pal) {
+    var i, files = [];
+    var ov = '', rel = '', shx = '';
+    for (i = 0; i < sheets.length; i++) {
+      ov += '<Override PartName="/xl/worksheets/sheet' + (i + 1) + '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>';
+      rel += '<Relationship Id="rId' + (i + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet' + (i + 1) + '.xml"/>';
+      shx += '<sheet name="' + x(sheets[i].name) + '" sheetId="' + (i + 1) + '" r:id="rId' + (i + 1) + '"/>';
+      files.push({ name: 'xl/worksheets/sheet' + (i + 1) + '.xml', data: u8(sheetXML(sheets[i])) });
+    }
+    var sid = sheets.length + 1;
+    files.unshift({ name: '[Content_Types].xml', data: u8('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+      '<Default Extension="xml" ContentType="application/xml"/>' +
+      '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+      ov +
+      '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+      '</Types>') });
+    files.push({ name: '_rels/.rels', data: u8('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' +
+      '</Relationships>') });
+    files.push({ name: 'xl/workbook.xml', data: u8('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" ' +
+      'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+      '<sheets>' + shx + '</sheets></workbook>') });
+    files.push({ name: 'xl/_rels/workbook.xml.rels', data: u8('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + rel +
+      '<Relationship Id="rId' + sid + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
+      '</Relationships>') });
+    files.push({ name: 'xl/styles.xml', data: u8(buildStyles(pal)) });
+    return zip(files);
+  }
+
+  /** 저장 — DL 과 같은 blob/revoke 방식 */
+  function save(filename, bytes) {
+    var blob, url, a;
+    try { blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }); }
+    catch (e) { alert('xlsx 생성에 실패했습니다: ' + (e && e.message ? e.message : e)); return false; }
+    if (window.navigator && window.navigator.msSaveBlob) { window.navigator.msSaveBlob(blob, filename); return true; }
+    url = URL.createObjectURL(blob);
+    a = document.createElement('a');
+    a.href = url; a.download = filename; a.rel = 'noopener'; a.style.display = 'none';
+    document.body.appendChild(a); a.click();
+    setTimeout(function () {
+      try { document.body.removeChild(a); } catch (e2) { }
+      try { URL.revokeObjectURL(url); } catch (e3) { }
+    }, 2000);
+    return true;
+  }
+
+  return { book: book, save: save, S: S, _zip: zip, _crc32: crc32, _u8: u8, _col: colName };
+})();
 
 /* ================================================================
    선택 구간 × 전 시리즈 변동분 CSV   — 2026-10-19 신설
