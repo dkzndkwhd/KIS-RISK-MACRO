@@ -204,6 +204,9 @@ body{font-size:13px;}
 .topbar b{color:#1c2530;}
 .topbar #asof{font-weight:700;color:#17456b;font-size:14px;}
 .topbar .spacer{flex:1 1 auto;}
+/* nowrap: 380px 에서 '3.75~4.00%' 가 물결 앞뒤로 쪼개지지 않게 한다. topbar 자체가
+   flex-wrap 이므로 항목 단위로는 그대로 접힌다(가로 스크롤이 생기지 않는다). */
+.topbar .brate{white-space:nowrap;}
 .topbar .brate b{color:#17456b;font-size:14px;}
 .dashgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start;}
 .span1{grid-column:span 1;}.span2{grid-column:span 2;}.span3{grid-column:span 3;}
@@ -625,6 +628,16 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
   <div><b>데이터 기준일</b> <span id="asof">—</span></div>
   <div id="asofcnt">—</div>
   <div class="spacer"></div>
+  <!-- [2026-10-21] 연준 정책금리(FOMC 목표범위). 한국은행 기준금리 **왼쪽**에 둔다 —
+       우상단 맨 끝자리는 종전대로 한국은행 기준금리가 지킨다(좁은 폭에서 줄바꿈될 때
+       한국은행이 먼저 내려가지 않게 하는 효과도 있다).
+       **2026-09-22 에 한 번 철회된 건과는 대상이 다르다** — 그때는 DFF/EFFR(실효금리)를
+       '미국 기준금리'로 쓰려 한 것이어서 개념이 어긋났고, 이번에는 FOMC 가 고시한
+       목표범위 그 자체다. 그래서 값이 하나가 아니라 **범위**로 적힌다.
+       기준일을 본문에 적지 않는 것은 옆의 한국은행 기준금리와 같은 관례이고,
+       목표범위는 발표 시차가 없는 '당일 유효값'이라 더욱 그렇다. 정확한 명칭·기준일·
+       출처는 title 툴팁에 있다(JS 가 기준일을 채운다). -->
+  <div class="brate" id="ustgt-wrap" title="연방기금금리 목표범위 (FOMC) · 출처 FRED DFEDTARU·DFEDTARL">연준 정책금리 <b id="ustgt">—</b></div>
   <div class="brate">한국은행 기준금리 <b id="baserate">—</b></div>
 </div>
 
@@ -742,7 +755,7 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
     <div class="chartbox" id="us-chart"><p class="note" id="us-stat">미국 금리 데이터(data/us_rates.json)를 불러오는 중…</p></div>
     <div class="lgd" id="us-legend"></div>
     <!-- p 가 아니라 div 다: <details> 는 블록 요소이고 <p> 안에 올 수 없어 파서가 p 를 먼저 닫아버린다. -->
-    <div class="note" id="us-note"><b>x축이 미국 영업일</b>입니다. 결측 구간은 선을 끊습니다(보간하지 않음). <span id="us-lag"></span><details class="inlx"><summary>자세히</summary>국내금리 탭의 '금리 시계열' 카드(한국 영업일축)에서는 한국 공휴일에 해당하는 미국 관측일이 버려지지만(전 기간 327일 · 2025년 16일), 이 카드에는 그 날들이 모두 들어 있습니다. <b>출처 FRED, 평일 저녁 자동 수집.</b> 미 국채 금리(H.15)·EFFR·SOFR 은 모두 <b>영업일 T 의 값이 T+1 영업일에 발표</b>되고, 수집 시각(19:30 KST)은 미 동부 오전이라 <b>국내 기준일과 1~2영업일 차이가 나는 것이 정상</b>입니다. 그 차이는 위에 항상 숫자로 표시되며, 빠진 날짜는 다음 날 수집에서 자동으로 채워집니다.</details></div>
+    <div class="note" id="us-note"><b>x축이 미국 영업일</b>입니다. 결측 구간은 선을 끊습니다(보간하지 않음). <span id="us-lag"></span><details class="inlx"><summary>자세히</summary>국내금리 탭의 '금리 시계열' 카드(한국 영업일축)에서는 한국 공휴일에 해당하는 미국 관측일이 버려지지만(전 기간 327일 · 2025년 16일), 이 카드에는 그 날들이 모두 들어 있습니다. <b>출처 FRED, 평일 저녁 자동 수집.</b> 미 국채 금리(H.15)·EFFR·SOFR 은 모두 <b>영업일 T 의 값이 T+1 영업일에 발표</b>되고, 수집 시각(19:30 KST)은 미 동부 오전이라 <b>국내 기준일과 1~2영업일 차이가 나는 것이 정상</b>입니다. 그 차이는 위에 항상 숫자로 표시되며, 빠진 날짜는 다음 날 수집에서 자동으로 채워집니다. <b>단 '목표상한·목표하한'(FOMC 정책금리 목표범위, 2026-10-21 추가)은 발표 시차가 없습니다</b> — 당일 유효값이 당일 올라옵니다. 이 둘은 <b>파선</b>으로 그려지고, FOMC 결정일에만 바뀌는 계단이라 DFF·EFFR 이 그 사이에서 움직이는 모습을 볼 수 있습니다. <b>실효금리(DFF·EFFR)와는 다른 개념</b>입니다 — 실효금리는 시장 체결 결과이고 목표범위는 연준이 고시한 정책금리 그 자체입니다. <b>2008-12-15 이전은 단일 목표치 체계</b>(FRED DFEDTAR)라 상한과 하한이 같은 값인데, 범위 폭이 0 이었다는 뜻이 아니라 제도가 달랐다는 뜻입니다.</details></div>
   </section>
 
   <!-- 일본 카드 — 미국과 **별도 카드**다. x축(일본 영업일)이 미국과 달라 한 차트에
@@ -1445,6 +1458,7 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
         <div class="mqrow"><span class="q">지금 국내 금리 수준이 얼마인가</span><span class="ar">→</span><span class="go d">대시보드 · 국내금리</span></div>
         <div class="mqrow"><span class="q">CP · CD 금리가 얼마인가 (단기자금)</span><span class="ar">→</span><span class="go d">대시보드 · 국내금리</span></div>
         <div class="mqrow"><span class="q">미국 금리가 얼마인가 · 미국 기준일이 언제인가</span><span class="ar">→</span><span class="go d">대시보드 · 해외금리</span></div>
+        <div class="mqrow"><span class="q"><b>연준 정책금리</b>가 지금 얼마인가 (목표범위)</span><span class="ar">→</span><span class="go">화면 <b>우상단</b> · 한국은행 기준금리 옆</span></div>
         <div class="mqrow"><span class="q">어제 · 1주 · 1년 전 대비 얼마 움직였나</span><span class="ar">→</span><span class="go d">대시보드 · 변동 현황</span></div>
         <div class="mqrow"><span class="q">왜 탭의 미국채 값과 도구의 미국채 값이 다른가</span><span class="ar">→</span><span class="go">상세 §2-4 (날짜축이 다름)</span></div>
         <div class="mqrow"><span class="q">어느 등급·만기가 많이 움직였나 (한눈에)</span><span class="ar">→</span><span class="go d">대시보드 · 히트맵</span></div>
@@ -1595,8 +1609,15 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
         조건을 정한 뒤 좌측 하단의 실행 버튼을 눌러야 계산합니다. 자동 재계산은 하지 않습니다.</p>
       <h4>상단 바</h4>
       <p><b>데이터 기준일</b>은 국내 현물 데이터의 최신 영업일입니다. 그 오른쪽에 수록 시리즈 수와 전체 구간,
-        맨 오른쪽에 한국은행 기준금리 현재값(<span class="dyn" id="man-base">—</span>)이 붙습니다.
+        맨 오른쪽에 한국은행 기준금리 현재값(<span class="dyn" id="man-base">—</span>)이 붙고,
+        그 왼쪽에 <b>연준 정책금리</b> 현수준(<span class="dyn" id="man-ustgt">—</span>)이 붙습니다.
         <b>미국 금리·선물·IRS 의 최신일은 이 기준일과 다를 수 있습니다</b>(§2-2).</p>
+      <p>연준 정책금리는 <b>FOMC 가 고시하는 연방기금금리 목표범위</b>라서 값이 하나가 아니라
+        <b>하한~상한</b>으로 적힙니다(예 3.75~4.00%). 가공하지 않고 고시된 형태 그대로 적는 것입니다 —
+        <b>DFF·EFFR(실효금리)와는 다른 개념</b>이고, 실효금리는 이 범위 <b>안에서</b> 움직입니다.
+        항목에 마우스를 올리면 정확한 명칭·기준일·출처가 나옵니다.
+        목표범위는 <b>발표 시차가 없어</b>(당일 유효값) 이 값은 '현수준'으로 읽어도 됩니다.
+        <b>한국은 단일값, 미국은 범위</b>라 두 숫자를 바로 빼서 금리차로 쓰지는 마십시오(§2-4).</p>
       <h4>공통 표기</h4>
       <ul>
         <li>금리 <b>수준은 %</b>, 금리 <b>변동은 bp</b>(1bp = 0.01%p), 선물은 <b>가격 포인트(pt)</b>입니다.</li>
@@ -1631,7 +1652,10 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
         <thead><tr><th class="l">데이터</th><th class="l">갱신 방식</th><th class="l">최신일이 국내 기준일과 어긋나는가</th></tr></thead>
         <tbody>
           <tr><td class="l">국내 채권 현물 · 한국은행 기준금리<br><span class="hint">대시보드 <b>국내금리</b> 탭</span></td><td class="l"><b>평일 19:30 자동</b></td><td class="l">아니오 — 이 날짜가 곧 화면의 "데이터 기준일"</td></tr>
-          <tr><td class="l">미국 금리 (FRED 14종)<br><span class="hint">대시보드 <b>해외금리</b> 탭</span></td><td class="l"><b>평일 19:30 자동</b></td><td class="l"><b>예 — 보통 1~2영업일 뒤.</b> H.15·EFFR·SOFR 모두 영업일 T 값이 T+1 에 발표되고, 수집 시각 19:30 KST 는 미 동부 오전이다. 빠진 날짜는 다음 날 수집에서 자동으로 채워진다</td></tr>
+          <tr><td class="l">미국 금리 (FRED 14종 — 국채 11만기 + DFF·EFFR·SOFR)<br><span class="hint">대시보드 <b>해외금리</b> 탭</span></td><td class="l"><b>평일 19:30 자동</b></td><td class="l"><b>예 — 보통 1~2영업일 뒤.</b> H.15·EFFR·SOFR 모두 영업일 T 값이 T+1 에 발표되고, 수집 시각 19:30 KST 는 미 동부 오전이다. 빠진 날짜는 다음 날 수집에서 자동으로 채워진다</td></tr>
+          <!-- [2026-10-21] 목표범위는 같은 FRED 수집에 얹혀 있지만 **시차 성질이 다르다.**
+               위 14종과 한 줄로 묶으면 "미국 데이터는 전부 T+1" 이라는 거짓이 된다. -->
+          <tr><td class="l">미국 <b>정책금리 목표범위</b> (FRED 2종 — 상한·하한)<br><span class="hint">헤더 우상단 · 해외금리 탭 <b>미국 시계열</b> 칩 · 분석 도구 <b>기준지표</b></span></td><td class="l"><b>평일 19:30 자동</b> (위 14종과 같은 요청 묶음, 합계 16요청)</td><td class="l"><b style="color:#17456b">아니오 — 발표 시차가 없다.</b> FRED 원문이 "그날 유효한 값을 그날 갱신한다"고 명시한다(<i>the data updated each day is the data effective as of that day</i>). <b>단 하나의 예외</b>: FOMC 발표가 미 동부 오후라서 <b>결정일의 새 범위는 다음 날 수집</b>에 들어온다. 값 자체는 결정일에 소급되어 들어오므로 시계열에 빈 칸이 남지는 않는다</td></tr>
           <tr><td class="l">일본국채 (MOF 15만기)<br><span class="hint">대시보드 <b>해외금리</b> 탭</span></td><td class="l"><b>평일 19:30 자동</b> (당월 CSV 요청 1건) · <b>월초 1회 전기간 파일 재확인</b></td><td class="l"><b>예 — 보통 1~2영업일 뒤.</b> 영업일 T 값이 T+1 에 일본 재무성이 고시한다. <b>월말에 하루를 거르면 당월 파일로는 복구되지 않는다</b> — 당월 파일은 매월 1일 초기화되고 전월 말일분은 전기간 파일에만 남는다. 그래서 월초에 전기간 파일을 한 번 다시 받아 전월 빈칸을 메운다</td></tr>
           <tr><td class="l">호주국채 (RBA F2 · 명목 4만기 + 물가연동 10년)<br><span class="hint">대시보드 <b>해외금리</b> 탭</span></td><td class="l"><b style="color:#8a5a20">금요일 19:30 자동</b> (CSV 요청 1건) · <b>월~목은 돌지 않는다</b></td><td class="l"><b style="color:#8a5a20">예 — 2~6영업일 뒤. 이것이 정상이다.</b> <b>RBA 는 주 1회만 발표한다</b> — 공식 일정은 금요일 14:00 AEDT(= 금 12:00 KST)에 <b>그 주 수요일까지</b>이고(원문 "Fridays, for daily yields up to 2 business days earlier"), 데이터 자체는 일별인데 배달이 주간이다. 월~목에 돌려도 신규 관측일이 0건이므로 수집기가 금요일에만 돈다. <b>원천이 전기간 누적 파일이라 한 주를 놓쳐도 다음 주에 자동 복구된다</b> — 일본의 월 경계 복구불가 함정이 구조적으로 없다</td></tr>
           <tr><td class="l">원화 IRS<br><span class="hint">대시보드 <b>선물 · IRS</b> 탭</span></td><td class="l"><b>① 평일 19:30 기사기반 자동(1·3·5·10년 잠정)</b> → <b>② 수기 xlsx 확정값이 19만기 일괄 덮어쓰기</b></td>
@@ -1931,7 +1955,9 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
             시계열 카드 칩과 분석 도구에는 전부 있습니다.
             2026-10-08 에 국내금리 탭의 '금리 현황'에서 미국채 행을 빼 이쪽으로 옮겼습니다.</td></tr>
           <tr><td class="l"><b>미국 금리 시계열</b></td><td class="l"><b>x축이 미국 영업일</b>입니다.
-            후보는 미국채 1월~30년 + DFF·EFFR·SOFR(기본 2년·10년·30년·SOFR) — 현황표 격자에 없는 <b>1·3·6개월</b>도 칩으로 고를 수 있습니다.
+            후보는 미국채 1월~30년 + DFF·EFFR·SOFR + <b>정책금리 목표상한·목표하한</b>(기본 2년·10년·30년·SOFR) — 현황표 격자에 없는 <b>1·3·6개월</b>도 칩으로 고를 수 있습니다.
+            목표상·하한은 <b>파선</b>으로 그려집니다(고시된 범위라 시장금리의 실선과 구분). 둘을 함께 켜면 한 쌍의 계단으로 보이고,
+            <b>DFF·EFFR 이 그 사이에서 움직이는 모습</b>을 볼 수 있습니다 — 2026-10-16 기준 범위 3.75~4.00 에 EFFR 3.88(상단 −12bp)입니다.
             카드 note 에 <b>국내·미국 기준일과 시차 일수</b>가 항상 나옵니다.
             국내금리 탭의 '금리 시계열'(한국축)에서는 한국 공휴일에 걸린 미국 관측일이 버려지지만(전 기간 327일 · 2025년 16일),
             이 카드에는 그 날들이 모두 들어 있습니다.</td></tr>
@@ -2120,7 +2146,7 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
             <td class="l"><b>채권 − IRS.</b> 대시보드 '선물·IRS' 탭의 <b>스왑스프레드(IRS − 국고)와 부호가 반대</b>이고 절대값이 같습니다.
               미국채는 통화가 달라 A 후보에서 제외됩니다</td></tr>
           <tr><td class="l"><b>기준금리 대비</b></td><td class="l">만기축이 있는 금리 시리즈(국내 채권 + 미국채 + IRS + <b>CP·CD 시가평가</b>)</td>
-            <td class="l">기준지표(한국은행 기준금리 · <b>CD 유통수익률(고시)</b> · DFF · EFFR · SOFR)</td>
+            <td class="l">기준지표(한국은행 기준금리 · <b>CD 유통수익률(고시)</b> · DFF · EFFR · SOFR · <b>미국 정책금리 목표상한·목표하한</b>)</td>
             <td class="l">기준지표는 만기 개념이 없어 <b>만기 B 가 잠깁니다</b>. 기준금리는 변경일에만 바뀌는 계단식이라,
               고정 구간에서 스프레드는 <b>A 의 금리 움직임을 그대로 따라갑니다</b></td></tr>
           <tr><td class="l"><b>전체</b></td><td class="l" colspan="2">제약 없음 — A·B 자유 선택(유형 선택자 도입 전과 동일)</td>
@@ -2232,7 +2258,7 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
           스트레스테스트의 <b>[선택 구간 전 시리즈 변동 CSV]</b> 에는 <b>국채선물 수정가가 들어갑니다</b>(2026-10-19) —
           그 두 파일은 단위를 열·주석으로 구분해 표기하므로 섞여도 오해가 생기지 않습니다.</li>
         <li><b>만기축이 필요한 도구</b>(스트레스테스트·커브 분석·커브+스프레드, 그리고 스프레드의 텀 유형)에는
-          <b>만기 개념이 없는 기준지표</b>(한국은행 기준금리·DFF·EFFR·SOFR)가 나오지 않습니다. 미국채(11만기)는 나옵니다.</li>
+          <b>만기 개념이 없는 기준지표</b>(한국은행 기준금리·DFF·EFFR·SOFR·<b>미국 정책금리 목표상·하한</b>)가 나오지 않습니다. 미국채(11만기)는 나옵니다.</li>
         <li><b>원화 IRS 는 금리(%)</b>라 제한이 없어 7개 도구 전부에서 고를 수 있습니다.
           단 노출 만기는 <b><span class="dyn" id="man-irsmats2">—</span></b> 다섯 개뿐입니다.</li>
         <li><b>CP·CD 시가평가(A1·A2+·A3+·AAA)도 금리(%)에 만기 6개</b>라 <b>7개 도구 전부</b>에서 고를 수 있습니다.
@@ -2241,6 +2267,15 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
         <li><b>CD 유통수익률(고시)만 만기축이 없습니다.</b> 그래서 커브·커브+스프레드·스트레스테스트·텀 스프레드에서
           빠지고, VaR·상관관계·데이터 다운로드에는 나옵니다. 스프레드 분석에서는
           <b>'기준금리 대비' 유형의 시리즈 B</b> 후보입니다 — 한국은행 기준금리·DFF·EFFR·SOFR 과 같은 자리입니다.</li>
+        <!-- [2026-10-21] 목표범위 신설 안내. '실효금리 ≠ 정책금리' 설명(2026-09)과 이어지는 자리다. -->
+        <li><b>미국 정책금리 목표상한·목표하한</b>(2026-10-21 신설)도 만기축이 없어 같은 규칙을 따릅니다 —
+          커브·커브+스프레드·스트레스테스트(채권종류)·텀 스프레드에서 빠지고, VaR·상관관계·데이터 다운로드와
+          스프레드의 <b>'기준금리 대비' 시리즈 B</b> 에 나옵니다.
+          <b>DFF·EFFR(실효금리)와 다른 개념</b>이라는 점을 기억하십시오 — 실효금리는 시장에서 실제로 체결된 결과이고,
+          목표범위는 <b>FOMC 가 고시한 정책금리 그 자체</b>입니다. 실효금리는 이 범위 <b>안에서</b> 움직입니다.
+          <b>한국은행 기준금리와 비교할 때</b>는 한국이 단일값, 미국이 범위라는 비대칭에 주의하십시오 —
+          화면은 범위를 가공하지 않고 <b>3.75~4.00%</b> 처럼 그대로 적습니다. 금리차처럼 숫자 하나가 필요하면
+          상·하한에서 직접 중간값을 계산하고 '중간값 기준'임을 함께 적는 편이 안전합니다(중간값 컬럼은 만들지 않았습니다).</li>
       </ul>
       <p><b>레지스트리 시리즈의 수록 구간</b>(§2-1 표와 같은 값이며 만기별로 시작일이 다릅니다):
         미국채 1개월물은 다른 만기보다 늦게 시작하고, SOFR 은 2018-04-03 부터, 국채선물 30년은 2024-02-19 부터,
@@ -2333,6 +2368,10 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
         <li><b>한국은행 기준금리·DFF 는 계단식(전방채움)</b>입니다. 대부분의 날 일간 변동이 정확히 0 이라
           변동 상관이 구조적으로 0 근처로 낮게 나오고, 스프레드는 고정 구간에서 상대 시리즈를 그대로 따라갑니다.
           <b>EFFR 은 DFF 와 사실상 같은 금리</b>(출처·집계만 다름)이므로 둘을 비교하면 거의 동일한 두 시리즈를 보는 셈입니다.</li>
+        <li><b>미국 정책금리 목표상·하한은 계단이 더 심합니다</b> — FOMC 결정일(연 8회 안팎)에만 바뀌므로
+          일간 변동이 거의 전부 0 입니다. <b>변동 상관·VaR 에서는 의미가 약하고</b>, DFF·EFFR 과는 상관이
+          사실상 1 이라 함께 넣으면 거의 같은 시리즈를 겹쳐 보게 됩니다. 쓸모가 있는 쪽은 레벨 비교입니다 —
+          <b>실효금리가 범위 안 어디에 있는지</b>(상단 대비 bp), <b>미국채 2년이 상단보다 얼마나 낮은지</b>(인하 기대) 같은 것입니다.</li>
         <li><b>SOFR 은 분기말·연말에 담보 수급으로 일시 급등</b>(스파이크)하는 성질이 있습니다.</li>
       </ul>
       <h4>결측 · 기간</h4>
@@ -2726,6 +2765,34 @@ var EXTRA_SERIES = [
     full: 'Federal Funds Effective Rate, daily (FRED: DFF)',
     note: US_NOTE + ' <b>DFF 는 일별 실효 연방기금금리</b>로, FOMC 목표범위가 바뀐 날 외에는 ' +
       '거의 움직이지 않는 준(準)계단식 시계열입니다. 일간 변동 상관은 구조적으로 낮게 나옵니다.'
+  }
+  /* [2026-10-21] FOMC 목표범위 2종. **DFF/EFFR 과 다른 개념이다** — 위 DFF 는 시장에서
+     실제 체결된 실효금리(결과)이고, 이 둘은 연준이 고시한 정책금리 그 자체(범위)다.
+     `미국기준금리_` 접두를 쓰지 않은 이유가 그것이다(그 접두는 DFF 가 쓰는 레거시 이름).
+     만기 개념이 없어 maturity: null → 커브·스트레스·커브+스프레드에서 자동 제외되고
+     VaR·스프레드(시리즈 B)·상관관계·다운로드에만 나온다. */
+  , {
+    key: 'US_TGT_U', label: '미국 정책금리 목표상한', group: '기준지표',
+    col: '미국정책금리_목표상한', maturity: null,
+    full: 'Federal Funds Target Range - Upper Limit (FRED: DFEDTARU)',
+    note: '<b>FOMC 가 고시하는 연방기금금리 목표범위의 상한</b>입니다. DFF·EFFR 같은 ' +
+      '<b>실효금리와는 다른 개념</b>입니다 — 실효금리는 시장 체결 결과이고 이것은 정책금리 ' +
+      '그 자체입니다. 실효금리는 이 범위 <b>안에서</b> 움직입니다. ' +
+      '<b>FOMC 결정일에만 바뀌는 계단식(전방채움)</b>이라 대부분의 날 일간 변동이 정확히 0 이고, ' +
+      '변동 상관·VaR 은 구조적으로 의미가 약합니다(DFF·EFFR 과는 상관이 사실상 1 이므로 ' +
+      '함께 넣으면 거의 같은 시리즈를 겹쳐 보는 셈입니다). ' +
+      '<b>발표 시차가 없습니다</b> — 당일 유효값이 당일 올라옵니다(H.15·EFFR·SOFR 의 T+1 규칙이 ' +
+      '적용되지 않습니다). 다만 FOMC 발표가 미 동부 오후라 결정일의 새 범위는 다음 날 수집에 들어옵니다. ' +
+      '<b>2008-12-15 이전은 단일 목표치 체계</b>였습니다(FRED DFEDTAR) — 그 구간은 상한과 하한이 ' +
+      '같은 값인데, 범위 폭이 0 이었다는 뜻이 아니라 <b>제도가 달랐다</b>는 뜻입니다.'
+  }
+  , {
+    key: 'US_TGT_L', label: '미국 정책금리 목표하한', group: '기준지표',
+    col: '미국정책금리_목표하한', maturity: null,
+    full: 'Federal Funds Target Range - Lower Limit (FRED: DFEDTARL)',
+    note: '<b>FOMC 목표범위의 하한</b>입니다. 성질·주의사항은 목표상한과 같습니다 — ' +
+      '실효금리(DFF·EFFR)와 다른 개념이고, 결정일에만 바뀌는 계단식이며, 발표 시차가 없고, ' +
+      '<b>2008-12-15 이전은 단일 목표치 체계</b>라 상한과 값이 같습니다.'
   }
   , {
     key: 'US_EFFR', label: '미국 실효연방기금금리(EFFR)', group: '기준지표',
@@ -5715,7 +5782,7 @@ var SP_KIND = {
   policy: {
     name: '기준금리 대비 스프레드', predA: spIsYield, predB: spIsPolicy,
     defA: ['국고채권', 36], defB: ['한국은행 기준금리', 0], sync: false,
-    hint: '시리즈 A = 채권·스왑·단기자금 금리 · 시리즈 B = 기준지표(한국은행 기준금리 · <b>CD 유통수익률(고시)</b> · 미국 DFF · EFFR · SOFR). 기준지표는 만기 개념이 없어 만기 B 가 잠깁니다. B 를 CD 유통수익률로 두면 실무에서 쓰는 <b>CD 대비 스프레드</b>가 됩니다.',
+    hint: '시리즈 A = 채권·스왑·단기자금 금리 · 시리즈 B = 기준지표(한국은행 기준금리 · <b>CD 유통수익률(고시)</b> · 미국 DFF · EFFR · SOFR · <b>미국 정책금리 목표상한·목표하한</b>). 기준지표는 만기 개념이 없어 만기 B 가 잠깁니다. B 를 CD 유통수익률로 두면 실무에서 쓰는 <b>CD 대비 스프레드</b>가 됩니다.',
     calc: '기준금리는 변경일에만 바뀌는 계단식이라, 기준금리가 고정된 구간에서 스프레드는 A 의 금리 움직임을 그대로 따라갑니다.'
   },
   all: { name: '전체', predA: null, predB: null, defA: null, defB: null, sync: false,
@@ -8875,7 +8942,11 @@ var FX = {
          다른 만기와 동일하게 다룬다. */
       ['미국채_7년', '미국채 7년'],
       ['미국채_10년', '미국채 10년'], ['미국채_20년', '미국채 20년'], ['미국채_30년', '미국채 30년'],
-      ['미국기준금리_DFF', '기준금리(DFF)'], ['미국단기금리_EFFR', 'EFFR'], ['미국단기금리_SOFR', 'SOFR']
+      ['미국기준금리_DFF', '기준금리(DFF)'], ['미국단기금리_EFFR', 'EFFR'], ['미국단기금리_SOFR', 'SOFR'],
+      /* [2026-10-21] FOMC 목표범위. 실효금리(DFF·EFFR)는 이 범위 **안에서** 움직인다.
+         두 칩을 함께 켜면 상·하단이 한 쌍의 파선 계단으로 그려진다(FX_DASH 참조).
+         음영 밴드로 채우는 것은 svgLine 공용 렌더러를 고쳐야 하므로 이번에는 넣지 않았다. */
+      ['미국정책금리_목표상한', '목표상한'], ['미국정책금리_목표하한', '목표하한']
     ],
     sel: ['미국채_2년', '미국채_10년', '미국채_30년', '미국단기금리_SOFR'],
     range: '3Y',
@@ -9008,6 +9079,10 @@ function fxWindow(C) {
   return i < 0 ? 0 : i;
 }
 /** 그 나라 시계열 카드 한 장을 그린다 */
+/* 파선으로 그릴 컬럼 → stroke-dasharray. 비어 있으면 실선이다.
+   국가가 늘어 '고시값' 성질의 시리즈가 또 생기면 여기에 한 줄 넣으면 된다. */
+var FX_DASH = { '미국정책금리_목표상한': '5 3', '미국정책금리_목표하한': '5 3' };
+
 function fxDrawTS(cc) {
   var C = FX[cc]; if (!C) return;
   var A = C.axis; if (!A) return;
@@ -9017,7 +9092,13 @@ function fxDrawTS(cc) {
     var pts = [];
     for (var i = i0; i <= i1; i++) { var v = axVal(A, c, i); pts.push(isNaN(v) ? null : [i, v]); }
     var li = order.indexOf(c);
-    return { name: A.LBL[c] || c, pts: pts, color: PAL[(li < 0 ? 0 : li) % PAL.length] };
+    /* [2026-10-21] 정책금리 목표범위는 **파선**으로 그린다 — 시장금리(실선)와 성질이
+       다른 '고시된 범위'임을 선 모양으로 구분한다. 상·하단이 같은 파선 패턴이라
+       둘을 함께 켜면 한 쌍으로 읽힌다. 계단 모양은 보간 없이도 자연히 나온다
+       (일별 전방채움이라 변경일에만 1영업일 폭의 수직 상승이 생긴다). */
+    var s = { name: A.LBL[c] || c, pts: pts, color: PAL[(li < 0 ? 0 : li) % PAL.length] };
+    if (FX_DASH[c]) s.dash = FX_DASH[c];
+    return s;
   });
   $(C.dom.chart).innerHTML = svgLine({
     w: cw(C.dom.chart, 1080), h: 340, series: ser,
@@ -9164,6 +9245,43 @@ function ovsChg() {
 }
 
 /** 해외금리 탭 상단 기준일 줄. 국가가 늘면 여기 항목이 자동으로 늘어난다. */
+/* ================================================================
+   헤더 우상단 — 연준 정책금리(FOMC 목표범위) 현수준
+   ----------------------------------------------------------------
+   두 번 불린다.
+     ① 초기 1회 — 한국 영업일축(rates.json extra[]) 의 마지막 값. 동기라 바로 찍힌다.
+     ② us_rates.json 도착 후 — **미국 자체축**의 마지막 값으로 갈아끼운다. 목표범위는
+        FOMC 결정일에만 바뀌는 계단이라 두 값은 거의 항상 같지만, 변경일이 한국 공휴일에
+        걸리면 한국축이 하루이틀 늦게 반영된다. 그때 '현수준'이 틀리지 않게 하려는 것이다.
+   값이 없으면 '—' 를 두고 조용히 넘어간다(데이터 미적재 환경에서 헤더가 깨지지 않게).
+   ================================================================ */
+var US_TGT_U = '미국정책금리_목표상한', US_TGT_L = '미국정책금리_목표하한';
+
+function usTargetHeader() {
+  var e = $('ustgt'); if (!e) return;
+  var u = NaN, l = NaN, asof = '', axis = '';
+  var A = (typeof fxAxis === 'function') ? fxAxis('US') : null;
+  if (A && A.COL[US_TGT_U] && A.COL[US_TGT_L]) {
+    var i = axPrevObs(A, US_TGT_U, A.LAST);
+    if (i >= 0) { u = axVal(A, US_TGT_U, i); l = axVal(A, US_TGT_L, i); asof = fmtD(A.DATES[i]); axis = '미국축'; }
+  }
+  if (isNaN(u) && typeof COL !== 'undefined' && COL[US_TGT_U]) {   // 한국축 대체
+    for (var k = LAST; k >= 0; k--) {
+      var v = pct(US_TGT_U, k);
+      if (!isNaN(v)) { u = v; l = pct(US_TGT_L, k); asof = fmtD(DATES[k]); axis = '한국축'; break; }
+    }
+  }
+  var w = $('ustgt-wrap');
+  if (isNaN(u) || isNaN(l)) { e.textContent = '—'; return; }
+  e.textContent = l.toFixed(2) + '~' + u.toFixed(2) + '%';
+  /* 매뉴얼 §1 본문의 같은 값도 함께 맞춘다(미국축 도착으로 값이 갱신될 때 어긋나지 않게). */
+  var m = $('man-ustgt'); if (m) m.textContent = e.textContent;
+  if (w) w.title = '연방기금금리 목표범위 (FOMC) · 하한 ' + l.toFixed(2) + ' / 상한 ' + u.toFixed(2) +
+    ' · ' + asof + ' 기준(' + axis + ') · 출처 FRED DFEDTARU·DFEDTARL' +
+    ' · 실효금리(DFF·EFFR)는 이 범위 안에서 움직입니다 — 다른 개념입니다' +
+    ' · 발표 시차 없음(당일 유효값). FOMC 결정일의 새 범위만 다음 날 반영됩니다';
+}
+
 function ovsAsofBar() {
   var e = $('ovs-asofbar'); if (!e) return;
   var parts = [];
@@ -9189,6 +9307,9 @@ function ovsAsofBar() {
 }
 
 function renderOvs() { guard('해외 현황', ovsLevel); guard('해외 변동', ovsChg); guard('해외 기준일', ovsAsofBar); }
+
+/* 헤더 정책금리 초기 1회(한국축). us_rates.json 이 오면 fxLoad 가 미국축으로 갈아끼운다. */
+guard('헤더 정책금리', usTargetHeader);
 
 /* ----------------------------------------------------------------
    국가 자체축 로더 — 나라마다 한 번씩 돈다.
@@ -9228,6 +9349,8 @@ function fxLoad(cc) {
       if (a) a.textContent = '최종 관측일 ' + fmtD(dt[n - 1]) + ' · ' + n.toLocaleString() + '영업일 (' +
         fmtD(dt[0]) + ' ~) · ' + C.src;
       try { fxLagNotes(); } catch (e) { }
+      /* [2026-10-21] 미국축이 도착했으면 헤더 정책금리를 미국축 값으로 갈아끼운다. */
+      if (cc === 'US') { try { usTargetHeader(); } catch (e) { } }
 
       // 칩
       var pk = $(C.dom.pick);
@@ -9293,6 +9416,12 @@ var MAN_SRC = {
   '미국 연방기금금리(DFF)': ['FRED · DFF', '평일 19:30 자동 (T+1 발표)'],
   '미국 실효연방기금금리(EFFR)': ['FRED · EFFR', '평일 19:30 자동 (T+1 발표)'],
   '미국 SOFR(담보부익일물)': ['FRED · SOFR', '평일 19:30 자동 (T+1 발표)'],
+  /* [2026-10-21] 목표범위 — **갱신 문구에 'T+1' 이 없는 유일한 미국 항목**이다.
+     당일 유효값이 당일 올라온다(FRED 원문). 결정일만 하루 늦는다. */
+  '미국 정책금리 목표상한': ['FRED · DFEDTARU (FOMC Press Release)<br><span class="hint">2008-12-16~ 범위 체계 · 그 이전은 단일 목표치 DFEDTAR 로 1회 백필(상한=하한)</span>',
+                             '평일 19:30 자동 (<b>발표 시차 없음</b> · FOMC 결정일만 다음 날)'],
+  '미국 정책금리 목표하한': ['FRED · DFEDTARL (FOMC Press Release)<br><span class="hint">2008-12-16~ 범위 체계 · 그 이전은 단일 목표치 DFEDTAR 로 1회 백필(상한=하한)</span>',
+                             '평일 19:30 자동 (<b>발표 시차 없음</b> · FOMC 결정일만 다음 날)'],
   '미국채': ['FRED · H.15 DGS1MO~DGS30', '평일 19:30 자동 (T+1 발표)'],
   /* [2026-10-08] 일본국채 — 수록 2000년~. 1974~1999 는 싣지 않았다(§2-4).
      당월 CSV 는 매월 1일 초기화되므로 월초에 전기간 파일을 한 번 다시 받는다. */
@@ -9453,6 +9582,8 @@ function renderManual() {
   txt('man-span', fmtD(DATA.meta.from) + ' ~ ' + fmtD(DATA.meta.to) + ' · ' + N.toLocaleString() + '영업일');
   var bc = DATA.base.c;
   txt('man-base', COL[bc] ? (pct(bc, LAST).toFixed(2) + '%') : '—');
+  /* 헤더와 같은 값을 매뉴얼 본문에도 노출한다 — 헤더 요소에서 그대로 읽어 두 곳이 어긋나지 않게 한다. */
+  txt('man-ustgt', ($('ustgt') && $('ustgt').textContent) || '—');
   txt('man-ntypes', TYPES.length.toLocaleString());
   var nser = 0; TYPES.forEach(function (t) { nser += t.mats.length; });
   txt('man-nser', nser.toLocaleString());
@@ -9532,7 +9663,7 @@ function renderManual() {
   $('man-matrix').innerHTML = '<table>' + hd + '<tbody>' + body + '</tbody>' +
     '<tfoot><tr><td class="l" colspan="' + (cols.length + 3) + '">' +
     '<span class="hint">○ = 선택 가능 (괄호 안은 그 그룹의 옵션 수) · × = 선택 불가. ' +
-    '\'기준지표\'는 한국은행 기준금리 · CD 유통수익률(고시) · DFF · EFFR · SOFR, \'해외금리\'는 미국채, ' +
+    '\'기준지표\'는 한국은행 기준금리 · CD 유통수익률(고시) · DFF · EFFR · SOFR · 미국 정책금리 목표상·하한, \'해외금리\'는 미국채, ' +
     '\'스왑금리\'는 원화 IRS, \'단기자금\'은 CP A1·A2+·A3+ 와 CD AAA 시가평가(각 6만기), ' +
     '\'선물\'은 국채선물(수정가)입니다. 이 표는 화면을 열 때 실제 드롭다운을 세어 만듭니다.' +
     '</span></td></tr></tfoot></table>';
