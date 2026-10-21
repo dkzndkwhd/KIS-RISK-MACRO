@@ -291,8 +291,12 @@ body{font-size:13px;}
 .hmleg b{color:#1d2a36;font-size:12px;}
 .hmleg .st{background:#eef3f9;border:1px solid #cdd6e0;border-radius:4px;padding:1px 7px;color:#17456b;font-weight:600;}
 
-/* 격자 */
-.hmwrap{overflow-x:auto;}
+/* 격자
+   [2026-10-21 수정] overflow-x 만 주면 overflow-y 가 auto 로 계산되어 .hmwrap 이
+   sticky 의 기준 컨테이너가 되는데, 높이가 내용 높이와 같아 실제로는 스크롤되지 않는다.
+   그 결과 thead 의 position:sticky 가 페이지와 함께 떠내려가 머리행이 안 붙었다
+   (전체 격자 59행에서 확인). **높이를 가두어 진짜 스크롤 컨테이너로 만든다.** */
+.hmwrap{overflow:auto;max-height:calc(100vh - 210px);}
 table.hm{border-collapse:separate;border-spacing:0;font-size:12px;white-space:nowrap;}
 table.hm th,table.hm td{border-bottom:1px solid #eef1f5;padding:4px 7px;text-align:center;}
 table.hm thead th{background:#f4f7fa;color:#4a5765;font-weight:600;font-size:11.5px;
@@ -7387,21 +7391,25 @@ var HM = (function () {
     h.push('</tbody></table>');
     box.innerHTML = h.join('');
 
-    /* 4) 범례 */
+    /* 4) CP·CD 패널 — 범례보다 먼저 그린다. 이 패널의 '상한 밖' 칸도 같은 상한을 쓰므로
+       범례·칸수에 합산해야 화면에 보이는 굵은 테두리 수와 숫자가 일치한다. */
+    var nClip2 = guard('히트맵 · 단기자금', function () { return renderMny(R, cap); }) || 0;
+    var nClipAll = nClip + nClip2;
+
+    /* 5) 범례 */
     var sw = '';
     for (i = 0; i < PAL.length; i++) sw += '<i style="background:' + PAL[i] + '"></i>';
     $('hm-leg').innerHTML =
       '<span>하락</span><span class="sw">' + sw + '</span><span>상승</span>' +
       '<b>±' + cap + ' bp</b><span class="st">' + (isAuto ? '자동' : '수동') + '</span>' +
       (isAuto ? '<span>자동 산출 = |변동| p95 → 최소 ' + CAP_MIN + 'bp → 눈금 올림</span>' : '') +
-      (nClip ? '<span>상한 밖 <b>' + nClip + '</b>칸 (테두리 강조)</span>' : '');
+      (nClipAll ? '<span>상한 밖 <b>' + nClipAll + '</b>칸 (테두리 강조)</span>' : '');
 
-    /* 5) 머리말·각주 */
+    /* 6) 머리말·각주 */
     $('hm-sub').textContent = fmtD(DATES[R.iA]) + ' → ' + fmtD(DATES[R.iB]) +
       (hzIdx >= 0 ? ' (' + CHG_HORIZ[hzIdx][0] + ')' : ' (임의 구간)');
     $('hm-cnt').innerHTML = '계산된 칸 <b>' + nCalc + '</b>개 · 결측 <b>' + nMiss + '</b>개' +
-      (nClip ? ' · 상한 밖 <b>' + nClip + '</b>개' : '');
-    guard('히트맵 · 단기자금', function () { renderMny(R, cap); });
+      (nClipAll ? ' · 상한 밖 <b>' + nClipAll + '</b>개' : '');
 
     $('hm-note').innerHTML = isSp
       ? '<b>스프레드 = 동일 만기 단순차(bp)</b>입니다. 기준은 만기마다 다릅니다 — ' +
@@ -7435,9 +7443,10 @@ var HM = (function () {
     if (r.rop) return (mlab === '3월') ? 'CD유통_91일' : null;
     return r.c + '_' + mlab;
   }
+  /** 상한 밖 칸 수를 돌려준다 — 범례의 '상한 밖 N칸' 에 합산해야 화면과 숫자가 맞는다. */
   function renderMny(R, cap) {
-    var box = $('hm-box2'); if (!box) return;
-    var isSp = (mode === 'sp'), j, r;
+    var box = $('hm-box2'); if (!box) return 0;
+    var isSp = (mode === 'sp'), j, r, nClip2 = 0;
     var h = ['<table class="hm"><thead><tr><th class="rh l" rowspan="2">구분</th><th class="rg l" rowspan="2">등급</th>'];
     h.push('<th class="grp" colspan="6">금리 (%)</th>');
     if (isSp) h.push('<th class="grp" colspan="6">CD AAA 대비 (bp)</th>');
@@ -7479,6 +7488,7 @@ var HM = (function () {
         if (!isFinite(cv)) { h.push('<td class="cell na' + sep + '">—</td>'); continue; }
         if (isSp && noSp) { h.push('<td class="cell base' + sep + '">' + cv.toFixed(1) + '</td>'); continue; }
         var bi = binOf(cv, cap), clip = Math.abs(cv) > cap;
+        if (clip) nClip2++;
         h.push('<td class="cell' + sep + (clip ? ' clip' : '') + '" style="background:' + PAL[bi] +
           (DARK[bi] ? ';color:#fff' : '') + '">' + cv.toFixed(1) + '</td>');
       }
@@ -7491,6 +7501,7 @@ var HM = (function () {
       (isSp ? '스프레드 기준은 <b>CD AAA 동일 만기</b>입니다 — CD AAA 자신과 CD 유통은 기준이거나 고시 체계가 달라 ' +
               '스프레드를 내지 않고, 변동 열에는 금리 변동을 회색으로 넣되 색을 칠하지 않습니다. ' : '') +
       '<b>색 상한은 위 격자와 같은 값</b>을 씁니다 — 한 화면에 스케일이 둘이면 오독하기 때문입니다.';
+    return nClip2;
   }
 
   function NOTE_COMMON() {
