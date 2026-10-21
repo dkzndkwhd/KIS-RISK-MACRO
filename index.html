@@ -302,6 +302,10 @@ table.hm th,table.hm td{border-bottom:1px solid #eef1f5;padding:4px 7px;text-ali
 table.hm thead th{background:#f4f7fa;color:#4a5765;font-weight:600;font-size:11.5px;
   position:sticky;top:0;z-index:2;border-bottom:1px solid #dbe2ea;}
 table.hm thead th.grp{background:#eef3f9;color:#17456b;border-left:1px solid #dbe2ea;}
+/* [2026-10-21 수정] 머리 2행이 둘 다 top:0 이면 2행이 1행을 덮어 '금리 / 스프레드 / 변동'
+   그룹 머리가 스크롤 중 사라진다. 1행 높이를 고정하고 2행을 그만큼 내려 붙인다. */
+table.hm thead tr:first-child th{height:25px;box-sizing:border-box;}
+table.hm thead tr:nth-child(2) th{top:25px;}
 table.hm td.l,table.hm th.l{text-align:left;}
 /* 행 머리 2열(구분·등급) 고정 */
 table.hm .rh{position:sticky;left:0;z-index:1;background:#fff;color:#1d2a36;font-weight:600;
