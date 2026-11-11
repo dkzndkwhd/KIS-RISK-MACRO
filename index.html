@@ -661,6 +661,9 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
   <button type="button" data-d="heat">히트맵</button>
   <button type="button" data-d="ovs">해외금리</button>
   <button type="button" data-d="fut">선물 · IRS</button>
+  <!-- [2026-11-11] 글로벌 매크로(환율·유가) — 선물·IRS **다음**이다(사용자 지정 위치).
+       금리가 아닌 계열만 모인 유일한 탭이라 금리 탭 전부보다 뒤에 둔다. -->
+  <button type="button" data-d="mac">글로벌 매크로</button>
 </div>
 
 <div id="dash-spot">
@@ -894,6 +897,89 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
 
 </div>
 </div><!-- /#dash-fut -->
+
+<!-- ===================== 대시보드 · 글로벌 매크로 =====================
+     2026-11-11 신설. 담는 것은 **금리가 아닌** 세 계열이다 —
+     환율 USD(원/달러 매매기준율, 서울외국환중개)와 유가 WTI·Brent(달러/배럴, EIA via FRED).
+
+     왜 별도 탭인가
+       ① 단위가 다르다. 금리의 '% / bp / pt' 이분법에 넣으면 조용히 틀린다
+          ('WTI 99.64pt' 가 된다). 그래서 표의 모든 숫자에 단위를 붙여 적는다.
+       ② 날짜축이 다르다. 데이터 출처가 data/macro.json 이고 그 축은
+          **환율(한국 은행영업일) ∪ 유가(미국 영업일) 합집합**이다. 어느 한쪽에
+          맞추면 424~1,102일이 버려진다(실측) — 그래서 합집합 축을 그대로 쓴다.
+          분석 도구는 반대로 **한국 영업일축**을 쓴다(국내 시리즈와 같은 날짜끼리
+          계산해야 하므로). 두 곳의 최신값·기준일이 갈릴 수 있다 — 탭 맨 아래
+          #mac-toolnote 가 그 사실을 상시 고지한다(해외금리 탭의 #ovs-toolnote 와 같은 장치).
+       ③ **계열마다 최종 관측일이 다르다.** 환율은 발표 시차가 없고 유가는 주 1회
+          배달이라 3~7영업일 뒤처진다. 그래서 '기준일'을 탭 하나로 묶어 적을 수 없고
+          **계열별로** 적는다(#mac-asofbar 와 현황표 행 라벨 양쪽에).
+
+     유가 스프레드 — 이번 공개의 목적 중 하나다
+       Brent−WTI 를 ① 현황표의 별도 행, ② 유가 차트의 칩(두 선과 함께 겹쳐 보기)
+       두 곳에서 볼 수 있게 했다. 2026년 구간에서 10~37달러로 역사적 통상범위
+       (0~10달러)보다 넓다는 사실은 macro.json meta.note 에 적혀 있고
+       화면에도 #mac-spreadwarn 으로 한 줄 노출한다. -->
+<div id="dash-macro" style="display:none">
+
+<div class="ovsbar" id="mac-asofbar">기준일을 불러오는 중…</div>
+
+<div class="dashgrid futgrid">
+
+  <section class="card span3">
+    <h2>글로벌 매크로 현황 <span id="mac-lv-warn" style="font-weight:400;font-size:11.5px;color:#a3410f"></span></h2>
+    <div class="chartbox" id="box-mac-level"></div>
+    <p class="note">셀 표기: <b>수준</b> / 아래 작은 수치는 <b>그 계열 직전 관측일 대비</b> 변동.
+      <span class="up">상승(빨강)</span> · <span class="dn">하락(파랑)</span> · <span class="na">—</span>는 해당일 미고시.
+      <b>단위가 금리와 다릅니다 — 환율은 「원」, 유가는 「달러/배럴」이고 변동도 같은 단위입니다(bp 가 아닙니다).</b>
+      소수는 <b>2자리</b>입니다(원본이 2자리입니다 — 금리의 3자리와 다릅니다).
+      <b>행마다 기준일이 다릅니다</b> — 행 라벨의 날짜를 보십시오. 환율은 발표 시차가 없고,
+      <b style="color:#8a5a20">유가는 EIA 가 주 1회만 발표</b>해 3~7영업일 뒤처지는 것이 정상입니다.</p>
+    <p class="note" id="mac-spreadwarn"></p>
+  </section>
+
+  <div class="pairgrid">
+  <section class="card" id="mac-fx-sec">
+    <h2>환율 시계열 (원) <span id="mac-fx-asof" style="font-weight:400;color:#67727f;font-size:11.5px">—</span></h2>
+    <div class="serpick" id="mac-fx-pick"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin:10px 0 10px">
+      <div class="rangebar" id="mac-fx-range" style="flex:1;margin:0"></div>
+      <button type="button" class="btn" id="mac-fx-dl" style="margin-right:0;white-space:nowrap" title="표시 구간 전체를 일자별 로데이터로 내려받습니다">CSV 다운로드</button>
+    </div>
+    <div class="chartbox" id="mac-fx-chart"><p class="note" id="mac-fx-stat">글로벌 매크로 데이터(data/macro.json)를 불러오는 중…</p></div>
+    <div class="lgd" id="mac-fx-legend"></div>
+    <div class="note" id="mac-fx-note"><b>단위는 원</b>입니다. 결측 구간은 선을 끊습니다(보간하지 않음). <span id="mac-fx-lag"></span><details class="inlx"><summary>자세히</summary><b>출처 서울외국환중개 매매기준율, 평일 저녁 자동 수집.</b> 은행 영업일 <b>1회(9시 이전) 고시</b>라 <b>발표 시차가 없습니다</b> — 당일치가 같은 날 19:30 회차에 들어옵니다(미국·일본·호주 금리와 다른 점입니다). <b>수록은 1990-03-02 부터</b>입니다. 매매기준율은 공시·회계·평가의 기준값이고 은행별로 갈리는 전신환·현찰 고시환율과 달리 <b>단일 공시치</b>입니다. 장중 보조열(시가·고가·저가·15:30·종가·거래량)은 <b>싣지 않았습니다</b> — USD 에만 있고 당일에는 0.00 으로 와서 차트가 바닥으로 꺾입니다. 전일대비 열도 쓰지 않습니다(부호가 마크업에만 있어 하락을 상승으로 읽을 위험이 있습니다) — 화면의 변동은 <b>수준값에서 다시 계산</b>한 것입니다. x축은 <b>환율·유가 합집합 축</b>이고 환율이 없는 날(미국만 있는 날)은 선이 끊깁니다.</details></div>
+  </section>
+
+  <section class="card" id="mac-oil-sec">
+    <h2>유가 시계열 ($/배럴) <span id="mac-oil-asof" style="font-weight:400;color:#67727f;font-size:11.5px">—</span></h2>
+    <div class="serpick" id="mac-oil-pick"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin:10px 0 10px">
+      <div class="rangebar" id="mac-oil-range" style="flex:1;margin:0"></div>
+      <button type="button" class="btn" id="mac-oil-dl" style="margin-right:0;white-space:nowrap" title="표시 구간 전체를 일자별 로데이터로 내려받습니다">CSV 다운로드</button>
+    </div>
+    <div class="chartbox" id="mac-oil-chart"><p class="note" id="mac-oil-stat">글로벌 매크로 데이터(data/macro.json)를 불러오는 중…</p></div>
+    <div class="lgd" id="mac-oil-legend"></div>
+    <div class="note" id="mac-oil-note"><b>단위는 달러/배럴</b>입니다. WTI·Brent 를 <b>한 차트에 겹쳐</b> 그리므로 두 선의 간격이 곧 스프레드입니다 — <b>칩의 「스프레드(Brent−WTI)」</b>를 켜면 그 차이를 선으로 직접 볼 수 있습니다. 결측 구간은 선을 끊습니다(보간하지 않음). <span id="mac-oil-lag"></span><details class="inlx"><summary>자세히</summary><b>출처 미국 에너지정보청(EIA) 현물가, FRED 경유(DCOILWTICO·DCOILBRENTEU), 평일 저녁 자동 수집.</b> <b style="color:#8a5a20">데이터는 일별이지만 배달이 주 1회(수요일 추정)</b>입니다 — 호주 RBA F2 와 같은 구조이고, 기준일이 환율보다 <b>3~7영업일 뒤처지는 것이 정상이며 지연이 아닙니다</b>. 신선도 임계를 8영업일로 둔 이유입니다. 월~화에는 신규 관측일이 올라오지 않는 것이 정상입니다. <b>수록은 WTI 1986-01-02 · Brent 1987-05-20 부터</b>입니다 — 금리 마스터(2000-10-30~)보다 14년 깁니다. <b>현물가</b>입니다(선물 근월물 연속계열이 아니므로 롤오버 왜곡이 없습니다). 주간·월간 평균 시리즈(WCOIL·MCOIL)는 일별의 집계값이라 싣지 않았습니다. x축은 <b>환율·유가 합집합 축</b>이고 유가가 없는 날(환율만 있는 날)은 선이 끊깁니다.</details></div>
+  </section>
+  </div>
+
+  <section class="card span3">
+    <h2>변동 현황</h2>
+    <div class="chartbox" id="box-mac-chg"></div>
+    <p class="note" id="mac-chg-note">변동 = 기준일 수준 − 과거 기준일 수준. <b>단위는 그 계열의 단위입니다</b>
+      (환율 원 · 유가 달러 · 스프레드 달러) — <b>bp 가 아닙니다</b>.
+      과거 기준일은 달력 기준으로 역산한 뒤 <b>그 계열의 그 이전 가장 가까운 관측일</b>로 대체합니다.
+      <b>표 머리글의 날짜는 국내 기준일에서 역산한 참고값</b>이며 실제 비교 구간은 계열마다 다릅니다 —
+      <b>셀에 마우스를 올리면 그 셀이 실제로 비교한 두 날짜가 보입니다.</b>
+      양쪽 중 하나라도 결측이면 계산하지 않고 <span class="na">—</span>로 둡니다.</p>
+  </section>
+
+</div>
+
+<p class="note axiswarn" id="mac-toolnote">—</p>
+
+</div><!-- /#dash-macro -->
 
 <!-- 단기자금 (CP·CD) — 2026-10-07 신설(당시 독립 탭) → 2026-10-08 개편에서 **국내금리 탭에 흡수**.
      CP·CD 시가평가수익률 + CD 유통수익률. 전부 KOFIA 고시이고 **국내 채권 현물과 같은 기준일**이라
@@ -1514,10 +1600,13 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
     <h3>5 · 도구 × 고를 수 있는 시리즈 <span>지금 이 화면의 드롭다운을 세어 만듭니다</span></h3>
     <div class="mqbd">
       <div class="tblwrap" id="mq-mx"><p class="pend">초기화 중…</p></div>
-      <p class="mqnote"><b>선물(가격 pt)은 상관관계에만</b> 나옵니다 — 단위가 섞이기 때문입니다.
+      <p class="mqnote"><b>선물(가격 pt)·환율(원)·유가($)는 상관관계에만</b> 나옵니다 — 단위가 섞이기 때문입니다.
         데이터 다운로드 탭의 <b>개별 선택에도 없습니다</b>. 다만 <b>[전체 다운로드]</b> 와
-        스트레스테스트의 <b>[선택 구간 전 시리즈 변동 CSV]</b> 에는 <b>국채선물 수정가가 들어갑니다</b>
-        (2026-10-19) — 파일 안에서 pt 컬럼을 따로 열거해 단위를 구분합니다.<br>
+        스트레스테스트의 <b>[선택 구간 전 시리즈 변동 CSV]</b> 에는 <b>국채선물 수정가·환율·유가가 들어갑니다</b>
+        (선물 2026-10-19 · 환율·유가 2026-11-11) — 파일 안에서 단위별로 컬럼을 열거하고
+        변동분 CSV 는 <b>Δ(bp) / Δ(pt) / Δ(원) / Δ($) 분리 열</b>로 나눠 적습니다.<br>
+        <b>환율·유가의 원본은 「글로벌 매크로」 탭의 카드 CSV</b> 에서 받는 것이 정확합니다 —
+        그쪽은 합집합 축이고 도구·다운로드는 한국축이라 버려지는 관측일이 있습니다(환율 229일 · WTI 323일 · Brent 313일).<br>
         <b>만기축이 필요한 도구</b>(스트레스테스트 · 커브 · 커브+스프레드)에는 만기 개념이 없는 <b>기준지표</b>가 나오지 않습니다.
         <b>VaR 은 기준지표를 고를 수 있습니다.</b></p>
     </div>
@@ -1538,6 +1627,12 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
           <span class="fix">→ 수준은 미조정가 · 변동은 조정계열</span></div>
         <div class="mqcard"><b>금리 × 선물 상관이 음수로 나온다</b><span>정상입니다. 금리↑ = 선물가격↓ 이기 때문입니다.</span>
           <span class="fix">→ 부호만 보고 오류로 판단하지 마십시오</span></div>
+        <div class="mqcard"><b>오늘자 유가가 없다 · 며칠째 같은 날짜다</b><span>정상입니다. EIA 가 <b>주 1회만 발표</b>합니다(데이터는 일별, 배달이 주간). 환율보다 <b>3~7영업일 뒤</b>인 것이 정상입니다.</span>
+          <span class="fix">→ 글로벌 매크로 탭의 계열별 기준일 줄 확인</span></div>
+        <div class="mqcard"><b>유가·환율 변동을 bp 로 읽었다</b><span><b>금리가 아닙니다.</b> 환율 변동은 <b>원</b>, 유가 변동은 <b>달러</b>입니다. 표·CSV 에 단위가 항상 함께 찍힙니다.</span>
+          <span class="fix">→ 단위 열 / Δ(원) · Δ($) 분리 열을 보십시오</span></div>
+        <div class="mqcard"><b>매크로 탭 값과 상관관계 도구 값의 기준일이 다르다</b><span>축이 다릅니다 — 탭은 <b>합집합 축</b>, 도구는 <b>한국 영업일축</b>입니다. 한국 영업일에 자리가 없는 관측일은 버려집니다.</span>
+          <span class="fix">→ 탭 맨 아래 축 안내 줄에 버려진 일수가 숫자로 적혀 있습니다</span></div>
         <div class="mqcard"><b>데이터 다운로드 탭 개별 선택에 선물이 없다</b><span>의도된 것입니다. 선물은 가격(pt)이라 개별 선택 후보에서 빠져 있습니다. 단 [전체 다운로드]에는 국채선물 수정가가 들어갑니다.</span>
           <span class="fix">→ [전체 다운로드], 또는 대시보드 선물·IRS 탭 → 선물 시계열 카드 CSV</span></div>
       </div>
@@ -1572,12 +1667,13 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
           <li><a href="#man-s2d">해외 금리가 나라마다 두 벌인 이유</a></li>
         </ol>
       </li>
-      <li><a href="#man-s3">대시보드 — 국내금리 / 히트맵 / 해외금리 / 선물·IRS</a>
+      <li><a href="#man-s3">대시보드 — 국내금리 / 히트맵 / 해외금리 / 선물·IRS / 글로벌 매크로</a>
         <ol>
           <li><a href="#man-s3a">국내금리 탭</a></li>
           <li><a href="#man-s3h">히트맵 탭</a></li>
           <li><a href="#man-s3b">해외금리 탭</a></li>
           <li><a href="#man-s3c">선물 · IRS 탭</a></li>
+          <li><a href="#man-s3m">글로벌 매크로 탭 — 환율 · 유가 (금리가 아님)</a></li>
         </ol>
       </li>
       <li><a href="#man-s4">분석 도구 7종</a>
@@ -1620,7 +1716,9 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
         <b>한국은 단일값, 미국은 범위</b>라 두 숫자를 바로 빼서 금리차로 쓰지는 마십시오(§2-4).</p>
       <h4>공통 표기</h4>
       <ul>
-        <li>금리 <b>수준은 %</b>, 금리 <b>변동은 bp</b>(1bp = 0.01%p), 선물은 <b>가격 포인트(pt)</b>입니다.</li>
+        <li>금리 <b>수준은 %</b>, 금리 <b>변동은 bp</b>(1bp = 0.01%p), 선물은 <b>가격 포인트(pt)</b>입니다.
+          <b>글로벌 매크로 탭의 환율·유가는 금리가 아닙니다</b> — 환율은 <b>원</b>, 유가는 <b>달러/배럴</b>이고
+          <b>수준과 변동이 같은 단위</b>입니다(변동도 bp 가 아닙니다). 소수는 금리 3자리, 환율·유가 <b>2자리</b>입니다(§3-5).</li>
         <li>증감 색: <span class="up">상승 = 빨강</span> · <span class="dn">하락 = 파랑</span>.
           <b>히트맵 탭도 같은 방향</b>이며, 칸을 칠할 때는 이 두 색 대신 <b>ColorBrewer RdBu 9단계</b>를 씁니다
           (단계가 필요하고 적록색맹에서도 구분되어야 하기 때문입니다). 자세한 것은 §3-2.
@@ -1694,7 +1792,12 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
       </ul>
       <p>구기준 구간(2000-10-30 ~ 2023-01-06)은 <b>전기간 마스터</b>에서 온 것이고, 일부 레거시 시리즈는 그 구간에만 값이 있습니다.</p>
 
-      <h4 id="man-s2d">2-4. 해외 금리가 나라마다 두 벌 실려 있는 이유</h4>
+      <h4 id="man-s2d">2-4. 해외 금리 · 글로벌 매크로가 두 벌 실려 있는 이유</h4>
+      <p><b>같은 계열이 '한국축 사본'과 '자체축 원본' 두 벌로 실려 있습니다.</b> 아래 표는 해외 금리의 경우이고,
+        <b>글로벌 매크로(환율·유가)도 정확히 같은 구조</b>입니다 — 분석 도구는 한국 영업일축에 정렬한 사본을 쓰고,
+        글로벌 매크로 탭은 <code>data/macro.json</code> 의 <b>환율 ∪ 유가 합집합 축</b>을 그대로 씁니다.
+        한국축 정렬에서 버려지는 관측일은 <b>환율 229일 · WTI 323일 · Brent 313일</b>이며(한국축 수록 구간 안에서의 수치),
+        그 숫자는 글로벌 매크로 탭 맨 아래 안내 줄에 화면에서 계산해 적습니다. <b>두 곳의 값·기준일이 다를 수 있고 데이터 오류가 아닙니다.</b></p>
       <div class="tblwrap"><table>
         <thead><tr><th class="l">벌</th><th class="l">날짜축</th><th class="l">어디서 쓰나</th><th class="l">쓰는 이유</th></tr></thead>
         <tbody>
@@ -1788,7 +1891,7 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
 
   <!-- ===== 3 ===== -->
   <details class="msec" id="man-s3">
-    <summary>3. 대시보드 — 국내금리 / 히트맵 / 해외금리 / 선물·IRS</summary>
+    <summary>3. 대시보드 — 국내금리 / 히트맵 / 해외금리 / 선물·IRS / 글로벌 매크로</summary>
     <div class="mbd">
       <p>대시보드는 상단의 <span class="mkey">국내금리</span> · <span class="mkey">해외금리</span> ·
         <span class="mkey">선물 · IRS</span> 세 하위 탭으로 갈립니다.
@@ -1810,8 +1913,12 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
         </tbody>
       </table></div>
       <ul>
-        <li><b>단위도 함께 갈립니다</b> — 국내금리·해외금리·IRS 는 금리(<b>%</b>), 선물만 가격(<b>pt</b>)입니다.
+        <li><b>단위도 함께 갈립니다</b> — 국내금리·해외금리·IRS 는 금리(<b>%</b>), 선물은 가격(<b>pt</b>),
+          <b>글로벌 매크로는 환율 「원」·유가 「달러/배럴」</b>입니다.
           탭 이름에 IRS 를 따로 적은 것은 IRS 가 선물이 아니라 스왑 고정금리(%)이기 때문입니다.</li>
+        <li><b>날짜축이 셋입니다</b> — 한국 영업일축(국내금리·히트맵·선물·IRS), 그 나라 자체축(해외금리),
+          <b>환율 ∪ 유가 합집합축(글로벌 매크로)</b>. <b>분석 도구 7종은 전부 한국축</b>이라
+          해외금리 탭·글로벌 매크로 탭과 값이 다를 수 있습니다(§2-4 · §3-5).</li>
         <li><b>단기자금(CP·CD)은 국내금리 탭에 있습니다.</b> 2026-10-07 에 독립 탭으로 신설했다가,
           10-08 개편에서 국내금리 탭으로 흡수했습니다 — KOFIA 같은 고시이고 <b>국내 채권 현물과 기준일이 같아</b>
           한국 영업일축 탭에 두는 것이 맞습니다. <b>'단기자금시장' 탭은 더 이상 없습니다.</b></li>
@@ -1924,6 +2031,8 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
           색 상한은 <b>위 격자와 같은 값</b>을 씁니다 — 한 화면에 스케일이 둘이면 오독합니다.</li>
         <li><b>다운로드</b>는 <b>xlsx(색상 포함)</b>와 <b>CSV</b> 두 가지입니다. §8-2 참조.</li>
         <li><b>넣지 않은 것</b> — <b>선물</b>은 단위가 <b>pt</b>(102~130)라 bp 색표에 섞으면 스케일이 깨집니다.
+          <b>환율(원)·유가(달러)도 같은 이유로 넣지 않았습니다</b> — 히트맵은 행 정의가 국내 신용등급 격자로
+          고정돼 있어 환율·유가가 나타날 경로가 애초에 없습니다(2026-11-11 확인).
           <b>IRS</b> 는 국고 대비 스프레드 개념이 달라 선물·IRS 탭에 그대로 둡니다.
           <b>해외(미·일·호)</b>는 그 자체가 국채라 뺄 기준이 없고 날짜축도 달라
           <b>해외금리 탭의 '해외 변동 현황'</b>이 같은 역할을 합니다.</li>
@@ -2011,6 +2120,50 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
         <li><b>블록마다 자체 기준일을 잡습니다</b> — 선물과 IRS 는 갱신 주기가 달라 최신 관측일이 서로 어긋날 수 있습니다.
           국내 기준일과 다르면 행 라벨에 그 날짜를 적고, 영업일 5일 넘게 밀리면 <b>'최근 데이터 없음' 배지</b>를 붙입니다.</li>
       </ul>
+
+      <h4 id="man-s3m">3-5. 글로벌 매크로 탭 <span style="font-weight:400;color:#67727f;font-size:12px">(2026-11-11 신설)</span></h4>
+      <p><b>이 탭만 금리가 아닙니다.</b> 그래서 단위와 날짜축이 다른 탭 전부와 다릅니다 — 이 두 가지가 이 절의 전부입니다.</p>
+      <div class="tblwrap"><table>
+        <thead><tr><th class="l" style="min-width:132px">계열</th><th class="l">단위 · 소수</th><th class="l">출처 · 발표</th><th class="l">수록</th></tr></thead>
+        <tbody>
+          <tr><td class="l"><b>환율 USD</b></td><td class="l"><b>원</b> (원/미국달러) · 2자리</td>
+            <td class="l">서울외국환중개 <b>매매기준율</b>. 은행 영업일 <b>1회(9시 이전) 고시</b> → <b>발표 시차 없음</b></td>
+            <td class="l">1990-03-02 ~</td></tr>
+          <tr><td class="l"><b>유가 WTI</b></td><td class="l"><b>달러/배럴</b> · 2자리</td>
+            <td class="l">미 에너지정보청(EIA) 현물가, FRED 경유(DCOILWTICO). <b>데이터는 일별이나 배달이 주 1회(수 추정)</b></td>
+            <td class="l">1986-01-02 ~</td></tr>
+          <tr><td class="l"><b>유가 Brent</b></td><td class="l"><b>달러/배럴</b> · 2자리</td>
+            <td class="l">동일 (DCOILBRENTEU)</td><td class="l">1987-05-20 ~</td></tr>
+          <tr><td class="l"><b>유가 스프레드</b><br>(Brent − WTI)</td><td class="l"><b>달러</b> · 2자리</td>
+            <td class="l"><b>화면에서 계산한 파생값</b>입니다 — 저장하지 않습니다. 양쪽이 모두 관측된 날만 값이 있습니다</td>
+            <td class="l">1987-05-20 ~</td></tr>
+        </tbody>
+      </table></div>
+      <ul>
+        <li><b>변동은 bp 가 아닙니다.</b> 환율 변동은 <b>원</b>, 유가 변동은 <b>달러</b>입니다 — 수준과 변동이 같은 단위입니다.
+          표의 모든 숫자 옆에 단위를 함께 적고, CSV 머리말·'단위' 열에도 찍습니다. 금리의 3자리가 아니라 <b>2자리</b>인 것은
+          원본이 2자리이기 때문입니다(3자리로 내면 끝자리 0 이 유효숫자처럼 보입니다).</li>
+        <li><b>계열마다 기준일이 다릅니다.</b> 환율은 국내 금리 기준일과 같고, 유가는 <b>3~7영업일 뒤</b>인 것이 정상입니다
+          (호주국채와 같은 '주간 배달' 구조입니다 — §2-2). 탭 맨 위 줄과 현황표 행 라벨, 각 카드의 시차 줄 세 곳에
+          계열별 기준일이 적혀 있습니다. 월~화에 유가 신규 관측일이 없는 것은 지연이 아닙니다.</li>
+        <li><b>x축이 「환율 ∪ 유가」 합집합 축입니다.</b> 환율은 한국 은행영업일, 유가는 미국 영업일이라
+          축이 다릅니다 — 어느 한쪽에 맞추면 <b>424~1,102일</b>의 관측이 통째로 버려집니다(실측).
+          그래서 합집합 축에 올리고 <b>빈 칸은 빈 칸으로 둡니다</b>(보간하지 않습니다). 환율만 있는 날에는 유가 선이,
+          유가만 있는 날에는 환율 선이 끊깁니다.</li>
+        <li><b>유가 스프레드는 두 곳에서 봅니다.</b> ① 현황표·변동 현황의 별도 행, ② 유가 차트 칩
+          <b>「스프레드(Brent−WTI)」</b> — 켜면 두 선과 함께 <b>파선</b>으로 그려져 간격을 직접 읽을 수 있습니다
+          (WTI·Brent 가 같은 $ 축이라 두 선의 간격이 그대로 스프레드입니다).
+          <b>⚠ 2026년 구간에서 10~37달러로 역사적 통상범위(0~10달러)보다 넓은 구간이 있습니다</b> —
+          FRED 공식 CSV 원문 그대로이고 파싱 문제는 아니지만 원인은 판정하지 못했습니다. 현황 카드에 그 경고가 상시 노출됩니다.</li>
+        <li><b>싣지 않은 것</b> — 환율의 장중 보조열(시가·고가·저가·15:30·종가·거래량)은 USD 에만 있고
+          당일에는 0.00 으로 들어와 차트가 바닥으로 꺾이므로 넣지 않았습니다. 원본의 '전일대비' 열도 쓰지 않습니다
+          (부호가 마크업에만 있어 하락을 상승으로 읽을 위험이 있습니다) — 화면의 변동은 <b>수준값에서 다시 계산</b>한 것입니다.
+          유가의 주간·월간 평균 시리즈(WCOIL·MCOIL)는 일별의 집계값이라 넣지 않았습니다.</li>
+        <li><b>출처 파일이 다릅니다</b> — <code>data/macro.json</code> 이고, 금리 마스터 CSV 2개와
+          <code>rates.json</code> 에는 이 세 계열이 <b>들어 있지 않습니다</b>(의도된 분리 — 금리 단위 가정 위에 선
+          도구들에 끼워 넣으면 단위가 조용히 틀어질 경로가 생깁니다). 분석 도구용으로는 로더가
+          <b>한국 영업일축에 정렬한 사본</b>을 따로 만듭니다 — 그 차이가 §2-4 와 같은 성질의 '두 벌 구조'입니다.</li>
+      </ul>
       <p class="mtop"><a href="#man-toc">↑ 목차</a></p>
     </div>
   </details>
@@ -2088,9 +2241,12 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
         <li><b>기존 [CSV 다운로드] 와 다른 파일</b>입니다. 기존 버튼은 <b>세로축이 윈도우</b>(탐색한
           전체 롤링 윈도우)이고 고른 <b>2개 만기</b>만 담습니다. 이 버튼은 <b>세로축이 시리즈</b>이고
           <b>기간은 1개</b>입니다. 둘은 겹치지 않습니다.</li>
-        <li><b>단위가 섞입니다</b> — 금리는 bp, 국채선물 수정가는 pt 입니다. 행마다 <span class="mono">변동단위</span>
-          열이 있고, 합계·정렬에 쓸 수 있게 <span class="mono">Δ(bp)</span> · <span class="mono">Δ(pt)</span> 가
-          분리돼 있습니다. 변동률(%)은 <b>가격 시리즈에만</b> 채웁니다 — 금리는 저금리·음수 구간에서
+        <li><b>단위가 섞입니다</b> — 금리는 bp, 국채선물 수정가는 pt, <b>환율은 원, 유가는 달러</b>입니다.
+          행마다 <span class="mono">변동단위</span>·<span class="mono">수준단위</span> 열이 있고,
+          합계·정렬에 쓸 수 있게 <span class="mono">Δ(bp)</span> · <span class="mono">Δ(pt)</span> ·
+          <span class="mono">Δ(원)</span> · <span class="mono">Δ($)</span> 가 분리돼 있습니다
+          (분리 열은 파일에 실제로 들어 있는 단위만큼 자동으로 생깁니다).
+          <b>환율·유가 행은 금리가 아니므로 bp 로 읽지 마십시오</b> — 머리말에도 그 사실을 적습니다. 변동률(%)은 <b>가격 시리즈에만</b> 채웁니다 — 금리는 저금리·음수 구간에서
           분모가 깨져 오해를 부르기 때문입니다.</li>
         <li><b>결측은 빈 칸</b>이고 <span class="mono">상태</span> 열에 사유(시작일결측 · 종료일결측 ·
           양끝결측 · 미수록)가 적힙니다. <b>보간·전방채움·직전 관측일 대체를 하지 않습니다</b> —
@@ -2187,11 +2343,14 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
       <h4 id="man-s4f">4-6. 상관관계 분석 — "두 시리즈가 같이 움직였나, 구간마다 달랐나"</h4>
       <p>피어슨 상관계수 <span class="mono">r = Σ(xᵢ−x̄)(yᵢ−ȳ) / √(Σ(xᵢ−x̄)²·Σ(yᵢ−ȳ)²)</span>,
         <b>양쪽 모두 값이 있는 날만</b>(inner join, 보간·전방채움 없음).
-        <b>이 도구만 선물(가격 pt)을 고를 수 있습니다.</b></p>
+        <b>이 도구만 선물(가격 pt)·환율(원)·유가(달러)를 고를 수 있습니다</b> — 상관계수는 <b>무차원</b>이라
+        단위가 섞여도 수학적으로 안전하기 때문입니다. 반대로 스트레스테스트·VaR·커브·텀스프레드·스프레드 분석은
+        bp 변동 분포나 같은 단위의 차(A−B)를 전제하므로 이 세 계열이 <b>선택지에 나오지 않습니다</b>.</p>
       <p><b>계산 대상</b></p>
       <ul>
         <li><b>변동(일간 차분) — 기본.</b> 금리는 <span class="mono">(y(tᵢ) − y(tᵢ₋₁)) × 100 [bp]</span>,
-          선물은 <b>가격 차분 [pt]</b>. 단위가 달라도 상관계수는 배율에 불변이라 그대로 비교됩니다.</li>
+          선물은 <b>가격 차분 [pt]</b>, <b>환율은 원 차분 · 유가는 달러 차분</b>입니다.
+          단위가 달라도 상관계수는 배율에 불변이라 그대로 비교됩니다 — 다만 <b>축 라벨·표준편차의 단위는 계열마다 다르게</b> 찍힙니다.</li>
         <li><b>수준(레벨)</b> — 금리는 추세가 강해 <b>레벨 상관은 거의 항상 높게 나오고 의미가 없습니다.</b>
           추세 때문에 과대평가되므로, 같이 오르내린 정도는 변동으로 보십시오.</li>
       </ul>
@@ -2228,8 +2387,11 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
           계열과 같은 파일에 두면 기준일이 어긋난 값을 최신값으로 오해하게 됩니다
           (2026-09-28 화면에서도 제거했고, 상관관계 도구에서만 쓸 수 있습니다).</li>
         <li><b>국채선물은 수정가</b>(월물간 보정 연결가격)만 담깁니다. 약정가는 레지스트리에 없습니다.</li>
-        <li><b>단위가 섞입니다</b> — 선물은 금리(%)가 아니라 가격(pt)입니다. 파일 상단 주석에
-          pt 컬럼을 전부 열거하므로 거기서 확인하십시오.</li>
+        <li><b>단위가 섞입니다</b> — 선물은 금리(%)가 아니라 가격(pt)이고, <b>환율은 원, 유가는 달러/배럴</b>입니다.
+          파일 상단 주석에 <b>단위별로 컬럼을 전부 열거</b>하므로 거기서 확인하십시오
+          (<span class="mono">[pt]</span> · <span class="mono">[원]</span> · <span class="mono">[$]</span>).
+          환율·유가의 출처는 <code>data/macro.json</code> 이고 <b>한국 영업일축에 정렬한 사본</b>이라
+          글로벌 매크로 탭(합집합 축)과 기준일이 다를 수 있습니다 — 원본 축으로 받으려면 그 탭의 카드 CSV 를 쓰십시오.</li>
         <li><b>날짜축은 전부 한국 영업일축</b>입니다. 미국·일본·호주도 마스터가 한국 영업일에 맞춰
           실은 값이라 국내 시리즈와 같은 날짜로 비교됩니다 — 대시보드 해외금리 카드가 쓰는
           각국 자체 날짜축 사본과는 다르고, 한국 공휴일에 걸린 해외 관측일은 빠져 있습니다.</li>
@@ -2437,7 +2599,8 @@ th.wrapc,td.wrapc{white-space:normal;word-break:keep-all;overflow-wrap:break-wor
           표만 쓰려면 주석 행을 지우고 쓰십시오.</li>
         <li>컬럼명은 마스터 CSV 와 같은 규칙 <span class="mono">채권종류 정식명_만기</span>입니다.</li>
         <li>값은 <b>원본 고시치 그대로</b>이고 <b>결측은 빈 칸</b>입니다(보간·0채움 없음).</li>
-        <li>단위는 금리 <b>%</b>(연율), 금리 변동 <b>bp</b>, 선물 <b>pt</b>. 파일마다 머리말에 명시됩니다.</li>
+        <li>단위는 금리 <b>%</b>(연율), 금리 변동 <b>bp</b>, 선물 <b>pt</b>,
+          <b>환율 「원」 · 유가 「달러/배럴」</b>(수준·변동 같은 단위, bp 가 아닙니다). 파일마다 머리말에 명시됩니다.</li>
       </ul>
       <p class="mtop"><a href="#man-toc">↑ 목차</a></p>
     </div>
@@ -2745,6 +2908,34 @@ var CDROP_NOTE =
   '구 제도의 오전 계열과 특수은행 계열은 2023-09-27 에 폐지됐고 시중은행과는 별개 계열이라(2009-02 기준 17~25bp 괴리) 섞지 않았습니다. ' +
   '<b>CD 시가평가(평가 4사평균)와 혼동하지 마십시오</b> — 91일 자리에서 수치는 거의 같지만 출처와 용도가 갈립니다.';
 
+/* 글로벌 매크로(환율·유가) 공통 주석 — 2026-11-11 신설.
+   **이 블록의 모든 문장은 '금리가 아니다'를 반복해서 말한다.** 중복이 아니라
+   의도다 — 사용자가 유가 변동을 bp 로 읽는 사고를 막는 것이 이 주석의 유일한 용도다. */
+var MACRO_NOTE =
+  '<b>이 시리즈는 금리가 아닙니다.</b> 환율은 <b>원</b>, 유가는 <b>달러/배럴</b>이므로 ' +
+  '수준과 변동이 <b>같은 단위</b>이고 <b>bp 가 아닙니다</b>. ' +
+  '만기 개념이 없어 <b>커브·텀스프레드·스프레드 분석에는 나오지 않으며</b>, ' +
+  'bp 변동 분포와 커브 유형 판정을 쓰는 <b>스트레스테스트·VaR 에서도 제외</b>됩니다 — ' +
+  '단위가 섞이면 임계값과 포트폴리오 집계가 조용히 무의미해지기 때문입니다. ' +
+  '<b>상관관계 도구에서는 그대로 쓸 수 있습니다</b>(상관계수는 무차원이라 단위가 달라도 안전합니다). ' +
+  '출처 파일이 금리와 다릅니다 — <b>data/macro.json</b> 이고, 금리 마스터 CSV·rates.json 에는 ' +
+  '들어 있지 않습니다(의도된 분리). ' +
+  '<b>분석 도구의 값은 「글로벌 매크로」 탭의 값과 기준일이 다를 수 있습니다</b> — ' +
+  '도구는 국내 시리즈와 같은 날짜끼리 계산해야 하므로 <b>한국 영업일축</b>으로 정렬하고, ' +
+  '탭은 <b>환율·유가 합집합 축</b>을 그대로 씁니다.';
+
+/* 유가 발표주기 주석 — 호주(RBA F2)와 같은 '주간 배달' 구조다. */
+var OIL_LAG_NOTE =
+  '<b>데이터는 일별이지만 배달이 주 1회(수요일 추정)</b>입니다 — EIA 현물가라 ' +
+  '기준일이 환율보다 <b>3~7영업일 뒤처지는 것이 정상이며 지연이 아닙니다</b>. ' +
+  '신선도 임계를 8영업일로 둔 이유입니다(호주국채와 같은 구조).';
+
+/* Brent−WTI 스프레드 주의 — macro.json meta.note 와 **같은 사실**을 화면에 올린 것이다. */
+var OIL_SPREAD_NOTE =
+  '⚠ <b>Brent−WTI 스프레드가 2026년 구간에서 10~37달러</b>로 역사적 통상범위(0~10달러)보다 넓습니다. ' +
+  'FRED 공식 CSV 원문 그대로이고 파싱 문제는 아니지만 원인은 판정하지 못했습니다 — ' +
+  '두 계열의 차이를 쓸 때 이 점을 확인하십시오.';
+
 var EXTRA_SERIES = [
   {
     key: 'BOK_BASE', label: '한국은행 기준금리', group: '기준지표',
@@ -2957,15 +3148,71 @@ var EXTRA_SERIES = [
   , { key: 'USF_10Y', label: '미국채선물(조정가)', group: '선물', col: '미국채선물10년_조정가', maturity: 120, price: true, corrOnly: true, full: '미국채선물 10년 ZN — 등락률 누적 롤오버 조정가격', note: USF_NOTE }
   , { key: 'USF_30Y', label: '미국채선물(조정가)', group: '선물', col: '미국채선물30년_조정가', maturity: 360, price: true, corrOnly: true, full: '미국채선물 30년 ZB — 등락률 누적 롤오버 조정가격', note: USF_NOTE }
   --------------------------------------------------------------------------- */
+
+  /* ---- 글로벌 매크로 (환율 원 · 유가 달러/배럴) — 2026-11-11 신설 -------------
+     **이 세 계열은 금리가 아니다.** 출처 파일도 다르다 — 금리 마스터 CSV 2개와
+     rates.json 에는 들어 있지 않고, 별도 `data/macro.json`(환율 한국 은행영업일 ∪
+     유가 미국 영업일 합집합 축)에서 와서 로더가 **한국 영업일축으로 정렬**해 COL 에
+     올린다(정렬에서 버려지는 날은 MACRO_DROP 에 숫자로 남고 자가진단에 찍힌다).
+
+     세 플래그의 뜻 — 하나라도 빠지면 단위가 조용히 틀어진다
+       price: true     수준·변동이 같은 단위다(금리의 %/bp 이분법 경로를 막는다).
+                       **이것만 넣으면 'pt' 로 표시된다** → 아래 unit 이 필요하다.
+       unit: '원'/'$'  표시 접미. unitOf() 가 PRICE_COLS 대신 UNIT_COLS 를 보도록
+                       일반화한 이유다(종전에는 price → 'pt' 이분법이었다).
+       dp: 2           소수 자리. 금리는 3자리지만 원본이 2자리라 3자리로 내면
+                       끝자리 0 이 유효숫자처럼 보인다(일본국채 패딩 함정과 같다).
+       maturity: null  만기 개념이 없다 → noMat 이 되어 커브·커브+스프레드·
+                       텀스프레드·만기축 도구(data-reg='mat')에서 **자동 제외**된다.
+       corrOnly: true  **상관관계 도구에서만** 고를 수 있다. 스트레스테스트·VaR 는
+                       bp 변동 분포와 커브 유형 판정을 쓰고, 스프레드 분석은 A−B 가
+                       같은 단위임을 가정한다('국고10년 − WTI' 는 의미가 없다).
+     히트맵은 행이 하드코딩(HM.ROWS)이고 레지스트리를 읽지 않아 섞일 경로가 없다.
+     '전시리즈 변동분 다운로드'·'전체 다운로드'에는 **의도적으로 들어간다** — 그래서
+     그 두 CSV 머리말에 단위 그룹을 전부 열거하도록 함께 고쳤다. ---------------- */
+  , {
+    key: 'MACRO_FX_USD', label: '환율 USD', group: '환율', col: '환율_USD',
+    maturity: null, price: true, unit: '원', dp: 2, corrOnly: true,
+    full: '원/미국달러 매매기준율 (서울외국환중개) — 1990-03-02 부터',
+    note: MACRO_NOTE + ' <b>단위는 원입니다 — bp 가 아닙니다.</b> 서울외국환중개가 은행 영업일 1회(9시 이전) 고시하므로 <b>발표 시차가 없습니다</b>(당일치가 같은 날 저녁 회차에 들어옵니다).'
+  }
+  , {
+    key: 'MACRO_OIL_WTI', label: '유가 WTI', group: '원자재', col: '유가_WTI',
+    maturity: null, price: true, unit: '$', dp: 2, corrOnly: true,
+    full: 'Crude Oil Prices: WTI – Cushing, Oklahoma (EIA via FRED, DCOILWTICO) — 1986-01-02 부터',
+    note: MACRO_NOTE + ' <b>단위는 달러/배럴입니다 — bp 가 아닙니다.</b> ' + OIL_LAG_NOTE
+  }
+  , {
+    key: 'MACRO_OIL_BRENT', label: '유가 Brent', group: '원자재', col: '유가_Brent',
+    maturity: null, price: true, unit: '$', dp: 2, corrOnly: true,
+    full: 'Crude Oil Prices: Brent – Europe (EIA via FRED, DCOILBRENTEU) — 1987-05-20 부터',
+    note: MACRO_NOTE + ' <b>단위는 달러/배럴입니다 — bp 가 아닙니다.</b> ' + OIL_LAG_NOTE + ' ' + OIL_SPREAD_NOTE
+  }
 ];
 
 /* 가격(포인트) 시리즈 컬럼 집합 — 금리(%) 시리즈와 단위가 다르다 */
 var PRICE_COLS = {};
-EXTRA_SERIES.forEach(function (e) { if (e.price) PRICE_COLS[e.col] = 1; });
+/* [2026-11-11] 단위 접미를 **문자열로 일반화**했다.
+   종전: price:true → 무조건 'pt'. 환율(원)·유가(달러)가 들어오면서 그 이분법이
+   깨졌다 — 'WTI 99.64pt' 가 되기 때문이다.
+   이제 UNIT_COLS 가 접미를 들고, 등록에 unit 이 없으면 **종전과 똑같이 'pt'** 다.
+   즉 국채선물 3컬럼의 동작은 한 글자도 바뀌지 않는다(회귀 하네스로 대조했다).
+   **price 를 빼고 unit 만 넣으면 안 된다** — price 가 PRICE_COLS 에 넣어
+   금리로 취급되는 경로를 막는 플래그이고, unit 은 그 위에 접미만 얹는다. */
+var UNIT_COLS = {};
+/* 소수 자리 — 금리는 3자리 기본이고, dp 를 등록한 계열만 그 자리수를 쓴다.
+   국채선물은 dp 가 없어 종전 규칙(가격 3자리)을 그대로 탄다. */
+var DP_COLS = {};
+EXTRA_SERIES.forEach(function (e) {
+  if (e.price) { PRICE_COLS[e.col] = 1; UNIT_COLS[e.col] = e.unit || 'pt'; }
+  if (e.dp != null) DP_COLS[e.col] = +e.dp;
+});
 /** 컬럼의 단위 메타. 금리는 0.1bp 저장 → 변동 bp(÷10)·수준 %(÷1000).
- *  가격은 0.001pt 저장 → 변동·수준 모두 pt(÷1000). */
+ *  가격·환율·유가는 0.001단위 저장 → 변동·수준 모두 같은 접미(÷1000).
+ *  접미는 UNIT_COLS (등록 시 unit, 없으면 'pt'). */
 function unitOf(col, isLvl) {
-  if (PRICE_COLS[col]) return { div: 1000, sfx: 'pt' };
+  var u = UNIT_COLS[col];
+  if (u) return { div: 1000, sfx: u };
   return isLvl ? { div: 1000, sfx: '%' } : { div: 10, sfx: 'bp' };
 }
 
@@ -2976,6 +3223,74 @@ function unitOf(col, isLvl) {
     var x = ex[i];
     if (!x || !x.c || COL[x.c]) continue;
     try { COL[x.c] = decodeSeries(x.d, N, x.fi, x.li); } catch (e) { }
+  }
+})();
+
+/* ================================================================
+   글로벌 매크로 (data/macro.json) — 2026-11-11 신설
+   ----------------------------------------------------------------
+   **두 벌로 쓴다.** 해외금리(us/jp/au)와 같은 구조다.
+     MACRO            합집합 자체축 그대로 — 「글로벌 매크로」 탭 전용.
+     COL[환율_USD] 등  **한국 영업일축으로 정렬**한 사본 — 분석 도구 전용.
+                      도구는 국내 시리즈와 같은 날짜끼리 계산해야 하므로
+                      공통 축(DATES)이 필수다.
+   한국축에 자리가 없는 날은 **버린다**(보간·전방채움 없음 — 사이트 전역 원칙).
+   버린 일수는 MACRO_DROP 에 숫자로 남고 자가진단 줄에 찍힌다. 두 곳의 최신값이
+   갈릴 수 있다는 사실은 화면 주석(MACRO_NOTE)과 매뉴얼에 적혀 있다.
+
+   로더가 rates.json 과 **병렬로** 받아 window.MACRO_RAW 에 넣는다. 실패하면
+   null 이고, 그때는 아래가 통째로 건너뛰어진다 — 세 계열이 COL 에 없으면
+   REG_TYPES 생성부가 '데이터에 컬럼이 없으면 건너뛴다'로 자동 제외한다.
+   즉 macro.json 이 없어도 기존 화면은 그대로 돈다(실패 격리).
+   ================================================================ */
+var MACRO = null;          // 합집합 자체축 { N, DATES, COL, META, LAST, meta }
+var MACRO_DROP = {};       // 컬럼 → { kept, drop, total } 한국축 정렬 손실
+(function () {
+  var J = window.MACRO_RAW;
+  if (!J || !J.meta || !J.series || !J.dates) return;
+  try {
+    var n = J.meta.nrows, dt = new Int32Array(n), i;
+    for (i = 0; i < n; i++) dt[i] = +J.dates.substr(i * 8, 8);
+    var mcol = {}, mmeta = {};
+    J.series.forEach(function (s) {
+      try { mcol[s.c] = decodeSeries(s.d, n, s.fi, s.li); mmeta[s.c] = s; } catch (e) { }
+    });
+    MACRO = { N: n, DATES: dt, COL: mcol, META: mmeta, LAST: n - 1, meta: J.meta };
+
+    /* 한국축 정렬 — DATES(한국 영업일) 위의 자리를 찾아 옮긴다. */
+    var pos = {};
+    for (i = 0; i < N; i++) pos[DATES[i]] = i;
+    J.series.forEach(function (s) {
+      var src = mcol[s.c];
+      if (!src || COL[s.c]) return;                 // 이미 있으면 덮지 않는다
+      var a = new Float64Array(N), k;
+      for (k = 0; k < N; k++) a[k] = NaN;
+      /* 버려지는 날을 두 가지로 나눠 센다 — 섞어서 한 숫자로 적으면 오해한다.
+           before : 한국축 시작(2000-10-30) **이전**이라 애초에 자리가 없는 날.
+                    유가 1986~ · 환율 1990~ 라 구조적으로 발생한다.
+           inSpan : 한국축 구간 **안인데도** 자리가 없는 날. 이것이 진짜 정렬 손실이다
+                    (2006년 이전 토요일 고시, 채권시장 미고시일, 한국 공휴일의 미국 관측일). */
+      var kept = 0, dropBefore = 0, dropIn = 0;
+      var d0 = DATES[0], d1 = DATES[N - 1];
+      for (i = 0; i < n; i++) {
+        var v = src[i];
+        if (isNaN(v)) continue;
+        var j = pos[dt[i]];
+        if (j === undefined) {                      // 한국축에 없는 날 → 버린다
+          if (dt[i] < d0 || dt[i] > d1) dropBefore++; else dropIn++;
+          continue;
+        }
+        a[j] = v; kept++;
+      }
+      MACRO_DROP[s.c] = {
+        kept: kept, drop: dropBefore + dropIn, dropBefore: dropBefore, dropIn: dropIn,
+        total: kept + dropBefore + dropIn
+      };
+      COL[s.c] = a;
+    });
+  } catch (e) {
+    MACRO = null;
+    if (window.console && console.warn) console.warn('[MACRO] 적재 실패 — ' + (e && e.message));
   }
 })();
 
@@ -2993,7 +3308,9 @@ function unitOf(col, isLvl) {
    그대로이며 여기서 건드리지 않는다. 실제 배치는 fillTypes() 가 한다 —
    국내 그룹 전부를 먼저 쌓고 그 뒤에 아래 순서로 레지스트리 그룹을 쌓는다.
    여기에 없는 새 그룹은 목록 맨 뒤(기준지표 다음)에 등장 순서대로 붙는다. */
-var REG_GROUP_ORDER = ['단기자금', '스왑금리', '해외금리', '선물', '기준지표'];
+/* [2026-11-11] '환율'·'원자재' 를 **기준지표 뒤**에 더했다. 금리가 아닌 계열이므로
+   금리 그룹 전부보다 아래에 둔다(순서만 바뀌고 노출 집합은 그대로다). */
+var REG_GROUP_ORDER = ['단기자금', '스왑금리', '해외금리', '선물', '기준지표', '환율', '원자재'];
 
 /* 레지스트리 → TYPES 와 같은 모양의 의사(擬似) 채권종류 */
 var REG_TYPES = [], REG_GROUPS = [], REG_NOTE = {};
@@ -3973,27 +4290,34 @@ guard('단기자금 변동 현황', function () {
    · fut = 선물·IRS. 종전과 동일.
    종전 키(spot/money)가 어딘가에 남아 있어도 kr 로 받아 주어 탭이 비는 사고를 막는다. */
 /* [2026-10-21] 'heat'(히트맵) 추가 — 국내금리와 해외금리 사이. */
+/* [2026-11-11] 'mac'(글로벌 매크로) 추가 — **선물·IRS 다음**.
+   기존 키(kr/heat/ovs/fut 및 구 키 spot·money)의 동작은 한 글자도 바꾸지 않았다.
+   마지막 else 가 종전에 'fut' 를 받던 자리였으므로, 'mac' 를 **명시 분기로** 넣고
+   else 는 그대로 선물·IRS 로 남겼다(알 수 없는 키가 와도 위의 정규화에서 kr 이 된다). */
 var dashSub = 'kr';
 function showDashSub(d) {
   if (d === 'spot' || d === 'money') d = 'kr';          // 구 키 호환
-  if (d !== 'kr' && d !== 'heat' && d !== 'ovs' && d !== 'fut') d = 'kr';
+  if (d !== 'kr' && d !== 'heat' && d !== 'ovs' && d !== 'fut' && d !== 'mac') d = 'kr';
   dashSub = d;
   var bar = $('dash-subtabs');
   if (bar) [].forEach.call(bar.getElementsByTagName('button'), function (b) {
     b.className = (b.getAttribute('data-d') === d) ? 'on' : '';
   });
-  var sp = $('dash-spot'), ov = $('dash-ovs'), ft = $('dash-fut'), mn = $('dash-money'), ht = $('dash-heat');
+  var sp = $('dash-spot'), ov = $('dash-ovs'), ft = $('dash-fut'), mn = $('dash-money'), ht = $('dash-heat'),
+      mc = $('dash-macro');
   if (sp) sp.style.display = (d === 'kr') ? '' : 'none';
   if (mn) { mn.style.display = (d === 'kr') ? '' : 'none'; mn.className = 'sub'; }
   if (ht) ht.style.display = (d === 'heat') ? '' : 'none';
   if (ov) ov.style.display = (d === 'ovs') ? '' : 'none';
   if (ft) ft.style.display = (d === 'fut') ? '' : 'none';
+  if (mc) mc.style.display = (d === 'mac') ? '' : 'none';
   /* 숨어 있던 컨테이너는 폭이 0이라 cw() 가 0을 돌려주고 SVG 가 찌그러진다.
      그래서 그 탭이 '보이게 된 순간' 차트를 다시 그린다.
      히트맵은 HTML table 이라 폭 0 함정이 없지만, 처음 보일 때 한 번은 그려야 한다. */
   if (d === 'kr') { guard('시계열', drawTS); guard('CP·CD 시계열', drawMnyTS); guard('CD 유통 시계열', drawRopTS); }
   else if (d === 'heat') { guard('히트맵', HM.render); }
   else if (d === 'ovs') { fxDrawAll(); guard('해외금리 탭', renderOvs); }
+  else if (d === 'mac') { guard('글로벌 매크로 탭', macRenderAll); }
   else { guard('선물 시계열', drawFutTS); guard('IRS 시계열', drawIrsTS); }
 }
 guard('대시보드 하위 탭', function () {
@@ -6515,7 +6839,15 @@ function runCorr() {
       ? '대상 = <b>수준(레벨, ' + unit + ')</b>. <span class="etxt">⚠ 금리는 추세가 강해 레벨 상관은 거의 항상 높게 나오고, 두 시리즈가 같이 오르내렸는지를 말해주지 않습니다 — 추세 때문에 <b>과대평가될 수 있습니다</b>.</span> 같이 움직인 정도는 <b>변동(차분)</b> 으로 보십시오.'
       : '대상 = <b>변동(일간 차분, ' + unit + ')</b>' +
         (PRICE_COLS[ca] || PRICE_COLS[cb]
-          ? ' — 금리 시리즈는 <span class="mono">(y(tᵢ) − y(tᵢ₋₁)) × 100 [bp]</span>, 선물은 <span class="mono">가격 차분 [pt]</span>. 단위가 서로 달라도 상관계수는 배율에 불변이라 그대로 비교됩니다. '
+          /* [2026-11-11] 비(非)금리 계열의 단위가 pt 하나가 아니다 — 원·$ 가 늘었다.
+             종전에는 '선물은 가격 차분 [pt]' 로 박혀 있어, 환율·유가를 고르면 거짓 문장이 된다.
+             실제로 고른 두 계열의 접미를 unitOf 에서 읽어 적는다(선물만 고르면 종전과 같은 뜻이 나온다). */
+          ? ' — 금리 시리즈는 <span class="mono">(y(tᵢ) − y(tᵢ₋₁)) × 100 [bp]</span>, ' +
+            '비(非)금리 시리즈는 <span class="mono">값 차분 [' +
+            [ca, cb].filter(function (c) { return PRICE_COLS[c]; })
+                    .map(function (c) { return unitOf(c, false).sfx; })
+                    .filter(function (u, i, arr) { return arr.indexOf(u) === i; }).join(' · ') +
+            ']</span> 입니다(선물 pt · 환율 원 · 유가 달러). 단위가 서로 달라도 상관계수는 배율에 불변이라 그대로 비교됩니다. '
           : ' — <span class="mono">xᵢ = ( y<sub>A</sub>(tᵢ) − y<sub>A</sub>(tᵢ₋₁) ) × 100</span>. ') +
         '금리는 추세가 강해 레벨 상관은 거의 항상 높게 나오고 의미가 없으므로, 두 시리즈가 <b>같이 오르내린 정도</b>는 일간 변동 간 상관으로 봅니다(기본값).') + '<br>' +
     '<b>비중첩(non-overlapping) 구간 방식</b> — 시작일~종료일을 <b>' + esc(WIN.nm) + '</b> 단위로 겹치지 않게 연속 분할해 각 구간마다 상관계수를 1개씩 냅니다. ' +
@@ -7075,12 +7407,28 @@ var DL = (function () {
     /* [2026-10-19] 단위가 섞일 수 있다 — 레지스트리 시리즈가 들어오면서 국채선물
        수정가(가격 pt)가 금리(%) 와 같은 파일에 담긴다. pt 컬럼은 수가 적으므로
        컬럼 목록이 생략되는 대형 파일에서도 **여기에 전부 열거**한다. */
-    var pcols = [];
-    for (var pi = 0; pi < cols.length; pi++) if (PRICE_COLS[cols[pi].c]) pcols.push(cols[pi].c);
+    /* [2026-11-11] 단위가 **세 가지 이상**으로 늘었다 — pt(선물) · 원(환율) · $(유가).
+       종전에는 'pt' 한 가지를 전제로 문장이 박혀 있었다. 이제 UNIT_COLS 에서
+       실제 단위별로 묶어 전부 열거한다(단위가 pt 하나뿐이면 종전과 같은 내용이 나온다). */
+    var pcols = [], byUnit = {}, uorder = [];
+    for (var pi = 0; pi < cols.length; pi++) {
+      var uc = UNIT_COLS[cols[pi].c];
+      if (!uc) continue;
+      pcols.push(cols[pi].c);
+      if (!byUnit[uc]) { byUnit[uc] = []; uorder.push(uc); }
+      byUnit[uc].push(cols[pi].c);
+    }
     if (pcols.length) {
-      L.push(cmt('단위 : 금리 시리즈는 % (연율), 가격 시리즈는 pt — 한 파일에 섞여 있습니다.'));
-      L.push(cmt('  가격(pt) 컬럼 ' + pcols.length + '개 : ' + pcols.join(', ')));
-      L.push(cmt('  ⚠ 열을 가로로 합산·비교할 때 단위를 확인하십시오.'));
+      L.push(cmt('단위 : 금리 시리즈는 % (연율), 비(非)금리 시리즈는 ' +
+        uorder.map(function (u) { return u; }).join(' · ') + ' — 한 파일에 섞여 있습니다.'));
+      for (var ui = 0; ui < uorder.length; ui++) {
+        L.push(cmt('  [' + uorder[ui] + '] 컬럼 ' + byUnit[uorder[ui]].length + '개 : ' + byUnit[uorder[ui]].join(', ')));
+      }
+      L.push(cmt('  ⚠ 열을 가로로 합산·비교할 때 단위를 확인하십시오. 수준과 변동이 같은 단위입니다(bp 가 아닙니다).'));
+      if (byUnit['원'] || byUnit['$']) {
+        L.push(cmt('  ⚠ 환율(원)·유가($)는 **금리가 아닙니다.** 출처가 data/macro.json 이고,'));
+        L.push(cmt('     한국 영업일축에 정렬한 사본이라 「글로벌 매크로」 탭(합집합 축)과 기준일이 다를 수 있습니다.'));
+      }
       L.push(cmt('값은 원본 고시치 그대로이며 결측은 빈 칸입니다 (보간·0채움 없음).'));
     } else {
       L.push(cmt('단위 : % (연율). 값은 원본 고시치 그대로이며 결측은 빈 칸입니다 (보간·0채움 없음).'));
@@ -7129,9 +7477,15 @@ var DL = (function () {
     for (k = 0; k < cols.length; k++) arrs.push(COL[cols[k].c] || null);
     var decs = [];
     /* -1 = 항상 2자리(기준금리) · -2 = 항상 3자리(가격 pt — 저장 단위가 0.001pt 라
-       3자리가 무손실이다) · 0 = 금리 기본(DEC_SWITCH 전 2자리, 후 3자리) */
+       3자리가 무손실이다) · 0 = 금리 기본(DEC_SWITCH 전 2자리, 후 3자리)
+       [2026-11-11] DP_COLS 에 등록된 계열(환율·유가 = 2자리)은 그 자리수를 쓴다.
+       원본이 2자리인데 3자리로 내면 끝자리 0 이 유효숫자처럼 보인다.
+       국채선물은 dp 가 없어 종전 -2 경로를 그대로 탄다(동작 불변). */
     for (k = 0; k < cols.length; k++) {
-      decs.push(cols[k].c === BASE_COL ? -1 : (PRICE_COLS[cols[k].c] ? -2 : 0));
+      var cc2 = cols[k].c;
+      decs.push(cc2 === BASE_COL ? -1
+        : (DP_COLS[cc2] != null ? DP_COLS[cc2]
+          : (PRICE_COLS[cc2] ? -2 : 0)));
     }
 
     var total = i1 - i0 + 1;
@@ -7152,8 +7506,11 @@ var DL = (function () {
           var a = arrs[k2];
           if (a) {
             var v = a[i];
+            /* dk > 0 = DP_COLS 로 등록된 고정 자리수(환율·유가 2자리).
+               0 은 '금리 기본'이라는 뜻이라 dp 0 은 쓰지 않는다(쓸 계열도 없다). */
+            var dk = decs[k2];
             if (!isNaN(v)) line += (v / 1000).toFixed(
-              decs[k2] === -1 ? 2 : (decs[k2] === -2 ? 3 : (DATES[i] >= DEC_SWITCH ? 3 : 2)));
+              dk === -1 ? 2 : (dk === -2 ? 3 : (dk > 0 ? dk : (DATES[i] >= DEC_SWITCH ? 3 : 2))));
           }
         }
         buf.push(line);
@@ -8129,6 +8486,27 @@ function buildDeltaCSV(iB, iT, head) {
   var nPrice = 0, nMiss = 0, nNone = 0;
   for (i = 0; i < U.length; i++) if (U[i].price) nPrice++;
 
+  /* [2026-11-11] Δ 분리 열을 **단위별로 자동 생성**한다.
+     종전에는 'Δ(bp)' · 'Δ(pt)' 두 열이 박혀 있었다. 환율(원)·유가($)가 들어오면
+     그 값이 'Δ(pt)' 칸에 들어가 단위가 틀린다.
+     지금 데이터에 bp·pt 만 있으면 종전과 **완전히 같은 두 열**이 나온다. */
+  var UNITS = [], useen = {};
+  for (i = 0; i < U.length; i++) {
+    var su = unitOf(U[i].col, false).sfx;
+    if (!useen[su]) { useen[su] = 1; UNITS.push(su); }
+  }
+  UNITS.sort(function (a, b) {                      // bp 를 맨 앞에, 나머지는 등장 순서
+    if (a === b) return 0;
+    if (a === 'bp') return -1;
+    if (b === 'bp') return 1;
+    return 0;
+  });
+  var unitCnt = {};
+  for (i = 0; i < U.length; i++) {
+    var su2 = unitOf(U[i].col, false).sfx;
+    unitCnt[su2] = (unitCnt[su2] || 0) + 1;
+  }
+
   var body = [], calc = 0;
   for (i = 0; i < U.length; i++) {
     var u = U[i], a = COL[u.col];
@@ -8147,16 +8525,18 @@ function buildDeltaCSV(iB, iT, head) {
     if (u.price && !isNaN(v0) && !isNaN(v1) && v0 !== 0) rate = nnum(100 * (v1 - v0) / Math.abs(v0), 4);
     var obs = 0;
     if (a) for (var k = iB; k <= iT; k++) if (!isNaN(a[k])) obs++;
+    /* 단위별 분리 열 — 자기 단위 칸에만 값이 들어간다(나머지는 빈 칸) */
+    var split = [];
+    for (var ui2 = 0; ui2 < UNITS.length; ui2++) split.push(UNITS[ui2] === un.sfx ? nnum(d, 4) : '');
     body.push([
       u.g, u.t, u.mat, u.col, un.sfx,
       nnum(isNaN(v0) ? NaN : v0 / lv.div, 3), lv.sfx,
       nnum(isNaN(v1) ? NaN : v1 / lv.div, 3),
-      nnum(d, 4),
-      u.price ? '' : nnum(d, 4),
-      u.price ? nnum(d, 4) : '',
+      nnum(d, 4)
+    ].concat(split).concat([
       rate, st, obs,
       u.fi >= 0 ? fmtD(DATES[u.fi]) : ''
-    ]);
+    ]));
   }
 
   L.push(DL.cmt('금리 분석 대시보드 (kisbond.com) — 선택 구간 × 전 시리즈 변동'));
@@ -8186,14 +8566,25 @@ function buildDeltaCSV(iB, iT, head) {
   L.push(DL.cmt(''));
   L.push(DL.cmt('--- 단위 ---'));
   L.push(DL.cmt('금리 시리즈 : 수준 % (연율) · 변동 bp'));
-  L.push(DL.cmt('가격 시리즈 : 수준 pt · 변동 pt — 국채선물 수정가 ' + nPrice + '개가 해당합니다.'));
-  L.push(DL.cmt('  ⚠ Δ 열은 두 단위가 섞입니다. 합계·정렬에는 Δ(bp) / Δ(pt) 분리 열을 쓰십시오.'));
+  /* [2026-11-11] 단위가 pt 하나가 아니다 — 단위별로 몇 개인지 실제 집계에서 적는다. */
+  if (unitCnt['pt']) L.push(DL.cmt('가격 시리즈 : 수준 pt · 변동 pt — 국채선물 수정가 ' + unitCnt['pt'] + '개가 해당합니다.'));
+  if (unitCnt['원']) L.push(DL.cmt('환율 : 수준 원 · 변동 원 — ' + unitCnt['원'] + '개. **금리가 아닙니다**(bp 가 아닙니다).'));
+  if (unitCnt['$']) L.push(DL.cmt('유가 : 수준 달러/배럴 · 변동 달러 — ' + unitCnt['$'] + '개. **금리가 아닙니다**(bp 가 아닙니다).'));
+  L.push(DL.cmt('  ⚠ Δ 열은 단위가 섞입니다(' + UNITS.join(' · ') + '). 합계·정렬에는 ' +
+    UNITS.map(function (u) { return 'Δ(' + u + ')'; }).join(' / ') + ' 분리 열을 쓰십시오.'));
+  L.push(DL.cmt('  변동단위 / 수준단위 열에 각 행의 단위가 그대로 찍혀 있습니다.'));
+  if (unitCnt['원'] || unitCnt['$']) {
+    L.push(DL.cmt('  환율·유가의 출처는 data/macro.json 이고 금리 마스터·rates.json 에는 없습니다.'));
+    L.push(DL.cmt('  여기 값은 **한국 영업일축에 정렬한 사본**이라 「글로벌 매크로」 탭(합집합 축)과 기준일이 다를 수 있습니다.'));
+  }
   L.push(DL.cmt('변동률(%) : 가격 시리즈에만 채웁니다. 금리는 저금리·음수 구간에서 분모가 깨져 비워 둡니다.'));
   L.push(DL.cmt('결측 : 빈 칸입니다 (보간·전방채움·0채움 없음). 사유는 상태 열을 보십시오.'));
   L.push(DL.cmt('인코딩 : UTF-8 (BOM), 줄바꿈 CRLF'));
   L.push(DL.cmt(''));
   L.push(DL.row(['그룹', '채권종류', '만기', '컬럼명', '변동단위',
-    '시작값', '수준단위', '종료값', 'Δ', 'Δ(bp)', 'Δ(pt)', '변동률(%)', '상태', '구간내관측일수', '수록시작일']));
+    '시작값', '수준단위', '종료값', 'Δ']
+    .concat(UNITS.map(function (u) { return 'Δ(' + u + ')'; }))
+    .concat(['변동률(%)', '상태', '구간내관측일수', '수록시작일'])));
   for (i = 0; i < body.length; i++) L.push(DL.row(body[i]));
   return { text: L.join(DL.CRLF) + DL.CRLF, n: U.length, calc: calc, miss: nMiss, none: nNone };
 }
@@ -9401,6 +9792,464 @@ FX_ORDER.forEach(function (cc) { fxBindCSV(cc); });
 FX_ORDER.forEach(function (cc) { guard('해외 로더(' + cc + ')', function () { fxLoad(cc); }); });
 
 /* ================================================================
+   글로벌 매크로 모듈 (MAC) — data/macro.json, 합집합 자체축
+   ----------------------------------------------------------------
+   왜 FX(해외금리) 모듈에 끼우지 않았는가
+     FX 는 **만기축을 전제**한 구조다 — levelCol 이 '만기(개월) → 컬럼' 이고
+     현황표가 만기 격자 11열이며 변동은 전부 bp 로 찍힌다. 환율·유가는 만기가
+     없고 단위가 원·달러다. 끼워 넣으면 FX 의 불변식을 건드리게 되고, 그 순간
+     미국·일본·호주 화면이 위험해진다. 그래서 **읽기 전용으로 재사용할 것만**
+     가져왔다 — axPrevObs / axIdxLE / axVal / axRaw / fxDateTicks / svgLine.
+     FX 레지스트리·FX_ORDER·renderOvs 는 한 줄도 건드리지 않는다.
+
+   축
+     MACRO.DATES = 환율(한국 은행영업일) ∪ 유가(미국 영업일) 합집합. 결측 허용.
+     계열마다 최종 관측일이 다르므로 '탭 기준일' 하나로 묶지 않고 계열별로 적는다.
+
+   단위
+     금리가 아니다. unitOf(col) 가 돌려주는 접미('원'·'$')를 **모든 숫자 뒤에**
+     붙인다. 소수는 series[].dp(=2)다 — 금리의 3자리를 쓰면 끝자리 0 이
+     유효숫자처럼 보인다.
+
+   스프레드
+     Brent − WTI 를 현황표 행 하나와 유가 차트 칩 하나로 둘 다 노출한다.
+     파생값이므로 COL·마스터·macro.json 에는 넣지 않고 **화면에서 계산**한다.
+   ================================================================ */
+var MAC_SPREAD_KEY = '__SPREAD_BRENT_WTI';
+var MAC = {
+  /* 현황·변동표의 행. 순서의 단일 출처다. */
+  ROWS: [
+    { col: '환율_USD', name: '환율 USD', short: '환율', card: 'fx',
+      src: '서울외국환중개 매매기준율', lagWhy: '환율은 발표 시차가 없습니다' },
+    { col: '유가_WTI', name: '유가 WTI', short: 'WTI', card: 'oil',
+      src: 'EIA 현물가 (FRED DCOILWTICO)', release: '주 1회(수 추정)',
+      lagWhy: 'EIA 가 주 1회만 발표합니다(데이터는 일별, 배달이 주간)' },
+    { col: '유가_Brent', name: '유가 Brent', short: 'Brent', card: 'oil',
+      src: 'EIA 현물가 (FRED DCOILBRENTEU)', release: '주 1회(수 추정)',
+      lagWhy: 'EIA 가 주 1회만 발표합니다(데이터는 일별, 배달이 주간)' }
+  ],
+  /* 두 카드 — 환율(원)과 유가($)는 **축이 다르므로 한 차트에 겹치지 않는다**.
+     국가당 카드 한 장 원칙(FX)과 같은 이유로 '단위당 카드 한 장'이다. */
+  CARDS: {
+    fx: {
+      key: 'fx', title: '환율', unit: '원',
+      chips: [['환율_USD', '환율 USD (원/달러)']],
+      sel: ['환율_USD'], range: '3Y',
+      dom: { sec: 'mac-fx-sec', chart: 'mac-fx-chart', legend: 'mac-fx-legend', pick: 'mac-fx-pick',
+             range: 'mac-fx-range', asof: 'mac-fx-asof', dl: 'mac-fx-dl', lag: 'mac-fx-lag', stat: 'mac-fx-stat' },
+      csv: { title: '환율 시계열 차트 로데이터', src: '서울외국환중개 StdExRate 매매기준율, 평일 저녁 자동 수집',
+             axisNote: 'x축 = 환율(한국 은행영업일) ∪ 유가(미국 영업일) 합집합 축', file: '환율시계열차트_' }
+    },
+    oil: {
+      key: 'oil', title: '유가', unit: '$',
+      /* 스프레드 칩은 **파생 계열**이다 — chips 에 두되 COL 에는 없다(macDrawTS 가 계산한다). */
+      chips: [['유가_WTI', 'WTI ($/bbl)'], ['유가_Brent', 'Brent ($/bbl)'],
+              [MAC_SPREAD_KEY, '스프레드(Brent−WTI)']],
+      sel: ['유가_WTI', '유가_Brent'], range: '3Y',
+      dom: { sec: 'mac-oil-sec', chart: 'mac-oil-chart', legend: 'mac-oil-legend', pick: 'mac-oil-pick',
+             range: 'mac-oil-range', asof: 'mac-oil-asof', dl: 'mac-oil-dl', lag: 'mac-oil-lag', stat: 'mac-oil-stat' },
+      csv: { title: '유가 시계열 차트 로데이터', src: 'EIA 현물가 (FRED DCOILWTICO·DCOILBRENTEU), 평일 저녁 자동 수집 · 주 1회 발표',
+             axisNote: 'x축 = 환율(한국 은행영업일) ∪ 유가(미국 영업일) 합집합 축', file: '유가시계열차트_' }
+    }
+  },
+  CARD_ORDER: ['fx', 'oil']
+};
+
+/** 그 계열의 단위 접미 (unitOf 단일 출처를 그대로 쓴다 — 두 벌이 되면 어긋난다) */
+function macUnit(col) { return unitOf(col, true).sfx; }
+/** 표시 문자열 — 소수는 DP_COLS(=2). 금리의 f3 를 쓰면 자리수가 틀린다. */
+function macFmt(col, v) {
+  if (isNaN(v)) return '—';
+  var dp = (DP_COLS[col] != null) ? DP_COLS[col] : 2;
+  return v.toFixed(dp);
+}
+/** 변동 표시 — 부호를 붙이고 단위 접미까지 적는다(bp 로 읽히지 않게) */
+function macFmtD(col, v) {
+  if (isNaN(v)) return '—';
+  var dp = (DP_COLS[col] != null) ? DP_COLS[col] : 2;
+  return (v >= 0 ? '+' : '') + v.toFixed(dp);
+}
+/** 스프레드(파생)의 i 번째 값. 양쪽 모두 있어야 한다 — 없으면 NaN. */
+function macSpreadVal(i) {
+  if (!MACRO) return NaN;
+  var b = MACRO.COL['유가_Brent'], w = MACRO.COL['유가_WTI'];
+  if (!b || !w) return NaN;
+  var vb = b[i], vw = w[i];
+  if (isNaN(vb) || isNaN(vw)) return NaN;
+  return (vb - vw) / 1000;
+}
+/** 스프레드 저장단위 값 (변동 계산용) */
+function macSpreadRaw(i) {
+  if (!MACRO) return NaN;
+  var b = MACRO.COL['유가_Brent'], w = MACRO.COL['유가_WTI'];
+  if (!b || !w) return NaN;
+  var vb = b[i], vw = w[i];
+  if (isNaN(vb) || isNaN(vw)) return NaN;
+  return vb - vw;
+}
+/** 스프레드가 관측된 가장 최근 인덱스 (양쪽 모두 있는 날) */
+function macSpreadPrevObs(from) {
+  if (!MACRO) return -1;
+  for (var i = from; i >= 0; i--) if (!isNaN(macSpreadRaw(i))) return i;
+  return -1;
+}
+/* 스프레드를 일반 계열과 같은 인터페이스로 다루기 위한 얇은 래퍼.
+   (표·차트·CSV 세 곳에서 같은 분기를 세 번 쓰지 않으려는 것이다.) */
+function macIsSpread(c) { return c === MAC_SPREAD_KEY; }
+function macRawOf(c, i) { return macIsSpread(c) ? macSpreadRaw(i) : axRaw(MACRO, c, i); }
+function macValOf(c, i) { return macIsSpread(c) ? macSpreadVal(i) : axVal(MACRO, c, i); }
+function macPrevObs(c, from) { return macIsSpread(c) ? macSpreadPrevObs(from) : axPrevObs(MACRO, c, from); }
+function macUnitOf(c) { return macIsSpread(c) ? '$' : macUnit(c); }
+function macDpOf(c) { return macIsSpread(c) ? 2 : ((DP_COLS[c] != null) ? DP_COLS[c] : 2); }
+function macFmtOf(c, v) { if (isNaN(v)) return '—'; return v.toFixed(macDpOf(c)); }
+function macFmtDOf(c, v) { if (isNaN(v)) return '—'; return (v >= 0 ? '+' : '') + v.toFixed(macDpOf(c)); }
+
+/** 데이터가 없을 때 카드에 사유를 적는다(기존 탭은 그대로 동작한다) */
+function macFailCards(msg) {
+  MAC.CARD_ORDER.forEach(function (k) {
+    var C = MAC.CARDS[k], e = $(C.dom.chart);
+    if (e) e.innerHTML = '<div class="alert e"><b>글로벌 매크로 데이터(data/macro.json)를 불러오지 못했습니다.</b><br>' +
+      esc(msg) + '<br>국내·해외 금리 등 나머지 기능은 정상 동작합니다.</div>';
+    var a = $(C.dom.asof); if (a) a.textContent = '';
+  });
+  var b = $('mac-asofbar'); if (b) b.innerHTML = '<b>기준일</b> — 데이터 없음';
+}
+
+/** 현황표 — 행 = 계열 + 스프레드. 값·변동 모두 **그 계열 직전 관측일 대비**. */
+function macLevel() {
+  if (!MACRO) return;
+  var th = '<tr><th class="l" style="width:230px">구분</th><th>수준</th><th>단위</th>' +
+           '<th>직전 관측일 대비</th><th>관측일수</th><th>수록 시작</th></tr>';
+  var body = '';
+  function line(c, name, src) {
+    var i = macPrevObs(c, MACRO.LAST);
+    if (i < 0) {
+      body += '<tr><td class="l"><b>' + esc(name) + '</b></td><td class="na" colspan="5">—</td></tr>';
+      return;
+    }
+    var j = macPrevObs(c, i - 1);
+    var d = (j < 0) ? NaN : (macRawOf(c, i) - macRawOf(c, j)) / 1000;
+    var m = macIsSpread(c) ? null : MACRO.META[c];
+    var n = 0, k;
+    if (macIsSpread(c)) { for (k = 0; k < MACRO.N; k++) if (!isNaN(macSpreadRaw(k))) n++; }
+    else n = (m ? m.n : 0);
+    var fi = macIsSpread(c) ? (function () { for (k = 0; k < MACRO.N; k++) if (!isNaN(macSpreadRaw(k))) return k; return -1; })()
+                            : (m ? m.fi : -1);
+    body += '<tr><td class="l"><b>' + esc(name) + '</b><br><span style="font-size:10.5px;color:#8a5a20">' +
+      fmtD(MACRO.DATES[i]) + ' 기준</span>' +
+      (src ? '<br><span style="font-size:10px;color:#67727f">' + esc(src) + '</span>' : '') + '</td>' +
+      '<td title="' + fmtD(MACRO.DATES[i]) + '"><b>' + macFmtOf(c, macValOf(c, i)) + '</b></td>' +
+      '<td style="color:#67727f">' + esc(macUnitOf(c)) + '</td>' +
+      '<td class="' + cls(d) + '" title="' + (j < 0 ? '직전 관측일 없음' : fmtD(MACRO.DATES[j]) + ' → ' + fmtD(MACRO.DATES[i])) + '">' +
+      macFmtDOf(c, d) + ' <span style="color:#67727f;font-weight:400">' + esc(macUnitOf(c)) + '</span></td>' +
+      '<td>' + n.toLocaleString() + '</td>' +
+      '<td>' + (fi >= 0 ? fmtD(MACRO.DATES[fi]) : '—') + '</td></tr>';
+  }
+  MAC.ROWS.forEach(function (R) { if (MACRO.COL[R.col]) line(R.col, R.name, R.src); });
+  /* 스프레드 행 — 사용자가 이상 여부를 눈으로 판단하려는 바로 그 숫자다. */
+  if (MACRO.COL['유가_Brent'] && MACRO.COL['유가_WTI']) {
+    line(MAC_SPREAD_KEY, '유가 스프레드 (Brent − WTI)', '화면 계산 (파생값 — 저장하지 않습니다)');
+  }
+  if (!body) return;
+  setTable('box-mac-level', 'tbl-mac-level', '', th, body);
+
+  /* 기준일이 국내보다 많이 밀렸으면 제목 옆에 배지를 단다(선물 탭과 같은 장치). */
+  var w = $('mac-lv-warn');
+  if (w) {
+    var late = [];
+    MAC.ROWS.forEach(function (R) {
+      if (!MACRO.COL[R.col]) return;
+      var i = macPrevObs(R.col, MACRO.LAST); if (i < 0) return;
+      var gap = dayDiff(DATES[LAST], MACRO.DATES[i]);
+      if (gap >= 8) late.push(esc(R.short) + ' ' + gap + '일');
+    });
+    w.innerHTML = late.length ? '· 기준일 지연 ' + late.join(' · ') + ' (유가는 주 1회 발표라 7일까지는 정상)' : '';
+  }
+}
+
+/** 변동 현황 — 행 = 계열 + 스프레드, 열 = CHG_HORIZ. 전부 **그 계열 관측일 기준**. */
+function macChg() {
+  if (!MACRO) return;
+  var refs = CHG_HORIZ.map(function (hz) {
+    if (hz[1] === 'd' && hz[2] === 1) return PREV;
+    return idxLE(shiftCal(DATES[LAST], hz[1], hz[2]));
+  });
+  var th = '<tr><th class="l" style="width:230px">구분</th><th>현재</th><th>단위</th>';
+  CHG_HORIZ.forEach(function (hz, i) {
+    th += '<th>' + hz[0] + '<br><span style="font-weight:400;font-size:10px;color:#7d8794">' +
+      (refs[i] >= 0 ? fmtD(DATES[refs[i]]) : '—') + '</span></th>';
+  });
+  th += '</tr>';
+  var body = '';
+  function line(c, name) {
+    var iNow = macPrevObs(c, MACRO.LAST); if (iNow < 0) return;
+    body += '<tr><td class="l">' + esc(name) +
+      '<br><span style="font-size:10.5px;color:#8a5a20">' + fmtD(MACRO.DATES[iNow]) + ' 기준</span></td>' +
+      '<td><b>' + macFmtOf(c, macValOf(c, iNow)) + '</b></td>' +
+      '<td style="color:#67727f">' + esc(macUnitOf(c)) + '</td>';
+    CHG_HORIZ.forEach(function (hz) {
+      var ri;
+      if (hz[1] === 'd' && hz[2] === 1) ri = macPrevObs(c, iNow - 1);
+      else ri = macPrevObs(c, axIdxLE(MACRO, shiftCal(MACRO.DATES[iNow], hz[1], hz[2])));
+      if (ri < 0) { body += '<td class="na" title="기준 관측일 없음">—</td>'; return; }
+      var d = (macRawOf(c, iNow) - macRawOf(c, ri)) / 1000;
+      body += '<td class="' + cls(d) + '" title="' + fmtD(MACRO.DATES[ri]) + ' → ' + fmtD(MACRO.DATES[iNow]) +
+        ' · 단위 ' + esc(macUnitOf(c)) + '">' + macFmtDOf(c, d) + '</td>';
+    });
+    body += '</tr>';
+  }
+  MAC.ROWS.forEach(function (R) { if (MACRO.COL[R.col]) line(R.col, R.name); });
+  if (MACRO.COL['유가_Brent'] && MACRO.COL['유가_WTI']) line(MAC_SPREAD_KEY, '유가 스프레드 (Brent − WTI)');
+  if (!body) return;
+  setTable('box-mac-chg', 'tbl-mac-chg', '', th, body);
+}
+
+/** 상단 기준일 줄 — **계열별**이다. 계열마다 발표 주기가 달라 하나로 묶을 수 없다. */
+function macAsofBar() {
+  var e = $('mac-asofbar'); if (!e) return;
+  if (!MACRO) { e.innerHTML = '<b>기준일</b> — 데이터 없음'; return; }
+  var parts = [];
+  MAC.ROWS.forEach(function (R) {
+    if (!MACRO.COL[R.col]) return;
+    var i = macPrevObs(R.col, MACRO.LAST);
+    parts.push(esc(R.short) + ' <b>' + (i >= 0 ? fmtD(MACRO.DATES[i]) : '—') + '</b>');
+  });
+  var kr = (typeof LAST !== 'undefined' && LAST >= 0) ? fmtD(DATES[LAST]) : '—';
+  var weekly = MAC.ROWS.filter(function (R) { return R.release && MACRO.COL[R.col]; })
+                       .map(function (R) { return esc(R.short) + ' ' + esc(R.release); });
+  e.innerHTML = '<b>기준일</b> — ' + parts.join(' · ') +
+    ' <span class="kr">· 국내 금리(참고) <b>' + kr + '</b></span><br>' +
+    '<span style="font-size:11.5px"><b>이 탭은 금리가 아닙니다</b> — 환율은 <b>원</b>, 유가는 <b>달러/배럴</b>이고 변동도 같은 단위입니다(bp 가 아닙니다). ' +
+    '계열마다 발표 주기가 다릅니다 — <b>환율은 발표 시차가 없고</b>(은행 영업일 1회 9시 이전 고시), ' +
+    (weekly.length ? '<b style="color:#8a5a20">' + weekly.join(' · ') + ' 발표</b>라 유가 기준일이 환율보다 ' +
+      '<b>3~7영업일 뒤인 것이 정상</b>입니다(지연이 아닙니다). ' : '') +
+    '표의 각 행은 <b>자기 기준일</b>로 계산됩니다.</span>';
+}
+
+/** 스프레드 주의 문구 — macro.json meta.note 의 경고를 화면에 한 줄 노출한다. */
+function macSpreadWarn() {
+  var e = $('mac-spreadwarn'); if (!e) return;
+  if (!MACRO || !MACRO.COL['유가_Brent'] || !MACRO.COL['유가_WTI']) { e.innerHTML = ''; return; }
+  var i = macSpreadPrevObs(MACRO.LAST);
+  var cur = (i >= 0) ? macSpreadVal(i) : NaN;
+  e.className = 'note';
+  e.style.background = '#fff8f0';
+  e.style.border = '1px solid #f0d8b8';
+  e.style.borderRadius = '8px';
+  e.style.padding = '8px 12px';
+  e.innerHTML = '⚠ <b>유가 스프레드(Brent − WTI) 주의</b> — 현재 <b>' +
+    (isNaN(cur) ? '—' : cur.toFixed(2) + ' 달러') + '</b>' + (i >= 0 ? ' (' + fmtD(MACRO.DATES[i]) + ' 기준)' : '') + '. ' +
+    OIL_SPREAD_NOTE;
+}
+
+/** 계열별 시차 한 줄 (#us-lag 와 같은 방식 — 국내 금리 기준일과의 차이) */
+function macLagNotes() {
+  if (!MACRO) return;
+  MAC.CARD_ORDER.forEach(function (k) {
+    var C = MAC.CARDS[k], e = $(C.dom.lag); if (!e) return;
+    var kd = (typeof LAST !== 'undefined' && LAST >= 0) ? DATES[LAST] : 0;
+    if (!kd) { e.textContent = ''; return; }
+    var txt = [];
+    MAC.ROWS.forEach(function (R) {
+      if (R.card !== k || !MACRO.COL[R.col]) return;
+      var i = macPrevObs(R.col, MACRO.LAST); if (i < 0) return;
+      var gap = dayDiff(kd, MACRO.DATES[i]);
+      txt.push(esc(R.short) + ' <b>' + fmtD(MACRO.DATES[i]) + '</b>' +
+        (gap > 0 ? ' (국내 금리 기준일 대비 ' + gap + '일 시차 — 정상. ' + esc(R.lagWhy) + ')'
+                 : (gap < 0 ? ' (국내보다 ' + (-gap) + '일 앞섭니다)' : ' (국내와 동일)')));
+    });
+    e.innerHTML = txt.length ? '기준일 ' + txt.join(' · ') + ' · 국내 금리 <b>' + fmtD(kd) + '</b>.' : '';
+  });
+}
+
+/** 기간 프리셋이 가리키는 시작 인덱스 (합집합 축 기준) */
+function macWindow(C) {
+  if (!MACRO) return 0;
+  var rb = $(C.dom.range); if (!rb) return 0;
+  var b = [].filter.call(rb.children, function (x) { return x.className === 'on'; })[0];
+  if (!b || b.dataset.u === 'a') return 0;
+  var i = axIdxLE(MACRO, shiftCal(MACRO.DATES[MACRO.LAST], b.dataset.u, +b.dataset.n));
+  return i < 0 ? 0 : i;
+}
+
+/** 카드 한 장을 그린다 */
+function macDrawTS(k) {
+  var C = MAC.CARDS[k]; if (!C || !MACRO) return;
+  var i0 = macWindow(C), i1 = MACRO.LAST;
+  var order = C.chips.map(function (r) { return r[0]; });
+  var lbl = {}; C.chips.forEach(function (r) { lbl[r[0]] = r[1]; });
+  var ser = C.sel.map(function (c) {
+    var pts = [], i;
+    for (i = i0; i <= i1; i++) { var v = macValOf(c, i); pts.push(isNaN(v) ? null : [i, v]); }
+    var li = order.indexOf(c);
+    var s = { name: lbl[c] || c, pts: pts, color: PAL[(li < 0 ? 0 : li) % PAL.length] };
+    /* 스프레드는 파생값이라 **파선**으로 그린다 — 고시된 두 선과 성질이 다름을 선 모양으로 구분한다
+       (미국 정책금리 목표범위를 파선으로 둔 것과 같은 판단). */
+    if (macIsSpread(c)) s.dash = '5 3';
+    return s;
+  }).filter(function (s) { return s; });
+  $(C.dom.chart).innerHTML = svgLine({
+    w: cw(C.dom.chart, 540), h: 300, series: ser,
+    xTicks: fxDateTicks(MACRO, i0, i1, 6), yFmt: function (v) { return v.toFixed(2); }
+  });
+  $(C.dom.legend).innerHTML = ser.map(function (s) {
+    return '<span><i style="background:' + s.color + '"></i>' + esc(s.name) + ' <b>' +
+      (function () { var lv = lastVal(s.pts); return isNaN(lv) ? '—' : lv.toFixed(2); })() +
+      ' ' + esc(C.unit) + '</b></span>';
+  }).join('');
+  var a = $(C.dom.asof);
+  if (a) {
+    var ds = [];
+    C.sel.forEach(function (c) {
+      var i = macPrevObs(c, MACRO.LAST);
+      ds.push((lbl[c] || c).replace(/\s*\(.*\)$/, '') + ' ' + (i >= 0 ? fmtD(MACRO.DATES[i]) : '—'));
+    });
+    a.textContent = '최종 관측일 ' + ds.join(' · ') + ' · 단위 ' + C.unit;
+  }
+}
+function macDrawAll() {
+  MAC.CARD_ORDER.forEach(function (k) {
+    guard('매크로 ' + MAC.CARDS[k].title + ' 시계열', function () { macDrawTS(k); });
+  });
+}
+
+/** 탭 맨 아래 축 경고 — 분석 도구(한국축)와 이 탭(합집합 축)의 값이 다를 수 있다는 사실. */
+function macToolNote() {
+  var e = $('mac-toolnote'); if (!e) return;
+  var det = [];
+  if (MACRO_DROP) {
+    MAC.ROWS.forEach(function (R) {
+      var d = MACRO_DROP[R.col]; if (!d) return;
+      det.push(esc(R.short) + ' ' + d.total.toLocaleString() + '일 중 <b>' + d.drop.toLocaleString() + '일</b> 제외' +
+        '(한국축 시작 이전 ' + d.dropBefore.toLocaleString() + '일 + 구간 내 미해당 ' + d.dropIn.toLocaleString() + '일)');
+    });
+  }
+  e.innerHTML = '<b>분석 도구(상관관계·전시리즈 변동분 다운로드·데이터 다운로드)의 환율·유가 값은 이 탭과 다를 수 있습니다.</b> ' +
+    '도구는 국내 시리즈와 <b>같은 날짜끼리</b> 계산해야 하므로 <b>한국 영업일축</b>(rates.json 의 축)에 정렬한 사본을 쓰고, ' +
+    '이 탭은 <b>환율·유가 합집합 축</b>(macro.json)을 그대로 씁니다. ' +
+    '한국 영업일에 자리가 없는 관측일은 축에 올릴 곳이 없어 버려지므로, 그런 날이 최신일일 때 두 곳의 기준일이 갈립니다 — 데이터 오류가 아닙니다.' +
+    (det.length ? '<br><span style="font-size:11.5px">한국축 정렬에서 버려진 관측일 — ' + det.join(' · ') + '.</span>' : '') +
+    '<br><span style="font-size:11.5px"><b>단위도 다릅니다</b> — 금리 도구가 bp 로 적는 자리에 환율은 <b>원</b>, 유가는 <b>달러</b>가 들어갑니다. ' +
+    '그래서 환율·유가는 <b>상관관계 도구에서만</b> 고를 수 있고(상관계수는 무차원이라 단위가 섞여도 안전합니다), ' +
+    '스트레스테스트·VaR·커브·텀스프레드·스프레드 분석·히트맵에는 <b>나오지 않습니다</b>.</span>';
+}
+
+/** 칩·기간 프리셋을 한 번만 만든다 */
+function macInit() {
+  if (!MACRO) { macFailCards('data/macro.json 을 받지 못했거나 형식이 올바르지 않습니다.'); return; }
+  MAC.CARD_ORDER.forEach(function (k) {
+    var C = MAC.CARDS[k];
+    var pk = $(C.dom.pick);
+    if (pk && !pk.__done) {
+      pk.__done = 1;
+      C.chips.forEach(function (r) {
+        /* 데이터에 없는 계열은 칩을 만들지 않는다. 스프레드는 양쪽이 다 있어야 한다. */
+        if (macIsSpread(r[0])) { if (!MACRO.COL['유가_Brent'] || !MACRO.COL['유가_WTI']) return; }
+        else if (!MACRO.COL[r[0]]) return;
+        var b = el('button', {}, esc(r[1]));
+        var m = MACRO.META[r[0]];
+        b.title = macIsSpread(r[0])
+          ? 'Brent − WTI · 화면에서 계산한 파생값입니다(저장하지 않습니다). 양쪽이 모두 관측된 날만 점이 생깁니다. 단위 $'
+          : ((m ? (m.full || r[1]) + ' · ' + fmtD(MACRO.DATES[m.fi]) + ' ~ ' + fmtD(MACRO.DATES[m.li]) +
+              ' · ' + m.n.toLocaleString() + '일' : r[1]) + ' · 단위 ' + C.unit);
+        if (C.sel.indexOf(r[0]) >= 0) b.className = 'on';
+        b.onclick = function () {
+          var i = C.sel.indexOf(r[0]);
+          if (i >= 0) C.sel.splice(i, 1); else C.sel.push(r[0]);
+          b.className = C.sel.indexOf(r[0]) >= 0 ? 'on' : '';
+          guard('매크로 ' + C.title + ' 시계열', function () { macDrawTS(k); });
+        };
+        pk.appendChild(b);
+      });
+    }
+    var rb = $(C.dom.range);
+    if (rb && !rb.__done) {
+      rb.__done = 1;
+      [['1M', 'm', 1], ['3M', 'm', 3], ['6M', 'm', 6], ['1Y', 'y', 1], ['3Y', 'y', 3], ['5Y', 'y', 5], ['10Y', 'y', 10], ['전체', 'a', 0]].forEach(function (r) {
+        var b = el('button', {}, r[0]); b.dataset.k = r[0]; b.dataset.u = r[1]; b.dataset.n = r[2];
+        if (r[0] === C.range) b.className = 'on';
+        b.onclick = function () {
+          C.range = r[0];
+          [].forEach.call(rb.children, function (x) { x.className = x.dataset.k === C.range ? 'on' : ''; });
+          guard('매크로 ' + C.title + ' 시계열', function () { macDrawTS(k); });
+        };
+        rb.appendChild(b);
+      });
+    }
+    /* CSV 다운로드 — 해외금리 카드와 같은 머리말 규약이다. 단위를 반드시 적는다. */
+    var btn = $(C.dom.dl);
+    if (btn && !btn.__done) {
+      btn.__done = 1;
+      btn.onclick = function () {
+        try {
+          if (!MACRO) { alert('글로벌 매크로 데이터가 아직 로드되지 않았습니다.'); return; }
+          var i0 = macWindow(C), i1 = MACRO.LAST;
+          var cols = C.sel.slice();
+          if (!cols.length) { alert('선택된 시리즈가 없습니다.'); return; }
+          var lbl = {}; C.chips.forEach(function (r) { lbl[r[0]] = r[1]; });
+          var rb2 = $(C.dom.range);
+          var on = rb2 ? [].filter.call(rb2.children, function (x) { return x.className === 'on'; })[0] : null;
+          var rl = on ? on.dataset.k : '';
+          var L = [];
+          L.push(DL.cmt('금리 분석 대시보드 (kisbond.com) — ' + C.csv.title));
+          L.push(DL.cmt('생성 시각 : ' + DL.nowStr()));
+          L.push(DL.cmt('원자료 : ' + C.csv.src));
+          L.push(DL.cmt('데이터 기준일 : ' + fmtD(MACRO.DATES[MACRO.LAST]) + ' · ' + C.csv.axisNote));
+          L.push(DL.cmt('표시 구간 : ' + rl + ' — ' + fmtD(MACRO.DATES[i0]) + ' ~ ' + fmtD(MACRO.DATES[i1]) +
+            ' (' + (i1 - i0 + 1).toLocaleString() + '행, 결측 허용 축)'));
+          L.push(DL.cmt('선택 시리즈 : ' + cols.length + '개 — ' + cols.map(function (c) { return (lbl[c] || c); }).join(', ')));
+          L.push(DL.cmt('단위 : ' + cols.map(function (c) { return (lbl[c] || c) + ' = ' + macUnitOf(c); }).join(' · ')));
+          L.push(DL.cmt('  ⚠ 금리가 아닙니다 — bp 가 아니고, 수준과 변동이 같은 단위입니다. 소수 ' + macDpOf(cols[0]) + '자리.'));
+          if (cols.indexOf(MAC_SPREAD_KEY) >= 0) {
+            L.push(DL.cmt('  스프레드(Brent−WTI)는 화면에서 계산한 파생값입니다(저장하지 않습니다). 양쪽이 모두 관측된 날만 값이 있습니다.'));
+            L.push(DL.cmt('  ⚠ 2026년 구간에서 10~37달러로 역사적 통상범위(0~10달러)보다 넓습니다 — FRED 원문 그대로이고 원인은 판정하지 못했습니다.'));
+          }
+          L.push(DL.cmt('결측 : 빈 칸 (보간·전방채움 없음). 환율만 있는 날·유가만 있는 날이 모두 들어 있는 합집합 축입니다.'));
+          L.push(DL.cmt('정렬 : 일자 오름차순 · 인코딩 UTF-8 (BOM), 줄바꿈 CRLF'));
+          L.push('');
+          L.push(DL.row(['일자'].concat(cols.map(function (c) {
+            return (lbl[c] || c) + '[' + macUnitOf(c) + ']' + (macIsSpread(c) ? '' : '(' + c + ')');
+          }))));
+          for (var i = i0; i <= i1; i++) {
+            var r = [fmtD(MACRO.DATES[i])];
+            for (var m2 = 0; m2 < cols.length; m2++) r.push(nnum(macValOf(cols[m2], i), 4));
+            L.push(DL.row(r));
+          }
+          DL.saveText(C.csv.file + DL.safe(rl || '전체') + '_' + DL.today() + '.csv', L.join(DL.CRLF) + DL.CRLF);
+        } catch (e) { alert('CSV 생성 중 오류: ' + (e && e.message ? e.message : e)); }
+      };
+    }
+  });
+}
+
+/** 탭 전체를 그린다 (탭 전환·리사이즈에서 부른다) */
+function macRenderAll() {
+  if (!MACRO) { macFailCards('data/macro.json 을 받지 못했거나 형식이 올바르지 않습니다.'); return; }
+  guard('매크로 초기화', macInit);
+  guard('매크로 현황', macLevel);
+  guard('매크로 변동', macChg);
+  guard('매크로 기준일', macAsofBar);
+  guard('매크로 스프레드 주의', macSpreadWarn);
+  guard('매크로 시차', macLagNotes);
+  guard('매크로 축 경고', macToolNote);
+  macDrawAll();
+}
+
+/* BOOT 시점에 한 번 그려 둔다 — 탭이 숨어 있어 차트 폭이 0 이므로 차트는
+   탭이 처음 보이는 순간 showDashSub('mac') 가 다시 그린다(기존 탭과 같은 방식).
+   표·기준일 줄·경고는 폭에 무관해 지금 그려도 된다. */
+guard('글로벌 매크로 초기 렌더', function () {
+  if (!MACRO) { macFailCards('data/macro.json 이 로드되지 않았습니다.'); return; }
+  guard('매크로 초기화', macInit);
+  guard('매크로 현황', macLevel);
+  guard('매크로 변동', macChg);
+  guard('매크로 기준일', macAsofBar);
+  guard('매크로 스프레드 주의', macSpreadWarn);
+  guard('매크로 시차', macLagNotes);
+  guard('매크로 축 경고', macToolNote);
+});
+
+/* ================================================================
    사용 매뉴얼 — 동적 슬롯 채우기
    ----------------------------------------------------------------
    원칙 : 데이터에서 읽을 수 있는 값은 매뉴얼에 하드코딩하지 않는다.
@@ -9785,6 +10634,17 @@ function mqDrawMap() {
         ['IRS 시계열', '기사기반 잠정 → 수기 확정값 덮어쓰기'],
         ['변동 현황', '선물 pt · IRS bp']
       ]
+    },
+    /* [2026-11-11] 글로벌 매크로 — **금리가 아닌 계열만 모인 유일한 탭**이다.
+       단위(원·$)와 날짜축(합집합)이 다른 탭 전부와 다르므로 그 사실을 칩 설명에 박는다. */
+    {
+      name: '글로벌|매크로|(합집합축)', chips: [
+        ['계열별 기준일 줄', '탭 맨 위 — 환율은 시차 없음 / 유가는 주 1회 발표라 3~7영업일 뒤'],
+        ['글로벌 매크로 현황', '환율 USD(원) · 유가 WTI·Brent($/배럴) + 유가 스프레드(Brent−WTI)'],
+        ['환율 시계열 (원)', '서울외국환중개 매매기준율 · 1990-03-02 부터'],
+        ['유가 시계열 ($/배럴)', 'WTI·Brent 를 겹쳐 그림 · 칩으로 스프레드 선 추가 · 1986-01-02 부터'],
+        ['변동 현황', '단위가 bp 가 아니다 — 환율 원 · 유가 달러']
+      ]
     }
   ]);
   group('분석 도구|7종', null, [
@@ -9793,18 +10653,23 @@ function mqDrawMap() {
     ['커브 분석', '만기축 위에 커브 2개 — 두 시점 또는 두 종류'],
     ['스프레드 분석', '두 금리 차의 시계열 · 백분위 · z (유형 5종)'],
     ['커브+스프레드 분석', '커브 2개 × 시점 2개 → 만기별 Δ스프레드'],
-    ['상관관계 분석', '비중첩 구간별 r — 선물을 고를 수 있는 유일한 도구'],
+    ['상관관계 분석', '비중첩 구간별 r — 선물·환율·유가를 고를 수 있는 유일한 도구'],
     ['데이터 다운로드', '고른 시리즈 × 기간의 wide CSV (개별 선택에 선물 없음 · 전체 다운로드는 레지스트리 전부)']
   ]);
   group('사용|매뉴얼', null, [
     ['한눈에', '이 화면 — 그림으로 보는 안내서'],
     ['상세', '정의 · 수식 · 부호 규약 · 알려진 이슈 (8개 절)']
   ]);
+  /* 하위 탭 수는 **화면에서 센다** — 숫자를 글로 박으면 탭이 늘 때마다 거짓이 된다
+     (종전에 '하위 탭 3개' 로 박혀 있었고 히트맵 추가 뒤에도 그대로 남아 있었다). */
+  var nsub = (function () { var b = $('dash-subtabs'); return b ? b.getElementsByTagName('button').length : 0; })();
   host.innerHTML = mqSvg(y, o.join('')) +
     '<p class="mqnote">좌측 메뉴 ' + (VIEWS.length) + '개 · 수록 시리즈 ' + nser.toLocaleString() +
-    '개(국내 현물) + 레지스트리 ' + REG_TYPES.length + '종. 대시보드는 하위 탭 3개, 매뉴얼은 2개입니다.<br>' +
-    '<b>대시보드 3탭은 날짜축으로 가른 것입니다</b> — 국내금리는 전부 한국 영업일축(CP·CD 포함), ' +
-    '해외금리는 전부 그 나라 자체축입니다. <b>분석 도구 7종은 모두 한국축</b>이라 해외금리 탭 값과 다를 수 있습니다(상세 §2-4).</p>';
+    '개(국내 현물) + 레지스트리 ' + REG_TYPES.length + '종. 대시보드는 하위 탭 ' + nsub + '개, 매뉴얼은 2개입니다.<br>' +
+    '<b>대시보드 하위 탭은 날짜축으로 가른 것입니다</b> — 국내금리는 전부 한국 영업일축(CP·CD 포함), ' +
+    '해외금리는 전부 그 나라 자체축, <b>글로벌 매크로는 환율·유가 합집합 축</b>입니다. ' +
+    '<b>분석 도구 7종은 모두 한국축</b>이라 해외금리·글로벌 매크로 탭 값과 다를 수 있습니다(상세 §2-4).<br>' +
+    '<b>글로벌 매크로만 금리가 아닙니다</b> — 환율은 <b>원</b>, 유가는 <b>달러/배럴</b>이고 변동도 같은 단위입니다(bp 가 아닙니다).</p>';
 }
 
 /* ---- ③ 데이터 타임라인 --------------------------------------------------
@@ -9874,7 +10739,10 @@ function mqDrawTimeline() {
 /* ---- ④ 단위·부호 다이어그램 --------------------------------------------- */
 function mqDrawUnit() {
   var host = $('mq-unit'); if (!host) return;
-  var o = [], H = 156;
+  /* [2026-11-11] 단위가 **네 가지**가 됐다 — %/bp · pt · 원 · $.
+     '선물만 pt' 로 적혀 있던 이분법을 고치고, 금리가 아닌 계열을 한 줄 더 깔았다.
+     H 를 늘린 것은 그 한 줄 때문이다(156 → 198). */
+  var o = [], H = 198;
   o.push(mqBox(10, 14, 400, 54, '#eef3f9', '#b9cde0'));
   o.push(mqTxt(210, 38, '채권 · IRS = 금리 (%)', { anchor: 'middle', bold: true, fs: 15, fill: '#17456b' }));
   o.push(mqTxt(210, 58, '변동은 bp · 1bp = 0.01%p', { anchor: 'middle', fs: 11.5, fill: '#5a6673' }));
@@ -9891,8 +10759,11 @@ function mqDrawUnit() {
   /* 결론 띠 */
   o.push(mqBox(10, 86, MQ_W - 20, 32, '#fdf6f6', '#e9a9a9'));
   o.push(mqTxt(MQ_W / 2, 107, '방향이 반대이므로 — 금리와 선물가격의 상관계수가 음수로 나오는 것이 정상입니다', { anchor: 'middle', bold: true, fs: 13, fill: '#b3001b' }));
-  o.push(mqBox(10, 124, MQ_W - 20, 26, '#eefaf2', '#b6d6c2'));
-  o.push(mqTxt(MQ_W / 2, 141, '대시보드는 날짜축으로 갈려 있습니다 — 국내금리(한국축 · CP·CD 포함) / 해외금리(그 나라 자체축) / 선물·IRS(한국축, 가격 pt)', { anchor: 'middle', fs: 12, fill: '#1f6b42' }));
+  /* 금리가 아닌 계열 띠 — 여기서 가장 많이 틀린다(유가 변동을 bp 로 읽는 사고). */
+  o.push(mqBox(10, 124, MQ_W - 20, 32, '#f7f1ff', '#cfc0e8'));
+  o.push(mqTxt(MQ_W / 2, 145, '글로벌 매크로는 금리가 아닙니다 — 환율 = 원 · 유가 = 달러/배럴. 수준과 변동이 같은 단위이고 bp 가 아닙니다 (소수 2자리)', { anchor: 'middle', bold: true, fs: 13, fill: '#553b8c' }));
+  o.push(mqBox(10, 162, MQ_W - 20, 26, '#eefaf2', '#b6d6c2'));
+  o.push(mqTxt(MQ_W / 2, 179, '대시보드는 날짜축으로 갈려 있습니다 — 국내금리·선물·IRS(한국축) / 해외금리(그 나라 자체축) / 글로벌 매크로(환율·유가 합집합축). 분석 도구는 전부 한국축입니다', { anchor: 'middle', fs: 12, fill: '#1f6b42' }));
   host.innerHTML = mqSvg(H, o.join(''));
 }
 
@@ -10030,6 +10901,7 @@ window.__NEWS_SCROLLFX = newsScrollFx;
     if (t) clearTimeout(t);
     t = setTimeout(function () {
       guard('리사이즈', drawTS); fxDrawAll();
+      guard('리사이즈(매크로)', macDrawAll);
       guard('리사이즈(이슈스크롤)', newsScrollFx);
     }, 180);
   };
@@ -10285,9 +11157,17 @@ try{ window.__DONE(); }catch(_e){}
 /* ================================================================
    데이터 로더 — data/rates.json 을 받아 BOOT(DATA) 를 호출한다.
    셸(이 HTML)은 거의 변하지 않으므로 브라우저 캐시를 그대로 탄다.
+
+   [2026-11-11] data/macro.json(환율·유가)을 **병렬로** 함께 받는다.
+     왜 BOOT 전에 받아야 하는가 — BOOT 안에서 COL 에 올려야 하고, 그 뒤에
+     REG_TYPES·드롭다운·분석 도구가 전부 동기로 조립되기 때문이다. 해외금리처럼
+     사후 비동기 주입으로는 도구 선택지에 들어가지 못한다.
+     **실패는 macro.json 에만 국한된다** — 자기 catch 안에서 null 로 떨어지고,
+     BOOT 는 그대로 진행된다(세 계열만 빠진다). rates.json 로딩을 막지 않는다.
    ================================================================ */
 (function () {
   var DATA_URL = 'data/rates.json';
+  var MACRO_URL = 'data/macro.json';
   var wrap = document.getElementById('loadwrap');
   var stat = document.getElementById('loadstat');
   var T0 = (window.performance && performance.now) ? performance.now() : +new Date();
@@ -10323,6 +11203,23 @@ try{ window.__DONE(); }catch(_e){}
     return;
   }
 
+  /* macro.json — rates.json 과 **동시에** 띄운다. 실패하면 null 이다(BOOT 를 막지 않는다). */
+  var pMacro = (function () {
+    try {
+      return fetch(MACRO_URL, { cache: 'no-cache' }).then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      }).then(function (t) {
+        var J = JSON.parse(t);
+        if (!J || !J.meta || !J.series || !J.dates) throw new Error('형식 오류 (meta/series/dates 없음)');
+        return J;
+      })['catch'](function (e) {
+        if (window.console && console.warn) console.warn('[LOADER] macro.json 실패 — ' + ((e && e.message) || e) + ' (환율·유가만 빠지고 나머지는 정상 동작합니다)');
+        return null;
+      });
+    } catch (e) { return { then: function (f) { f(null); return this; } }; }
+  })();
+
   say('data/rates.json 요청 중…');
   fetch(DATA_URL, { cache: 'no-cache' }).then(function (r) {
     if (!r.ok) throw new Error('HTTP ' + r.status + ' ' + (r.statusText || '') + ' — ' + DATA_URL);
@@ -10351,20 +11248,27 @@ try{ window.__DONE(); }catch(_e){}
     if (!Dx || !Dx.meta || !Dx.series) throw new Error('데이터 형식이 올바르지 않습니다 (meta/series 없음)');
     window.DATA = Dx;
     say('시리즈 ' + Dx.meta.nseries + '개 디코딩 중…');
-    setTimeout(function () {
-      try {
-        if (!Dx) return;
-        BOOT(Dx);
-        done();
-        if (window.console && console.log) {
-          console.log('[LOADER] 완료 ' + ms() + 'ms · ' + Dx.meta.nseries + '시리즈 · ' +
-            Dx.meta.nrows + '영업일 · ' + Dx.meta.from + '~' + Dx.meta.to);
+    /* macro.json 이 아직 안 왔으면 기다린다 — BOOT 가 동기로 COL 에 올려야 한다.
+       실패해도 null 로 떨어져 바로 넘어오므로 여기서 멈추는 일은 없다. */
+    pMacro.then(function (mj) {
+      window.MACRO_RAW = mj || null;
+      if (mj) say('글로벌 매크로 ' + mj.meta.nseries + '계열 포함 · 디코딩 중…');
+      setTimeout(function () {
+        try {
+          if (!Dx) return;
+          BOOT(Dx);
+          done();
+          if (window.console && console.log) {
+            console.log('[LOADER] 완료 ' + ms() + 'ms · ' + Dx.meta.nseries + '시리즈 · ' +
+              Dx.meta.nrows + '영업일 · ' + Dx.meta.from + '~' + Dx.meta.to +
+              (mj ? ' · macro ' + mj.meta.nseries + '계열 ' + mj.meta.nrows + '행 ' + mj.meta.from + '~' + mj.meta.to : ' · macro 없음'));
+          }
+        } catch (e) {
+          fail('초기화 오류: ' + (e && e.message ? e.message : e),
+            (e && e.stack) ? String(e.stack).split('\n').slice(0, 2).join(' / ') : '');
         }
-      } catch (e) {
-        fail('초기화 오류: ' + (e && e.message ? e.message : e),
-          (e && e.stack) ? String(e.stack).split('\n').slice(0, 2).join(' / ') : '');
-      }
-    }, 16);
+      }, 16);
+    });
   })['catch'](function (e) {
     var m = (e && e.message) ? e.message : String(e);
     var hint;
